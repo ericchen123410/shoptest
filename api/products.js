@@ -94,7 +94,7 @@ console.log("DB =", process.env.DATABASE_ID);
         isSale,
 
         isNew: getCheckbox(props.isNew),
-        ishot: getCheckbox(props.isHot),
+        isHot: getCheckbox(props.isHot),
         image: getImage(props.image),
         images: getImages(props.images),
 
