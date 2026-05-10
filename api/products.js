@@ -78,8 +78,9 @@ console.log("DB =", process.env.DATABASE_ID);
 
     const products = data.results.map((page) => {
       const props = page.properties;
-
-      const isSale = getCheckbox(props.Sale);
+      const isSale = getCheckbox(props.isSale);
+      const isNew = getCheckbox(props.isNew);
+      const isHot = getCheckbox(props.isHot);
       const price = getNumber(props.tpric);
       const sprice = getNumber(props.sprice);
 
@@ -93,7 +94,7 @@ console.log("DB =", process.env.DATABASE_ID);
         isSale,
 
         isNew: getCheckbox(props.isNew),
-
+        ishot: getCheckbox(props.isHot),
         image: getImage(props.image),
         images: getImages(props.images),
 
