@@ -79,9 +79,13 @@ console.log("DB =", process.env.DATABASE_ID);
     const products = data.results.map((page) => {
       const props = page.properties;
 
-      const isSale = getCheckbox(props.Sale);
-      const price = getNumber(props.tpric);
+      const isSale = getCheckbox(props.isSale);
+      const price = getNumber(props.tprice);
       const sprice = getNumber(props.sprice);
+      const isHot = getCheckbox(props.isHot);
+      const isNew = getCheckbox(props.isNew);
+
+      
 
       return {
         id: page.id,
@@ -93,6 +97,7 @@ console.log("DB =", process.env.DATABASE_ID);
         isSale,
 
         isNew: getCheckbox(props.isNew),
+        isHot: getCheckbox(props.isHot),
 
         image: getImage(props.image),
         images: getImages(props.images),
