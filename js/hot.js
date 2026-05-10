@@ -10,7 +10,7 @@ async function init() {
     const res = await fetch(API_URL);
     let data = await res.json();
 
-    data = data.filter(p => p.isSale);
+    data = data.filter(p => p.isNew);
 
     data.sort(
       (a, b) =>
@@ -28,7 +28,7 @@ async function init() {
 
 function render(data) {
   if (!data.length) {
-    el.innerHTML = "<div>目前沒有特價商品</div>";
+    el.innerHTML = "<div>目前沒有熱賣商品</div>";
     return;
   }
 
