@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cart</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-50">
+
+<div class="sticky top-0 z-50 bg-white border-b">
+  <div class="flex justify-between items-center p-4">
+    <div class="flex gap-4">
+      <a href="index.html">🏠 首頁</a>
+      <a href="hot.html">🔥 熱賣商品</a>
+      <a href="sale.html">🈹 特價</a>
+    </div>
+
+    <div class="flex items-center gap-4">
+      <button onclick="history.back()">⬅️ 上一頁</button>
+      <a href="cart.html">
+        🛒 <span id="cartCount" class="bg-red-500 text-white px-2 rounded-full">0</span>
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="p-6">
+  <h1 class="text-2xl font-bold mb-4">購物車</h1>
+  <div id="cart"></div>
+</div>
+
+<script type="module" src="./js/cart.js"></script>
+<script src="./js/cartCount.js"></script>
+
+</body>
+</html>
