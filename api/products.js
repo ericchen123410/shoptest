@@ -81,7 +81,7 @@ console.log("DB =", process.env.DATABASE_ID);
       const isSale = getCheckbox(props.isSale);
       const isNew = getCheckbox(props.isNew);
       const isHot = getCheckbox(props.isHot);
-      const price = getNumber(props.tpric);
+      const price = getNumber(props.tprice);
       const sprice = getNumber(props.sprice);
 
       return {
