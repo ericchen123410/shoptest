@@ -10,7 +10,7 @@ async function init() {
     const res = await fetch(API_URL);
     let data = await res.json();
 
-    data = data.filter(p => p.isNew);
+    data = data.filter(p => p.isHot);
 
     data.sort(
       (a, b) =>
