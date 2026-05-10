@@ -45,7 +45,7 @@ function render(data) {
         <div class="mt-2 font-bold">${p.name}</div>
 
         ${
-          p.isSale
+          p.isHot
             ? `
               <div class="text-red-500">
                 ${formatPrice(p.price)}
