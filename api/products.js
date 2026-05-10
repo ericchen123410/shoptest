@@ -1,20 +1,21 @@
-```js id="l6dc0y"
+```js id="5e6gkr"
 export default async function handler(req, res) {
 
   try {
 
-    const { NOTION_TOKEN, DATABASE_ID } = process.env;
+    const NOTION_TOKEN = process.env.NOTION_TOKEN;
+    const DATABASE_ID = process.env.DATABASE_ID;
 
-    // 檢查 env
+    // env 檢查
     if (!NOTION_TOKEN || !DATABASE_ID) {
 
       return res.status(500).json({
-        error: "缺少 NOTION_TOKEN 或 DATABASE_ID"
+        error: "缺少環境變數"
       });
     }
 
     // 打 notion api
-    const response = await fetch(
+    const notionRes = await fetch(
       `https://api.notion.com/v1/databases/${DATABASE_ID}/query`,
       {
         method: "POST",
@@ -27,13 +28,181 @@ export default async function handler(req, res) {
       }
     );
 
-    // ⭐ 先拿 raw data
-    const data = await response.json();
+    // ⭐ 先轉文字避免 crash
+    const raw = await notionRes.text();
 
-    // ⭐ 檢查 notion 錯誤
-    if (!response.ok) {
+    let data;
 
-      console.error("Notion API Error:", data);
+    try {
+
+      data = JSON.parse(raw);
+
+    } catch (e) {
+
+      return res.status(500).json({
+        error: "Notion JSON parse failed",
+        raw
+      });
+    }
+
+    // notion error
+    if (!notionRes.ok) {
+
+      return res.status(500).json({
+        error: "Notion API Error",
+        detail: data
+      });
+    }
+
+    // results 保護
+    if (!Array.isArray(data.results)) {
+
+      return res.status(500).json({
+        error: "results 不是 array",
+        data
+      });
+    }
+
+    // rich text
+    const getText = (prop) => {
+
+      if (!prop) return "";
+
+      if (prop.title) {
+
+        return prop.title
+          .map(t => t.plain_text)
+          .join("");
+      }
+
+      if (prop.rich_text) {
+
+        return prop.rich_text
+          .map(t => t.plain_text)
+          .join("\n");
+      }
+
+      return "";
+    };
+
+    // number
+    const getNumber = (prop) => {
+
+      if (!prop) return 0;
+
+      if (prop.type === "number") {
+        return prop.number || 0;
+      }
+
+      if (
+        prop.type === "formula" &&
+        prop.formula?.type === "number"
+      ) {
+
+        return prop.formula.number || 0;
+      }
+
+      return 0;
+    };
+
+    // checkbox
+    const getCheckbox = (prop) => {
+      return prop?.checkbox || false;
+    };
+
+    // date
+    const getDate = (prop) => {
+
+      if (!prop) return null;
+
+      return prop?.date?.start || null;
+    };
+
+    // 單圖
+    const getImage = (prop) => {
+
+      if (!prop) return "";
+
+      if (prop.type === "url") {
+        return prop.url || "";
+      }
+
+      return getText(prop);
+    };
+
+    // 多圖
+    const getImages = (prop) => {
+
+      const text = getText(prop);
+
+      if (!text) return [];
+
+      return text
+        .split(",")
+        .map(s => s.trim())
+        .filter(Boolean);
+    };
+
+    // products
+    const products = data.results.map((page) => {
+
+      const props = page.properties || {};
+
+      const isSale = getCheckbox(props.isSale);
+
+      const price = getNumber(props.tprice);
+
+      const sprice = getNumber(props.sprice);
+
+      return {
+
+        id: page.id,
+
+        name: getText(props.tname),
+
+        description: getText(props.description),
+
+        price: isSale
+          ? (sprice || price)
+          : price,
+
+        originalPrice: price,
+
+        isSale,
+
+        isNew: getCheckbox(props.isNew),
+
+        isHot: getCheckbox(props.isHot),
+
+        image: getImage(props.image),
+
+        images: getImages(props.images),
+
+        createdTime: page.created_time,
+
+        update: getDate(props.update),
+      };
+    });
+
+    // cors
+    res.setHeader(
+      "Access-Control-Allow-Origin",
+      "*"
+    );
+
+    return res.status(200).json(products);
+
+  } catch (err) {
+
+    console.error(err);
+
+    return res.status(500).json({
+      error: err.message,
+      stack: err.stack
+    });
+  }
+}
+```
 
       return res.status(response.status).json({
         error: "Notion API 錯誤",
