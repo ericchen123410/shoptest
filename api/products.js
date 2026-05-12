@@ -16,7 +16,7 @@ export default async function handler(req, res) {
 
     const data = await response.json();
 
-    // ⭐ 文字（完整 rich_text）
+    // ⭐ 文字
     const getText = (prop) => {
       if (!prop) return "";
 
@@ -49,7 +49,7 @@ export default async function handler(req, res) {
     // ⭐ checkbox
     const getCheckbox = (prop) => prop?.checkbox || false;
 
-    // ⭐ 日期（update）
+    // ⭐ 日期
     const getDate = (prop) => {
       if (!prop || prop.type !== "date") return null;
       return prop.date?.start || null;
@@ -78,8 +78,11 @@ export default async function handler(req, res) {
     const products = data.results.map((page) => {
       const props = page.properties;
 
-      const isSale = getCheckbox(props.Sale);
-      const price = getNumber(props.tpric);
+      const isHot = getCheckbox(props.isHot);
+      const isSale = getCheckbox(props.isSale);
+      const isNew = getCheckbox(props.isNew); // ⭐ 新增這行
+
+      const price = getNumber(props.tprice);
       const sprice = getNumber(props.sprice);
 
       return {
@@ -91,15 +94,14 @@ export default async function handler(req, res) {
         originalPrice: price,
         isSale,
 
-        isNew: getCheckbox(props.isNew),
+        isHot,
+        isNew, // ⭐ 一定要回傳
 
         image: getImage(props.image),
         images: getImages(props.images),
 
         createdTime: page.created_time,
-
-        // ⭐ 用來排序
-        update: getDate(props.update)
+        update: getDate(props.update),
       };
     });
 
