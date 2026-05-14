@@ -74,10 +74,8 @@ export default async function handler(req, res) {
       if (!text) return [];
       return text.split(",").map(s => s.trim()).filter(Boolean);
     };
-    const visibleResults = response.results.filter((page) => {
-      return page.properties?.isView?.checkbox === true;
-    });
-    const products = visibleResults.map((page) => {
+
+    const products = data.results.map((page) => {
       const props = page.properties;
 
       const isHot = getCheckbox(props.isHot);
