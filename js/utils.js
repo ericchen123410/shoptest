@@ -11,12 +11,6 @@ export const getCart = () =>
 export const saveCart = (cart) =>
   localStorage.setItem("cart", JSON.stringify(cart));
 
-export const addToCart = (id) => {
-  const cart = getCart();
-  cart[id] = (cart[id] || 0) + 1;
-  saveCart(cart);
-};
-
 export const getTotalQty = () => {
   const cart = getCart();
   return Object.values(cart).reduce((a, b) => a + b, 0);
