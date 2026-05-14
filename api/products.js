@@ -19,34 +19,22 @@ export default async function handler(req, res) {
     // ⭐ 文字
     const getText = (prop) => {
       if (!prop) return "";
-
-      if (prop.title) {
-        return prop.title.map(t => t.plain_text).join("");
-      }
-
-      if (prop.rich_text) {
-        return prop.rich_text.map(t => t.plain_text).join("\n");
-      }
-
+      if (prop.title) return prop.title.map(t => t.plain_text).join("");
+      if (prop.rich_text) return prop.rich_text.map(t => t.plain_text).join("\n");
       return "";
     };
 
     // ⭐ 數字
     const getNumber = (prop) => {
       if (!prop) return 0;
-
       if (prop.type === "number") return prop.number || 0;
-
       if (prop.type === "formula") {
-        if (prop.formula.type === "number") {
-          return prop.formula.number || 0;
-        }
+        if (prop.formula.type === "number") return prop.formula.number || 0;
       }
-
       return 0;
     };
 
-    // ⭐ checkbox
+    // ⭐ Checkbox
     const getCheckbox = (prop) => prop?.checkbox || false;
 
     // ⭐ 日期
@@ -58,15 +46,16 @@ export default async function handler(req, res) {
     // ⭐ 單圖
     const getImage = (prop) => {
       if (!prop) return "";
-
       if (prop.type === "url") return prop.url || "";
-
       return (
         prop?.title?.map(t => t.plain_text).join("") ||
         prop?.rich_text?.map(t => t.plain_text).join("") ||
         ""
       );
     };
+
+    // ⭐ Select 單選（分類）
+    const getSelect = (prop) => prop?.select?.name || "";
 
     // ⭐ 多圖
     const getImages = (prop) => {
@@ -78,11 +67,12 @@ export default async function handler(req, res) {
     const products = data.results.map((page) => {
       const props = page.properties;
 
-      const isHot = getCheckbox(props.isHot);
+      const isView = getCheckbox(props.isView); // ⭐ 上架控制
+      const isHot  = getCheckbox(props.isHot);
       const isSale = getCheckbox(props.isSale);
-      const isNew = getCheckbox(props.isNew); // ⭐ 新增這行
+      const isNew  = getCheckbox(props.isNew);
 
-      const price = getNumber(props.tprice);
+      const price  = getNumber(props.tprice);
       const sprice = getNumber(props.sprice);
 
       return {
@@ -95,7 +85,10 @@ export default async function handler(req, res) {
         isSale,
 
         isHot,
-        isNew, // ⭐ 一定要回傳
+        isNew,
+        isView,
+
+        category: getSelect(props.category), // ⭐ 分類
 
         image: getImage(props.image),
         images: getImages(props.images),
@@ -105,7 +98,10 @@ export default async function handler(req, res) {
       };
     });
 
-    res.status(200).json(products);
+    // ⭐ 只回傳 isView = true 的商品（下架商品不顯示）
+    const visible = products.filter(p => p.isView);
+
+    res.status(200).json(visible);
 
   } catch (err) {
     res.status(500).json({ error: err.message });
