@@ -1,6 +1,6 @@
 import { formatPrice } from "./utils.js";
 
-const API_URL = "https://shop-project-azure.vercel.app/api/products";
+const API_URL = "https://shoptest-chi.vercel.app/api/products";
 
 const id = new URLSearchParams(location.search).get("id");
 const el = document.getElementById("product");
