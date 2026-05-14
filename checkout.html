@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>結帳</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+
+<div class="sticky top-0 z-50 bg-white border-b shadow-sm">
+  <div class="flex justify-between items-center px-3 py-2">
+    <div class="flex gap-1 text-sm">
+      <a href="index.html" class="font-bold px-2 py-1.5 rounded-lg hover:bg-gray-100">🏠</a>
+      <a href="new.html"   class="px-2 py-1.5 rounded-lg hover:bg-gray-100 text-xs">🆕 新品</a>
+      <a href="hot.html"   class="px-2 py-1.5 rounded-lg hover:bg-gray-100 text-xs">🔥 熱賣</a>
+      <a href="sale.html"  class="px-2 py-1.5 rounded-lg hover:bg-gray-100 text-xs">🈹 特價</a>
+    </div>
+    <div class="flex items-center gap-1">
+      <button onclick="history.back()" class="text-sm px-2 py-1.5 rounded-lg hover:bg-gray-100">⬅️</button>
+      <a href="cart.html" class="px-2 py-1.5 rounded-lg hover:bg-gray-100">
+        🛒 <span id="cartCount" class="bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full">0</span>
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="px-4 py-4 max-w-xl mx-auto">
+
+  <!-- 步驟指示 -->
+  <div class="flex items-center justify-center gap-2 mb-6 text-sm">
+    <span class="text-gray-400">購物車</span>
+    <span class="text-gray-300">›</span>
+    <span class="font-bold text-black">填寫資料</span>
+    <span class="text-gray-300">›</span>
+    <span class="text-gray-400">完成</span>
+  </div>
+
+  <!-- 訂單摘要 -->
+  <div class="bg-white rounded-xl border mb-4">
+    <button onclick="toggleSummary()"
+      class="w-full flex justify-between items-center px-4 py-3 text-sm font-semibold">
+      <span>📦 訂單明細</span>
+      <span id="summaryArrow" class="text-gray-400 transition-transform">▼</span>
+    </button>
+    <div id="summaryContent" class="border-t px-4 pb-4 hidden">
+      <div id="orderItems" class="divide-y text-sm"></div>
+      <div class="flex justify-between items-center mt-3 font-bold">
+        <span>合計</span>
+        <span id="orderTotal" class="text-red-500 text-base"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 填寫資料表單 -->
+  <div class="bg-white rounded-xl border px-4 py-4 mb-4">
+    <h2 class="font-bold mb-4">收件資料</h2>
+
+    <div class="space-y-3">
+
+      <div>
+        <label class="text-xs text-gray-500 mb-1 block">姓名 <span class="text-red-500">*</span></label>
+        <input id="name" type="text" placeholder="請輸入姓名"
+          class="w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black">
+      </div>
+
+      <div>
+        <label class="text-xs text-gray-500 mb-1 block">電話 <span class="text-red-500">*</span></label>
+        <input id="phone" type="tel" placeholder="請輸入電話"
+          class="w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black">
+      </div>
+
+      <div>
+        <label class="text-xs text-gray-500 mb-1 block">Email <span class="text-red-500">*</span></label>
+        <input id="email" type="email" placeholder="請輸入 Email"
+          class="w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black">
+      </div>
+
+      <div>
+        <label class="text-xs text-gray-500 mb-1 block">地址 <span class="text-red-500">*</span></label>
+        <input id="address" type="text" placeholder="請輸入收件地址"
+          class="w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black">
+      </div>
+
+      <div>
+        <label class="text-xs text-gray-500 mb-1 block">備註</label>
+        <textarea id="note" placeholder="顏色、尺寸或其他備註（選填）" rows="3"
+          class="w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black resize-none"></textarea>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 送出按鈕 -->
+  <button id="submitBtn" onclick="submitOrder()"
+    class="w-full py-3.5 bg-black text-white font-medium rounded-xl active:bg-gray-800 transition text-base">
+    確認送出訂單
+  </button>
+
+  <p class="text-xs text-center text-gray-400 mt-3">送出後將建立訂單，我們會盡快與您聯繫</p>
+
+</div>
+
+<!-- 成功畫面（預設隱藏）-->
+<div id="successScreen" class="hidden fixed inset-0 bg-white z-50 flex flex-col items-center justify-center px-6">
+  <div class="text-6xl mb-4">🎉</div>
+  <h1 class="text-2xl font-bold mb-2">訂單已送出！</h1>
+  <p class="text-gray-500 text-sm mb-6">感謝您的購買，我們將盡快與您聯繫</p>
+
+  <div class="bg-gray-50 border rounded-xl px-6 py-4 w-full max-w-xs text-center mb-6">
+    <div class="text-xs text-gray-400 mb-1">您的訂單編號</div>
+    <div id="displayOrderId" class="text-xl font-bold tracking-widest text-black"></div>
+    <button onclick="copyOrderId()"
+      class="mt-2 text-xs text-gray-400 underline active:text-black">
+      點擊複製
+    </button>
+  </div>
+
+  <a id="queryLink" href="order-status.html"
+    class="w-full max-w-xs py-3 bg-black text-white text-center font-medium rounded-xl active:bg-gray-800 block mb-3">
+    查詢訂單狀態
+  </a>
+  <a href="index.html"
+    class="w-full max-w-xs py-3 text-center text-sm text-gray-400 underline block">
+    繼續逛逛
+  </a>
+</div>
+
+<script src="./js/cartCount.js"></script>
+<script type="module">
+import { formatPrice } from "./js/utils.js";
+
+const PRODUCTS_API = "https://shop-project-azure.vercel.app/api/products";
+const ORDERS_API   = "https://shop-project-azure.vercel.app/api/orders";
+
+let orderItems = [];
+let orderTotal = 0;
+
+// ── 初始化：讀購物車 + 抓商品資料 ──────────────────────
+async function init() {
+  const cart = JSON.parse(localStorage.getItem("cart") || "{}");
+  if (!Object.keys(cart).length) {
+    location.href = "cart.html";
+    return;
+  }
+
+  const res = await fetch(PRODUCTS_API);
+  const products = await res.json();
+
+  orderItems = [];
+  orderTotal = 0;
+
+  Object.entries(cart).forEach(([id, qty]) => {
+    const p = products.find(x => x.id === id);
+    if (!p) return;
+    const sub = p.price * qty;
+    orderTotal += sub;
+    orderItems.push({ name: p.name, qty, price: formatPrice(p.price), sub });
+  });
+
+  // 訂單明細
+  document.getElementById("orderItems").innerHTML = orderItems.map(i => `
+    <div class="flex justify-between py-2.5">
+      <span class="text-gray-700">${i.name} <span class="text-gray-400">× ${i.qty}</span></span>
+      <span class="font-medium">${formatPrice(i.sub)}</span>
+    </div>
+  `).join("");
+
+  document.getElementById("orderTotal").textContent = formatPrice(orderTotal);
+}
+
+// ── 展開 / 收合訂單明細 ──────────────────────────────
+window.toggleSummary = () => {
+  const content = document.getElementById("summaryContent");
+  const arrow   = document.getElementById("summaryArrow");
+  const isHidden = content.classList.contains("hidden");
+  content.classList.toggle("hidden", !isHidden);
+  arrow.style.transform = isHidden ? "rotate(180deg)" : "";
+};
+
+// ── 送出訂單 ─────────────────────────────────────────
+window.submitOrder = async () => {
+  const name    = document.getElementById("name").value.trim();
+  const phone   = document.getElementById("phone").value.trim();
+  const email   = document.getElementById("email").value.trim();
+  const address = document.getElementById("address").value.trim();
+  const note    = document.getElementById("note").value.trim();
+
+  // 驗證
+  if (!name || !phone || !email || !address) {
+    alert("請填寫所有必填欄位（姓名、電話、Email、地址）");
+    return;
+  }
+  if (!/^\d{8,10}$/.test(phone.replace(/-/g, ""))) {
+    alert("電話格式不正確");
+    return;
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    alert("Email 格式不正確");
+    return;
+  }
+
+  // 產生訂單編號：ORD + 時間戳
+  const orderId = "ORD" + Date.now().toString().slice(-8);
+
+  const btn = document.getElementById("submitBtn");
+  btn.disabled = true;
+  btn.textContent = "送出中...";
+
+  try {
+    const res = await fetch(ORDERS_API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        orderId, name, phone, email, address, note,
+        items: orderItems,
+        total: orderTotal,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!data.success) throw new Error(data.error || "送出失敗");
+
+    // 清空購物車
+    localStorage.removeItem("cart");
+
+    // 顯示成功畫面
+    document.getElementById("displayOrderId").textContent = orderId;
+    document.getElementById("queryLink").href = `order-status.html?orderId=${orderId}`;
+    document.getElementById("successScreen").classList.remove("hidden");
+
+  } catch (err) {
+    alert("訂單送出失敗，請稍後再試\n" + err.message);
+    btn.disabled = false;
+    btn.textContent = "確認送出訂單";
+  }
+};
+
+// ── 複製訂單編號 ─────────────────────────────────────
+window.copyOrderId = () => {
+  const id = document.getElementById("displayOrderId").textContent;
+  navigator.clipboard.writeText(id).then(() => alert("已複製訂單編號：" + id));
+};
+
+init();
+</script>
+</body>
+</html>

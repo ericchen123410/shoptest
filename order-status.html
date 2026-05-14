@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>訂單查詢</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+
+<div class="sticky top-0 z-50 bg-white border-b shadow-sm">
+  <div class="flex justify-between items-center px-3 py-2">
+    <div class="flex gap-1 text-sm">
+      <a href="index.html" class="font-bold px-2 py-1.5 rounded-lg hover:bg-gray-100">🏠</a>
+      <a href="new.html"   class="px-2 py-1.5 rounded-lg hover:bg-gray-100 text-xs">🆕 新品</a>
+      <a href="hot.html"   class="px-2 py-1.5 rounded-lg hover:bg-gray-100 text-xs">🔥 熱賣</a>
+      <a href="sale.html"  class="px-2 py-1.5 rounded-lg hover:bg-gray-100 text-xs">🈹 特價</a>
+    </div>
+    <div class="flex items-center gap-1">
+      <button onclick="history.back()" class="text-sm px-2 py-1.5 rounded-lg hover:bg-gray-100">⬅️</button>
+      <a href="cart.html" class="px-2 py-1.5 rounded-lg hover:bg-gray-100">
+        🛒 <span id="cartCount" class="bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full">0</span>
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="px-4 py-6 max-w-xl mx-auto">
+
+  <h1 class="text-xl font-bold mb-1 text-gray-900">訂單查詢</h1>
+  <p class="text-sm text-gray-400 mb-6">輸入您的訂單編號查詢目前狀態</p>
+
+  <!-- 搜尋框 -->
+  <div class="flex gap-2 mb-6">
+    <input id="orderInput" type="text"
+      placeholder="請輸入訂單編號，例如 ORD12345678"
+      class="flex-1 border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-black uppercase"
+      oninput="this.value = this.value.toUpperCase()"
+      onkeydown="if(event.key==='Enter') queryOrder()">
+    <button onclick="queryOrder()"
+      class="px-5 py-3 bg-black text-white rounded-xl text-sm font-medium active:bg-gray-800 transition shrink-0">
+      查詢
+    </button>
+  </div>
+
+  <!-- 結果區 -->
+  <div id="result"></div>
+
+</div>
+
+<script src="./js/cartCount.js"></script>
+<script type="module">
+import { formatPrice } from "./js/utils.js";
+
+const QUERY_API = "https://shop-project-azure.vercel.app/api/order-query";
+
+// 狀態對應設定
+const STATUS_MAP = {
+  "待處理": { icon: "🕐", color: "bg-yellow-100 text-yellow-700", bar: 1 },
+  "處理中": { icon: "📦", color: "bg-blue-100 text-blue-600",    bar: 2 },
+  "已出貨": { icon: "🚚", color: "bg-purple-100 text-purple-600", bar: 3 },
+  "已完成": { icon: "✅", color: "bg-green-100 text-green-600",   bar: 4 },
+};
+
+const STEPS = ["待處理", "處理中", "已出貨", "已完成"];
+
+window.queryOrder = async () => {
+  const orderId = document.getElementById("orderInput").value.trim();
+  const el = document.getElementById("result");
+
+  if (!orderId) {
+    el.innerHTML = `<div class="text-center text-sm text-red-400 py-4">請輸入訂單編號</div>`;
+    return;
+  }
+
+  el.innerHTML = `<div class="text-center text-gray-400 py-8 text-sm">查詢中...</div>`;
+
+  try {
+    const res = await fetch(`${QUERY_API}?orderId=${encodeURIComponent(orderId)}`);
+    const data = await res.json();
+
+    if (!res.ok) {
+      el.innerHTML = `
+        <div class="flex flex-col items-center py-10 text-gray-400">
+          <div class="text-4xl mb-3">🔍</div>
+          <div class="text-sm font-medium text-gray-500">找不到此訂單</div>
+          <div class="text-xs mt-1">請確認訂單編號是否正確</div>
+        </div>`;
+      return;
+    }
+
+    const status = STATUS_MAP[data.status] || STATUS_MAP["待處理"];
+    const currentStep = STEPS.indexOf(data.status);
+
+    // 進度條
+    const stepsHtml = STEPS.map((step, i) => {
+      const done    = i <= currentStep;
+      const current = i === currentStep;
+      return `
+        <div class="flex flex-col items-center flex-1">
+          <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold mb-1
+            ${done ? "bg-black text-white" : "bg-gray-200 text-gray-400"}
+            ${current ? "ring-2 ring-black ring-offset-2" : ""}">
+            ${done && !current ? "✓" : i + 1}
+          </div>
+          <span class="text-xs ${current ? "font-bold text-black" : "text-gray-400"}">${step}</span>
+        </div>
+        ${i < STEPS.length - 1 ? `<div class="flex-1 h-0.5 mt-3.5 ${i < currentStep ? "bg-black" : "bg-gray-200"}"></div>` : ""}
+      `;
+    }).join("");
+
+    // 商品清單
+    const itemsHtml = data.items
+      ? data.items.split("\n").filter(Boolean).map(line => `
+          <div class="flex justify-between py-2 text-sm border-b last:border-0">
+            <span class="text-gray-700">${line.split("（")[0].trim()}</span>
+            <span class="text-gray-500">${line.match(/（(.+)）/)?.[1] || ""}</span>
+          </div>`).join("")
+      : "";
+
+    // 下單時間
+    const date = new Date(data.createdAt);
+    const dateStr = `${date.getFullYear()}/${date.getMonth()+1}/${date.getDate()} ${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}`;
+
+    el.innerHTML = `
+      <!-- 訂單標題 -->
+      <div class="bg-white rounded-xl border px-4 py-4 mb-3">
+        <div class="flex justify-between items-start mb-3">
+          <div>
+            <div class="text-xs text-gray-400 mb-0.5">訂單編號</div>
+            <div class="font-bold tracking-wider text-base">${data.orderId}</div>
+          </div>
+          <span class="text-xs px-2.5 py-1 rounded-full font-medium ${status.color}">
+            ${status.icon} ${data.status}
+          </span>
+        </div>
+        <div class="text-xs text-gray-400">下單時間：${dateStr}</div>
+      </div>
+
+      <!-- 進度條 -->
+      <div class="bg-white rounded-xl border px-4 py-5 mb-3">
+        <div class="text-xs font-semibold text-gray-500 mb-4">訂單進度</div>
+        <div class="flex items-start">${stepsHtml}</div>
+      </div>
+
+      <!-- 訂單明細 -->
+      <div class="bg-white rounded-xl border px-4 py-4 mb-3">
+        <div class="text-xs font-semibold text-gray-500 mb-2">訂單明細</div>
+        ${itemsHtml}
+        <div class="flex justify-between items-center pt-3 font-bold">
+          <span>合計</span>
+          <span class="text-red-500">${formatPrice(data.total)}</span>
+        </div>
+      </div>
+
+      <!-- 收件資料 -->
+      <div class="bg-white rounded-xl border px-4 py-4">
+        <div class="text-xs font-semibold text-gray-500 mb-2">收件資料</div>
+        <div class="text-sm text-gray-700 space-y-1">
+          <div>${data.name}</div>
+          <div class="text-gray-400 text-xs">${data.address}</div>
+        </div>
+      </div>
+    `;
+
+  } catch (err) {
+    el.innerHTML = `<div class="text-center text-sm text-red-400 py-4">查詢失敗，請稍後再試</div>`;
+  }
+};
+
+// 如果 URL 帶了 ?orderId=xxx 直接查詢（從成功頁跳過來）
+const urlOrderId = new URLSearchParams(location.search).get("orderId");
+if (urlOrderId) {
+  document.getElementById("orderInput").value = urlOrderId;
+  queryOrder();
+}
+</script>
+
+</body>
+</html>
