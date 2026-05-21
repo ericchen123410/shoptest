@@ -171,13 +171,9 @@ let orderShipping = 0;
 
 // ── 初始化：讀購物車 + 抓商品資料 ──────────────────────
 async function init() {
-  const isMerge      = new URLSearchParams(location.search).get("merge") === "1";
-  const mergeOrders  = isMerge
-    ? JSON.parse(sessionStorage.getItem("mergeCustomOrders") || "[]")
-    : [];
-
+  const mergeOrders = [];
   const cart = JSON.parse(localStorage.getItem("cart") || "{}");
-  if (!Object.keys(cart).length && !mergeOrders.length) {
+  if (!Object.keys(cart).length) {
     location.href = "cart.html";
     return;
   }
@@ -198,19 +194,6 @@ async function init() {
     orderItems.push({ name: p.name, qty, price: formatPrice(p.price), sub });
   });
 
-  // ⭐ 合併客製化訂單
-  mergeOrders.forEach(o => {
-    const sub = o.price * (o.quantity || 1);
-    orderSubtotal += sub;
-    totalWeight   += (o.weight || 0) * (o.quantity || 1);
-    orderItems.push({
-      name:  `【客製化】${o.productName}（${o.orderId}）`,
-      qty:   o.quantity || 1,
-      price: formatPrice(o.price),
-      sub,
-      customOrderId: o.orderId,
-    });
-  });
 
   // ⭐ 運費計算
   const baseShipping = Math.ceil(totalWeight * RATE);
@@ -311,7 +294,6 @@ window.submitOrder = async () => {
     if (!data.success) throw new Error(data.error || "送出失敗");
 
     localStorage.removeItem("cart");
-    if (email) localStorage.setItem("lastEmail", email);
 
     // ⭐ 更新合併的客製化訂單狀態為「處理中」
     for (const co of mergeOrders) {

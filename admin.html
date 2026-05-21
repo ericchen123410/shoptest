@@ -86,12 +86,6 @@
         <div class="text-sm font-semibold">客戶管理</div>
         <div class="text-xs text-gray-400 mt-0.5">查看 / 編輯資料</div>
       </button>
-      <button onclick="showPage('customorders')"
-        class="admin-menu-btn bg-white rounded-2xl p-4 shadow-sm text-center hover:shadow-md transition active:bg-gray-50">
-        <div class="text-3xl mb-2">✏️</div>
-        <div class="text-sm font-semibold">客製化訂單</div>
-        <div class="text-xs text-gray-400 mt-0.5">查看 / 定價 / 狀態</div>
-      </button>
       <button onclick="showPage('batch')"
         class="admin-menu-btn bg-white rounded-2xl p-4 shadow-sm text-center hover:shadow-md transition active:bg-gray-50">
         <div class="text-3xl mb-2">🤖</div>
@@ -130,7 +124,6 @@ const PAGES = {
   orders:   { title: "📋 訂單管理", url: "admin-orders.html"   },
   banners:   { title: "🖼 輪播管理", url: "admin-banners.html"   },
   customers:    { title: "👥 客戶管理",    url: "admin-customers.html"       },
-  customorders: { title: "✏️ 客製化訂單",  url: "admin-custom-orders.html"   },
   batch:     { title: "🤖 批次生成",  url: "admin-batch-generate.html" },
   batchadd:  { title: "📦 批次上架",  url: "admin-batch-add.html"      },
 };
