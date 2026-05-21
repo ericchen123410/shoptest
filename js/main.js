@@ -13,7 +13,7 @@ let activeSub  = "全部";
 async function init() {
   el.innerHTML = `<div class="col-span-2 text-center text-gray-400 py-10">載入中...</div>`;
 
-  const res = await fetch(API_URL);
+  const res = await fetch(API_URL, { cache: "no-store" });
   allData   = await res.json();
 
   // ⭐ 記錄大分類出現的順序（Tab 順序）

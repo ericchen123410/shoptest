@@ -4,7 +4,7 @@ const API_URL = "https://shoptest-chi.vercel.app/api/products";
 const el = document.getElementById("list");
 
 async function init() {
-  const res = await fetch(API_URL);
+  const res = await fetch(API_URL, { cache: "no-store" });
   let data = await res.json();
 
   data = data.filter(p => p.isSale);

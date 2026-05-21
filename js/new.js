@@ -5,7 +5,7 @@ const el = document.getElementById("list");
 
 async function init() {
   try {
-    const res = await fetch(API_URL);
+    const res = await fetch(API_URL, { cache: "no-store" });
     let data = await res.json();
 
     data = data.filter(p => p.isNew === true);

@@ -7,7 +7,7 @@ const el = document.getElementById("product");
 
 async function init() {
   try {
-    const res = await fetch(API_URL);
+    const res = await fetch(API_URL, { cache: "no-store" });
     const data = await res.json();
 
     // 與首頁相同排序：大分類 Tab 順序 → 各自 sort
