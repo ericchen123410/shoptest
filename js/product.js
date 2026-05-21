@@ -10,11 +10,21 @@ async function init() {
     const res = await fetch(API_URL);
     const data = await res.json();
 
-    // 與首頁相同排序
-    data.sort((a, b) =>
-      new Date(b.update || b.createdTime) -
-      new Date(a.update || a.createdTime)
-    );
+    // 與首頁相同排序：大分類 Tab 順序 → 各自 sort
+    const mainOrder = [];
+    data.forEach(p => {
+      if (p.mainCategory && !mainOrder.includes(p.mainCategory))
+        mainOrder.push(p.mainCategory);
+    });
+    data.sort((a, b) => {
+      const mi = mainOrder.indexOf(a.mainCategory ?? "");
+      const mj = mainOrder.indexOf(b.mainCategory ?? "");
+      if (mi !== mj) return mi - mj;
+      const sa = a.sort || 9999;
+      const sb = b.sort || 9999;
+      if (sa !== sb) return sa - sb;
+      return new Date(b.update || b.createdTime) - new Date(a.update || a.createdTime);
+    });
 
     const idx = data.findIndex(x => x.id === id);
     const p = data[idx];
@@ -53,9 +63,14 @@ async function init() {
         ${nextBtn}
       </div>`;
 
+    // images 可能是字串（逗號分隔）或陣列
+    const imagesArr = Array.isArray(p.images)
+      ? p.images
+      : (p.images || "").split(",").map(s => s.trim()).filter(Boolean);
+
     const mainImg =
       p.image ||
-      (p.images && p.images[0]) ||
+      imagesArr[0] ||
       "https://via.placeholder.com/400";
 
     el.innerHTML = `
@@ -64,25 +79,33 @@ async function init() {
       <div class="border-b mb-4">${navBar}</div>
 
       <!-- 商品主體：手機單欄、桌機雙欄 -->
-      <div class="md:grid md:grid-cols-2 md:gap-8">
+      <div class="lg:grid lg:grid-cols-2 lg:gap-12">
 
         <!-- 圖片區 -->
         <div>
           <img id="mainImg" src="${mainImg}"
-               class="w-full aspect-square object-cover rounded-xl">
+               class="w-full aspect-square object-cover rounded-xl sm:rounded-2xl">
 
-          ${(p.images || []).length > 0 ? `
+          ${imagesArr.length > 0 ? `
           <div class="flex gap-2 mt-3 overflow-x-auto pb-1">
-            ${(p.images || []).map(img => `
+            ${imagesArr.map(img => `
               <img src="${img}"
-                   class="w-16 h-16 shrink-0 object-cover rounded-lg cursor-pointer thumb
+                   class="w-16 h-16 sm:w-20 sm:h-20 shrink-0 object-cover rounded-lg cursor-pointer thumb
                           border-2 border-transparent hover:border-black transition">
             `).join("")}
           </div>` : ""}
         </div>
 
         <!-- 商品資訊 -->
-        <div class="mt-5 md:mt-0">
+        <div class="mt-5 lg:mt-0">
+
+          <!-- 分類麵包屑 -->
+          ${(p.mainCategory || p.category) ? `
+          <div class="text-xs text-gray-400 mb-2 flex items-center gap-1">
+            ${p.mainCategory ? `<span>${p.mainCategory}</span>` : ""}
+            ${p.mainCategory && p.category ? `<span>›</span>` : ""}
+            ${p.category ? `<span>${p.category}</span>` : ""}
+          </div>` : ""}
 
           <!-- 標籤 -->
           <div class="flex gap-2 mb-2 flex-wrap">
@@ -92,18 +115,34 @@ async function init() {
           </div>
 
           <!-- 商品名稱 -->
-          <h1 class="text-xl font-bold leading-snug text-gray-900">${p.name}</h1>
+          <h1 class="text-xl sm:text-2xl lg:text-3xl font-bold leading-snug text-gray-900">${p.name}</h1>
 
           <!-- 價格 -->
           ${p.isSale
             ? `<div class="mt-2 flex items-baseline gap-2">
-                 <span class="text-2xl font-bold text-red-500">${formatPrice(p.price)}</span>
-                 <span class="text-sm line-through text-gray-400">${formatPrice(p.originalPrice)}</span>
+                 <span class="text-2xl sm:text-3xl font-bold text-red-500">${formatPrice(p.price)}</span>
+                 <span class="text-sm sm:text-base line-through text-gray-400">${formatPrice(p.originalPrice)}</span>
                </div>`
             : `<div class="mt-2">
-                 <span class="text-2xl font-bold text-red-500">${formatPrice(p.price)}</span>
+                 <span class="text-2xl sm:text-3xl font-bold text-red-500">${formatPrice(p.price)}</span>
                </div>`
           }
+
+          <!-- 商品資訊列 -->
+          ${(p.idnumber || p.weight) ? `
+          <div class="flex gap-4 mt-4 pt-4 border-t border-gray-100">
+            ${p.idnumber ? `
+            <div class="flex flex-col gap-0.5">
+              <span class="text-xs text-gray-400 uppercase tracking-wide">商品編號</span>
+              <span class="text-sm font-medium text-gray-700">#${p.idnumber}</span>
+            </div>` : ""}
+            ${p.idnumber && p.weight ? `<div class="w-px bg-gray-200"></div>` : ""}
+            ${p.weight ? `
+            <div class="flex flex-col gap-0.5">
+              <span class="text-xs text-gray-400 uppercase tracking-wide">重量</span>
+              <span class="text-sm font-medium text-gray-700">${p.weight} kg</span>
+            </div>` : ""}
+          </div>` : ""}
 
           <!-- 數量 -->
           <div class="flex items-center gap-4 mt-5">
@@ -174,46 +213,69 @@ function renderDescription(text) {
 
   const flushList = () => {
     if (!list.length) return;
-    html += `<ul class="space-y-1 text-gray-700 mb-4">
-      ${list.map(i => `<li class="flex gap-2"><span class="text-green-500 shrink-0">✔</span><span>${i}</span></li>`).join("")}
-    </ul>`;
+    html += `
+      <ul class="space-y-2 mb-4">
+        ${list.map(i => `
+          <li class="flex gap-2 text-sm text-gray-700 leading-relaxed">
+            <span class="text-gray-400 shrink-0 mt-0.5">•</span>
+            <span>${i}</span>
+          </li>`).join("")}
+      </ul>`;
     list = [];
   };
 
   const flushTable = () => {
     if (!table.length) return;
-    html += `<div class="overflow-x-auto mb-4 rounded-xl border">
-      <table class="w-full text-sm">
-        ${table.map(([k, v]) => `
-          <tr class="border-b last:border-0">
-            <td class="bg-gray-50 p-2.5 w-1/3 font-medium text-gray-600">${k}</td>
-            <td class="p-2.5 text-gray-800">${v}</td>
-          </tr>`).join("")}
-      </table>
-    </div>`;
+    html += `
+      <div class="overflow-x-auto mb-4 rounded-xl border border-gray-100">
+        <table class="w-full text-sm">
+          ${table.map(([k, v]) => `
+            <tr class="border-b border-gray-100 last:border-0">
+              <td class="bg-gray-50 px-3 py-2.5 w-2/5 font-medium text-gray-500 whitespace-nowrap">${k}</td>
+              <td class="px-3 py-2.5 text-gray-800">${v}</td>
+            </tr>`).join("")}
+        </table>
+      </div>`;
     table = [];
   };
 
+  // ⭐ 固定標題關鍵字 → 強制加粗顯示
+  const FIXED_HEADERS = ["商品內容跟特點", "商品內容與特點", "商品特點", "商品內容"];
+
   lines.forEach(line => {
-    if (line.startsWith("•") || line.startsWith("-")) {
+
+    // ⭐ 固定標題：完全符合就加粗
+    if (FIXED_HEADERS.some(h => line.includes(h))) {
+      flushList();
       flushTable();
-      list.push(line.replace(/^[-•]\s*/, ""));
+      html += `
+        <div class="flex items-center gap-2 mt-5 mb-3">
+          <span class="w-1 h-4 bg-black rounded-full shrink-0"></span>
+          <h3 class="font-bold text-base text-gray-900">${line}</h3>
+        </div>`;
       return;
     }
-    if (line.includes("：") || line.includes(":")) {
+
+    // • 或 - 開頭 → 清單
+    if (line.startsWith("•") || line.startsWith("-") || line.startsWith("‧")) {
+      flushTable();
+      list.push(line.replace(/^[-•‧]\s*/, ""));
+      return;
+    }
+
+    // key：value 或 key:value → 規格表
+    if (line.includes("：") || /^[^:]+:[^/]{1,30}$/.test(line)) {
       flushList();
       const sep = line.includes("：") ? "：" : ":";
       const i = line.indexOf(sep);
       table.push([line.slice(0, i).trim(), line.slice(i + 1).trim()]);
       return;
     }
+
+    // 其餘 → 一般段落
     flushList();
     flushTable();
-    if (line.length < 20) {
-      html += `<h3 class="font-bold text-base mt-5 mb-2 text-gray-900">${line}</h3>`;
-    } else {
-      html += `<p class="text-gray-600 mb-2 leading-relaxed">${line}</p>`;
-    }
+    html += `<p class="text-sm text-gray-600 mb-2 leading-relaxed">${line}</p>`;
   });
 
   flushList();

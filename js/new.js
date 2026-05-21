@@ -9,9 +9,21 @@ async function init() {
     let data = await res.json();
 
     data = data.filter(p => p.isNew === true);
-    data.sort((a, b) =>
-      new Date(b.update || b.createdTime) - new Date(a.update || a.createdTime)
-    );
+    // ⭐ 固定「日本好市多」在第一位
+    const mainOrder = ["日本好市多"];
+    data.forEach(p => {
+      if (p.mainCategory && !mainOrder.includes(p.mainCategory))
+        mainOrder.push(p.mainCategory);
+    });
+    data.sort((a, b) => {
+      const mi = mainOrder.indexOf(a.mainCategory ?? "");
+      const mj = mainOrder.indexOf(b.mainCategory ?? "");
+      if (mi !== mj) return mi - mj;
+      const sa = a.sort || 9999;
+      const sb = b.sort || 9999;
+      if (sa !== sb) return sa - sb;
+      return new Date(b.update || b.createdTime) - new Date(a.update || a.createdTime);
+    });
 
     el.innerHTML = data.length
       ? data.map(renderCard).join("")
