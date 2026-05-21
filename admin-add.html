@@ -85,6 +85,11 @@
           class="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black">
       </div>
       <div>
+        <label class="text-xs text-gray-500 mb-1 block">日文名稱</label>
+        <input id="jname" type="text" placeholder="日文商品名稱（選填）"
+          class="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black">
+      </div>
+      <div>
         <label class="text-xs text-gray-500 mb-1 block">商品編號 <span class="text-gray-400">（選填）</span></label>
         <div class="relative">
           <input id="idnumber" type="text" placeholder="請輸入商品編號"
@@ -326,7 +331,8 @@ async function submitProduct() {
   try {
     const validDetails = detailUrls.filter(Boolean);
     const allImages = mainImgUrl ? [mainImgUrl, ...validDetails.filter(u => u !== mainImgUrl)] : validDetails;
-    const payload = { tname, jprice: Number(tprice), jsprice: Number(document.getElementById("sprice").value)||0, mainCategory: document.getElementById("mainCategory").value.trim(), category: document.getElementById("category").value.trim(), description: document.getElementById("description").value.trim(), weight: Number(document.getElementById("weight").value)||0, idnumber: document.getElementById("idnumber").value.trim()||null, image: mainImgUrl, images: allImages.join(","), isView: document.getElementById("isView").checked, isNew: document.getElementById("isNew").checked, isHot: document.getElementById("isHot").checked, isSale: document.getElementById("isSale").checked };
+    const jname = document.getElementById("jname").value.trim();
+    const payload = { tname, jname, jprice: Number(tprice), jsprice: Number(document.getElementById("sprice").value)||0, mainCategory: document.getElementById("mainCategory").value.trim(), category: document.getElementById("category").value.trim(), description: document.getElementById("description").value.trim(), weight: Number(document.getElementById("weight").value)||0, idnumber: document.getElementById("idnumber").value.trim()||null, image: mainImgUrl, images: allImages.join(","), isView: document.getElementById("isView").checked, isNew: document.getElementById("isNew").checked, isHot: document.getElementById("isHot").checked, isSale: document.getElementById("isSale").checked };
     const res = await fetch(ADD_API, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
     const data = await res.json(); if (!data.success) throw new Error(data.error||"新增失敗");
     document.getElementById("successScreen").classList.remove("hidden");
@@ -386,19 +392,8 @@ async function generateDescription() {
       document.getElementById("description").value = desc;
     }
 
-    // 如果有圖片，自動填入主圖
-    if (data.imageUrl) {
-      mainImgUrl = data.imageUrl;
-      const preview = document.getElementById("mainImgPreview");
-      preview.src = mainImgUrl;
-      preview.classList.remove("hidden");
-      document.getElementById("mainImgRemove").classList.remove("hidden");
-      document.getElementById("mainImgPlaceholder").classList.add("hidden");
-      status.textContent = "✅ 已生成並填入（含商品圖片），請確認後繼續！";
-    } else {
-      status.textContent = "✅ 已生成並填入，請確認內容後繼續！";
-    }
-    status.className = "text-xs text-green-600";
+    status.textContent = "✅ 已生成並填入，請確認內容後繼續！";
+    status.className   = "text-xs text-green-600";
 
     // 顯示預覽
     const preview = document.getElementById("aiPreview");
@@ -419,7 +414,7 @@ async function generateDescription() {
 
 function resetForm() {
   document.getElementById("successScreen").classList.add("hidden");
-  ["tname","idnumber","tprice","sprice","weight","mainCategory","category","description"].forEach(id => document.getElementById(id).value = "");
+  ["tname","jname","idnumber","tprice","sprice","weight","mainCategory","category","description"].forEach(id => document.getElementById(id).value = "");
   document.getElementById("idnumberStatus").textContent = ""; document.getElementById("idnumber").classList.remove("border-orange-400","border-green-400");
   document.getElementById("isView").checked = true; ["isNew","isHot","isSale"].forEach(id => document.getElementById(id).checked = false);
   mainImgUrl = ""; document.getElementById("mainImgPreview").classList.add("hidden"); document.getElementById("mainImgRemove").classList.add("hidden"); document.getElementById("mainImgPlaceholder").classList.remove("hidden");

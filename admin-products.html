@@ -541,15 +541,8 @@ async function generateEditDesc() {
       document.getElementById("editDesc").value = descMatch[0].trim();
     }
 
-    // 如果有圖片，加入圖片槽
-    if (data.imageUrl) {
-      mainImgUrl = data.imageUrl;
-      addEditImgSlot(data.imageUrl);
-      status.textContent = "✅ 已生成（含商品圖片），請確認";
-    } else {
-      status.textContent = "✅ 已生成，請確認內容";
-    }
-    status.className = "text-xs mt-1.5 text-green-600";
+    status.textContent = "✅ 已生成，請確認內容";
+    status.className   = "text-xs mt-1.5 text-green-600";
 
   } catch (err) {
     status.textContent = "❌ " + err.message;
