@@ -9,34 +9,114 @@
 <body class="bg-gray-100">
 
 <div class="sticky top-0 z-50 bg-white border-b shadow-sm">
-  <div class="flex justify-between items-center px-3 py-2">
-    <div class="flex gap-1 text-sm">
-      <a href="index.html" class="font-bold px-2 py-1.5 rounded-lg hover:bg-gray-100">🏠</a>
-      <a href="new.html"   class="px-2 py-1.5 rounded-lg hover:bg-gray-100 text-xs">🆕 新品</a>
-      <a href="hot.html"   class="px-2 py-1.5 rounded-lg hover:bg-gray-100 text-xs">🔥 熱賣</a>
-      <a href="sale.html"  class="px-2 py-1.5 rounded-lg hover:bg-gray-100 text-xs">🈹 特價</a>
+  <div class="flex justify-between items-center px-4 py-2 max-w-7xl mx-auto">
+    <div class="flex items-center gap-1">
+      <a href="index.html" class="font-bold px-2 py-1.5 rounded-lg hover:bg-gray-100 text-sm">🏠 <span class="hidden lg:inline">首頁</span></a>
+      <a href="new.html"   class="px-2 py-1.5 rounded-lg hover:bg-gray-100 text-xs lg:text-sm">🆕 <span class="hidden sm:inline">新品</span></a>
+      <a href="hot.html"   class="px-2 py-1.5 rounded-lg hover:bg-gray-100 text-xs lg:text-sm">🔥 <span class="hidden sm:inline">熱賣</span></a>
+      <a href="sale.html"  class="px-2 py-1.5 rounded-lg hover:bg-gray-100 text-xs lg:text-sm">🈹 <span class="hidden sm:inline">特價</span></a>
     </div>
     <div class="flex items-center gap-1">
-      <button onclick="history.back()" class="text-sm px-2 py-1.5 rounded-lg hover:bg-gray-100">⬅️</button>
-      <a href="cart.html" class="px-2 py-1.5 rounded-lg hover:bg-gray-100">
+      <!-- ⭐ 搜尋 -->
+      <div id="searchWrap" class="flex items-center">
+        <div id="searchBox"
+          class="hidden items-center gap-1 bg-gray-50 border rounded-xl px-2 py-1 mr-1 transition-all">
+          <input id="navSearchInput" type="text" placeholder="搜尋商品…"
+            class="bg-transparent text-sm outline-none w-36 sm:w-48"
+            oninput="onNavSearch(this.value)"
+            onkeydown="if(event.key==='Escape') closeSearch()">
+          <button onclick="closeSearch()" class="text-gray-400 hover:text-black text-sm leading-none">✕</button>
+        </div>
+        <button onclick="toggleSearch()" id="searchToggleBtn"
+          class="px-2 py-1.5 rounded-lg hover:bg-gray-100 text-base">🔍</button>
+      </div>
+      <a href="order-status.html" class="px-2 py-1.5 rounded-lg hover:bg-gray-100 text-xs lg:text-sm">📋 <span class="hidden sm:inline">訂單查詢</span></a>
+      <button onclick="history.back()" class="px-2 py-1.5 rounded-lg hover:bg-gray-100 text-sm">⬅️</button>
+      <a href="cart.html" class="px-2 py-1.5 rounded-lg hover:bg-gray-100 text-sm">
         🛒 <span id="cartCount" class="bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full">0</span>
       </a>
     </div>
   </div>
+  <!-- ⭐ 搜尋結果下拉（僅首頁顯示即時結果） -->
+  <div id="searchDropdown" class="hidden absolute left-0 right-0 bg-white border-t shadow-lg z-50 max-h-80 overflow-y-auto max-w-7xl mx-auto"></div>
 </div>
 
-<div class="px-3 py-4">
-  <h1 class="text-xl font-bold mb-3 text-gray-800">商品列表</h1>
+<!-- ⭐ 輪播 Banner -->
+<div id="bannerWrap" class="w-full max-w-7xl mx-auto"></div>
 
-  <!-- ⭐ 分類 Tab（動態產生，可橫向滑動） -->
-  <div class="overflow-x-auto pb-2 mb-4 -mx-3 px-3">
-    <div id="tabs" class="flex gap-2 w-max"></div>
+<div class="px-3 sm:px-6 lg:px-8 py-4 max-w-7xl mx-auto">
+
+  <!-- ⭐ 大分類 Tab -->
+  <div class="overflow-x-auto pb-2 mb-2 -mx-3 px-3">
+    <div id="mainTabs" class="flex gap-2 w-max"></div>
   </div>
 
-  <div id="list" class="grid grid-cols-2 md:grid-cols-4 gap-3"></div>
+  <!-- ⭐ 小分類 Tab（大分類選定後動態出現） -->
+  <div id="subTabsWrap" class="hidden overflow-x-auto pb-2 mb-4 -mx-3 px-3">
+    <div id="subTabs" class="flex gap-1.5 w-max pl-1">
+      <!-- 小分類前加一條分隔線視覺提示 -->
+    </div>
+  </div>
+
+  <!-- 客製化訂單入口（固定顯示在商品列表最後）-->
+  <div id="customOrderBanner"
+    class="flex items-center justify-between bg-gradient-to-r from-gray-900 to-gray-700 rounded-2xl px-5 py-4 cursor-pointer hover:opacity-90 transition hidden"
+    onclick="window.location.href='custom-order.html'">
+    <div>
+      <div class="text-white font-bold text-base mb-0.5">✏️ 客戶客製化訂單</div>
+      <div class="text-gray-300 text-xs">找不到想要的商品？讓我們幫你代購</div>
+    </div>
+    <div class="text-white text-2xl shrink-0">›</div>
+  </div>
+
+  <div id="list" class="space-y-8"></div>
 </div>
 
+<script type="module">
+  import { initBanner } from "./js/banner.js";
+  initBanner("bannerWrap");
+</script>
 <script type="module" src="./js/main.js"></script>
 <script src="./js/cartCount.js"></script>
+<script>
+// ── Navibar 搜尋共用 JS（首頁）───────────────────────
+function toggleSearch() {
+  const box = document.getElementById("searchBox");
+  const isHidden = box.classList.contains("hidden");
+  box.classList.toggle("hidden", !isHidden);
+  box.classList.toggle("flex", isHidden);
+  if (isHidden) {
+    setTimeout(() => document.getElementById("navSearchInput").focus(), 50);
+  } else {
+    closeSearch();
+  }
+}
+
+function closeSearch() {
+  const box = document.getElementById("searchBox");
+  box.classList.add("hidden");
+  box.classList.remove("flex");
+  document.getElementById("navSearchInput").value = "";
+  const dd = document.getElementById("searchDropdown");
+  if (dd) { dd.classList.add("hidden"); dd.innerHTML = ""; }
+  if (typeof restoreList === "function") restoreList();
+}
+
+function onNavSearch(val) {
+  if (typeof handleNavSearch === "function") handleNavSearch(val);
+}
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeSearch();
+});
+
+document.addEventListener("click", (e) => {
+  const wrap = document.getElementById("searchWrap");
+  const dd   = document.getElementById("searchDropdown");
+  if (wrap && !wrap.contains(e.target) && dd && !dd.contains(e.target)) {
+    closeSearch();
+  }
+});
+</script>
 </body>
 </html>

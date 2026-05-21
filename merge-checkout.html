@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>選擇合併結帳</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+<div class="sticky top-0 z-50 bg-white border-b shadow-sm">
+  <div class="flex items-center gap-3 px-4 py-3">
+    <button onclick="history.back()" class="text-gray-400 hover:text-black">←</button>
+    <h1 class="font-bold text-base">選擇合併結帳</h1>
+  </div>
+</div>
+
+<div class="px-4 py-5 max-w-xl mx-auto space-y-4">
+
+  <p class="text-sm text-gray-400">選擇要一起結帳的客製化訂單，運費將合併計算</p>
+
+  <!-- 目前購物車商品 -->
+  <div class="bg-white rounded-2xl p-4 shadow-sm">
+    <div class="text-xs font-semibold text-gray-500 mb-3">目前購物車</div>
+    <div id="cartSummary" class="text-sm text-gray-700"></div>
+  </div>
+
+  <!-- 可合併的客製化訂單 -->
+  <div class="bg-white rounded-2xl p-4 shadow-sm">
+    <div class="text-xs font-semibold text-gray-500 mb-3">可合併的客製化訂單</div>
+    <div id="customOrderList" class="space-y-2">
+      <div class="text-center text-gray-400 text-sm py-4">載入中...</div>
+    </div>
+  </div>
+
+  <!-- 按鈕 -->
+  <div class="space-y-2">
+    <button id="mergeBtn" onclick="proceedMerge()"
+      class="w-full py-4 bg-black text-white font-semibold rounded-2xl active:bg-gray-800 transition">
+      合併結帳
+    </button>
+    <button onclick="proceedNormal()"
+      class="w-full py-3 border rounded-2xl text-sm text-gray-500 hover:bg-gray-50 transition">
+      不合併，直接結帳
+    </button>
+  </div>
+
+</div>
+
+<script>
+const CUSTOM_API  = "https://shop-project-azure.vercel.app/api/custom-order";
+const PRODUCTS_API = "https://shop-project-azure.vercel.app/api/products";
+const CUSTOMER_API = "https://shop-project-azure.vercel.app/api/customer";
+
+// URL 參數：from=cart 或 from=custom&orderId=CUSxxx
+const params     = new URLSearchParams(location.search);
+const fromSource = params.get("from"); // "cart" | "custom"
+const fromOrderId = params.get("orderId"); // 客製化訂單編號（from=custom 時）
+const fromEmail  = params.get("email");
+
+let customOrders  = [];
+let selectedIds   = new Set();
+let cartProducts  = [];
+
+async function init() {
+  // 顯示購物車摘要
+  await loadCartSummary();
+  // 載入可合併的客製化訂單
+  await loadCustomOrders();
+}
+
+async function loadCartSummary() {
+  const el = document.getElementById("cartSummary");
+
+  if (fromSource === "cart") {
+    const cart = JSON.parse(localStorage.getItem("cart") || "{}");
+    if (!Object.keys(cart).length) { el.innerHTML = `<div class="text-gray-400 text-xs">購物車是空的</div>`; return; }
+
+    try {
+      const res  = await fetch(PRODUCTS_API);
+      const prods = await res.json();
+      cartProducts = [];
+      let totalWeight = 0;
+      let subtotal    = 0;
+
+      el.innerHTML = Object.entries(cart).map(([id, qty]) => {
+        const p = prods.find(x => x.id === id);
+        if (!p) return "";
+        totalWeight += (p.weight || 0) * qty;
+        subtotal    += p.price * qty;
+        cartProducts.push({ name: p.name, qty, price: p.price, weight: p.weight || 0 });
+        return `<div class="flex justify-between text-sm py-1">
+          <span class="text-gray-700">${p.name} × ${qty}</span>
+          <span class="text-gray-500">NT$ ${Math.round(p.price * qty).toLocaleString()}</span>
+        </div>`;
+      }).join("") + `
+        <div class="border-t mt-2 pt-2 flex justify-between text-xs text-gray-400">
+          <span>商品總重 ${totalWeight.toFixed(2)} kg</span>
+          <span>小計 NT$ ${Math.round(subtotal).toLocaleString()}</span>
+        </div>`;
+    } catch { el.innerHTML = `<div class="text-red-400 text-xs">載入失敗</div>`; }
+
+  } else if (fromSource === "custom") {
+    el.innerHTML = `<div class="flex items-center gap-2 text-sm">
+      <span class="text-gray-500">客製化訂單</span>
+      <span class="font-bold">${fromOrderId || ""}</span>
+    </div>`;
+  }
+}
+
+async function loadCustomOrders() {
+  const el = document.getElementById("customOrderList");
+  try {
+    // 需要 email 取得客戶編號
+    let customerId = "";
+    if (fromEmail) {
+      const custRes  = await fetch(CUSTOMER_API + "?email=" + encodeURIComponent(fromEmail));
+      const custData = await custRes.json();
+      if (custData.found) customerId = custData.customerId;
+    }
+
+    const res  = await fetch(CUSTOM_API + "?type=list");
+    const all  = await res.json();
+
+    // 只顯示同一客戶、已定價、待處理/處理中、排除目前這筆
+    customOrders = all.filter(o =>
+      o.price > 0 &&
+      o.weight > 0 &&
+      ["待處理", "處理中"].includes(o.status) &&
+      o.orderId !== fromOrderId &&
+      (customerId ? o.customerId === customerId : true)
+    );
+
+    if (!customOrders.length) {
+      el.innerHTML = `<div class="text-center text-gray-400 text-sm py-4">目前沒有可合併的客製化訂單<br><span class="text-xs text-gray-300">（需已定價且填寫重量）</span></div>`;
+      return;
+    }
+
+    el.innerHTML = customOrders.map(o => `
+      <label class="flex items-start gap-3 border rounded-xl p-3 cursor-pointer hover:bg-gray-50 transition" id="label-${o.pageId}">
+        <input type="checkbox" class="w-4 h-4 accent-black mt-0.5 shrink-0"
+          onchange="toggleSelect('${o.pageId}', this.checked)">
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 mb-0.5">
+            <span class="text-xs font-bold">${o.orderId}</span>
+            <span class="text-xs text-gray-400">${o.source || ""}</span>
+          </div>
+          <div class="text-sm text-gray-700 truncate">${o.productName}</div>
+          <div class="text-xs text-gray-400">數量 ${o.quantity} · ${o.weight} kg</div>
+        </div>
+        <div class="text-right shrink-0">
+          <div class="text-sm font-bold text-red-500">NT$ ${Math.round(o.price).toLocaleString()}</div>
+        </div>
+      </label>`).join("");
+
+  } catch (err) {
+    el.innerHTML = `<div class="text-center text-red-400 text-sm py-4">載入失敗：${err.message}</div>`;
+  }
+}
+
+function toggleSelect(pageId, checked) {
+  if (checked) selectedIds.add(pageId);
+  else selectedIds.delete(pageId);
+}
+
+function proceedNormal() {
+  // 直接結帳，不合併
+  if (fromSource === "cart") {
+    location.href = "checkout.html";
+  } else {
+    // 客製化訂單單獨送出 — 回到表單重新送出（不合併）
+    location.href = "custom-order.html";
+  }
+}
+
+function proceedMerge() {
+  if (!selectedIds.size) {
+    alert("請選擇至少一筆客製化訂單，或點「不合併，直接結帳」");
+    return;
+  }
+
+  // 把選取的客製化訂單 ID 存到 sessionStorage
+  const selectedOrders = customOrders.filter(o => selectedIds.has(o.pageId));
+  sessionStorage.setItem("mergeCustomOrders", JSON.stringify(selectedOrders));
+  sessionStorage.setItem("mergeFrom", fromSource);
+
+  // 進入結帳頁
+  location.href = "checkout.html?merge=1";
+}
+
+init();
+</script>
+</body>
+</html>

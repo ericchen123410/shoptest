@@ -9,26 +9,42 @@
 <body class="bg-gray-50">
 
 <div class="sticky top-0 z-50 bg-white border-b shadow-sm">
-  <div class="flex justify-between items-center px-3 py-2">
-    <div class="flex gap-1 text-sm">
-      <a href="index.html" class="font-bold px-2 py-1.5 rounded-lg hover:bg-gray-100">🏠</a>
-      <a href="new.html"   class="px-2 py-1.5 rounded-lg hover:bg-gray-100 text-xs">🆕 新品</a>
-      <a href="hot.html"   class="px-2 py-1.5 rounded-lg hover:bg-gray-100 text-xs">🔥 熱賣</a>
-      <a href="sale.html"  class="px-2 py-1.5 rounded-lg hover:bg-gray-100 text-xs">🈹 特價</a>
+  <div class="flex justify-between items-center px-4 py-2 max-w-7xl mx-auto">
+    <div class="flex items-center gap-1">
+      <a href="index.html" class="font-bold px-2 py-1.5 rounded-lg hover:bg-gray-100 text-sm">🏠 <span class="hidden lg:inline">首頁</span></a>
+      <a href="new.html"   class="px-2 py-1.5 rounded-lg hover:bg-gray-100 text-xs lg:text-sm">🆕 <span class="hidden sm:inline">新品</span></a>
+      <a href="hot.html"   class="px-2 py-1.5 rounded-lg hover:bg-gray-100 text-xs lg:text-sm">🔥 <span class="hidden sm:inline">熱賣</span></a>
+      <a href="sale.html"  class="px-2 py-1.5 rounded-lg hover:bg-gray-100 text-xs lg:text-sm">🈹 <span class="hidden sm:inline">特價</span></a>
     </div>
     <div class="flex items-center gap-1">
-      <button onclick="history.back()" class="text-sm px-2 py-1.5 rounded-lg hover:bg-gray-100">⬅️</button>
-      <a href="cart.html" class="px-2 py-1.5 rounded-lg hover:bg-gray-100">
+      <!-- ⭐ 搜尋 -->
+      <div id="searchWrap" class="flex items-center">
+        <div id="searchBox"
+          class="hidden items-center gap-1 bg-gray-50 border rounded-xl px-2 py-1 mr-1 transition-all">
+          <input id="navSearchInput" type="text" placeholder="搜尋商品… (Enter)"
+            class="bg-transparent text-sm outline-none w-36 sm:w-48"
+            oninput="onNavSearch(this.value)"
+            onkeydown="if(event.key==='Escape') closeSearch()">
+          <button onclick="closeSearch()" class="text-gray-400 hover:text-black text-sm leading-none">✕</button>
+        </div>
+        <button onclick="toggleSearch()" id="searchToggleBtn"
+          class="px-2 py-1.5 rounded-lg hover:bg-gray-100 text-base">🔍</button>
+      </div>
+      <a href="order-status.html" class="px-2 py-1.5 rounded-lg hover:bg-gray-100 text-xs lg:text-sm">📋 <span class="hidden sm:inline">訂單查詢</span></a>
+      <button onclick="history.back()" class="px-2 py-1.5 rounded-lg hover:bg-gray-100 text-sm">⬅️</button>
+      <a href="cart.html" class="px-2 py-1.5 rounded-lg hover:bg-gray-100 text-sm">
         🛒 <span id="cartCount" class="bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full">0</span>
       </a>
     </div>
   </div>
+  <!-- ⭐ 搜尋結果下拉（僅首頁顯示即時結果） -->
+  <div id="searchDropdown" class="hidden absolute left-0 right-0 bg-white border-t shadow-lg z-50 max-h-80 overflow-y-auto max-w-7xl mx-auto"></div>
 </div>
 
-<div class="px-4 py-4 max-w-xl mx-auto">
+<div class="px-4 sm:px-6 py-6 max-w-4xl mx-auto">
 
   <!-- 步驟指示 -->
-  <div class="flex items-center justify-center gap-2 mb-6 text-sm">
+  <div class="flex items-center justify-center gap-2 mb-6 text-sm sm:text-base">
     <span class="text-gray-400">購物車</span>
     <span class="text-gray-300">›</span>
     <span class="font-bold text-black">填寫資料</span>
@@ -45,8 +61,16 @@
     </button>
     <div id="summaryContent" class="border-t px-4 pb-4 hidden">
       <div id="orderItems" class="divide-y text-sm"></div>
-      <div class="flex justify-between items-center mt-3 font-bold">
-        <span>合計</span>
+      <div class="flex justify-between items-center mt-2 text-sm text-gray-500">
+        <span>商品小計</span>
+        <span id="orderSubtotal"></span>
+      </div>
+      <div class="flex justify-between items-center mt-1 text-sm" id="orderShippingRow">
+        <span>運費</span>
+        <span id="orderShipping"></span>
+      </div>
+      <div class="flex justify-between items-center mt-3 pt-2 border-t font-bold">
+        <span>總計</span>
         <span id="orderTotal" class="text-red-500 text-base"></span>
       </div>
     </div>
@@ -82,11 +106,6 @@
           class="w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black">
       </div>
 
-      <div>
-        <label class="text-xs text-gray-500 mb-1 block">備註</label>
-        <textarea id="note" placeholder="顏色、尺寸或其他備註（選填）" rows="3"
-          class="w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black resize-none"></textarea>
-      </div>
 
     </div>
   </div>
@@ -107,13 +126,20 @@
   <h1 class="text-2xl font-bold mb-2">訂單已送出！</h1>
   <p class="text-gray-500 text-sm mb-6">感謝您的購買，我們將盡快與您聯繫</p>
 
-  <div class="bg-gray-50 border rounded-xl px-6 py-4 w-full max-w-xs text-center mb-6">
-    <div class="text-xs text-gray-400 mb-1">您的訂單編號</div>
-    <div id="displayOrderId" class="text-xl font-bold tracking-widest text-black"></div>
-    <button onclick="copyOrderId()"
-      class="mt-2 text-xs text-gray-400 underline active:text-black">
-      點擊複製
-    </button>
+  <div class="bg-gray-50 border rounded-xl px-6 py-4 w-full max-w-xs text-center mb-6 space-y-3">
+    <div>
+      <div class="text-xs text-gray-400 mb-0.5">您的訂單編號</div>
+      <div id="displayOrderId" class="text-xl font-bold tracking-widest text-black"></div>
+      <button onclick="copyOrderId()"
+        class="mt-1 text-xs text-gray-400 underline active:text-black">
+        點擊複製
+      </button>
+    </div>
+    <div class="border-t pt-3">
+      <div class="text-xs text-gray-400 mb-0.5">您的客戶編號</div>
+      <div id="displayCustomerId" class="text-base font-bold text-gray-700"></div>
+      <div class="text-xs text-gray-400 mt-0.5">下次購物可用此編號查詢訂單</div>
+    </div>
   </div>
 
   <a id="queryLink" href="order-status.html"
@@ -131,15 +157,27 @@
 import { formatPrice } from "./js/utils.js";
 
 const PRODUCTS_API = "https://shop-project-azure.vercel.app/api/products";
-const ORDERS_API   = "https://shop-project-azure.vercel.app/api/orders";
+const ORDERS_API   = "https://shop-project-azure.vercel.app/api/orders-manage";
+const CUSTOMER_API = "https://shop-project-azure.vercel.app/api/customer";
 
-let orderItems = [];
-let orderTotal = 0;
+const RATE       = 220;
+const SURCHARGE  = 150;
+const FREE_KG    = 10;
+
+let orderItems    = [];
+let orderTotal    = 0;
+let orderSubtotal = 0;
+let orderShipping = 0;
 
 // ── 初始化：讀購物車 + 抓商品資料 ──────────────────────
 async function init() {
+  const isMerge      = new URLSearchParams(location.search).get("merge") === "1";
+  const mergeOrders  = isMerge
+    ? JSON.parse(sessionStorage.getItem("mergeCustomOrders") || "[]")
+    : [];
+
   const cart = JSON.parse(localStorage.getItem("cart") || "{}");
-  if (!Object.keys(cart).length) {
+  if (!Object.keys(cart).length && !mergeOrders.length) {
     location.href = "cart.html";
     return;
   }
@@ -147,16 +185,38 @@ async function init() {
   const res = await fetch(PRODUCTS_API);
   const products = await res.json();
 
-  orderItems = [];
-  orderTotal = 0;
+  orderItems    = [];
+  orderSubtotal = 0;
+  let totalWeight = 0;
 
   Object.entries(cart).forEach(([id, qty]) => {
     const p = products.find(x => x.id === id);
     if (!p) return;
     const sub = p.price * qty;
-    orderTotal += sub;
+    orderSubtotal += sub;
+    totalWeight   += (p.weight || 0) * qty;
     orderItems.push({ name: p.name, qty, price: formatPrice(p.price), sub });
   });
+
+  // ⭐ 合併客製化訂單
+  mergeOrders.forEach(o => {
+    const sub = o.price * (o.quantity || 1);
+    orderSubtotal += sub;
+    totalWeight   += (o.weight || 0) * (o.quantity || 1);
+    orderItems.push({
+      name:  `【客製化】${o.productName}（${o.orderId}）`,
+      qty:   o.quantity || 1,
+      price: formatPrice(o.price),
+      sub,
+      customOrderId: o.orderId,
+    });
+  });
+
+  // ⭐ 運費計算
+  const baseShipping = Math.ceil(totalWeight * RATE);
+  const needSurcharge = totalWeight < FREE_KG;
+  orderShipping      = baseShipping + (needSurcharge ? SURCHARGE : 0);
+  orderTotal         = orderSubtotal + orderShipping;
 
   // 訂單明細
   document.getElementById("orderItems").innerHTML = orderItems.map(i => `
@@ -165,6 +225,16 @@ async function init() {
       <span class="font-medium">${formatPrice(i.sub)}</span>
     </div>
   `).join("");
+
+  document.getElementById("orderSubtotal").textContent = formatPrice(orderSubtotal);
+
+  const shippingEl  = document.getElementById("orderShipping");
+  const shippingRow = document.getElementById("orderShippingRow");
+  shippingRow.className = "flex justify-between items-center mt-1 text-sm text-gray-500";
+
+  let shippingText = formatPrice(baseShipping) + "（" + totalWeight.toFixed(2).replace(/\.?0+$/, "") + "kg × NT$" + RATE + "）";
+  if (needSurcharge) shippingText += " + NT$" + SURCHARGE + " 附加費";
+  shippingEl.textContent = shippingText;
 
   document.getElementById("orderTotal").textContent = formatPrice(orderTotal);
 }
@@ -184,7 +254,6 @@ window.submitOrder = async () => {
   const phone   = document.getElementById("phone").value.trim();
   const email   = document.getElementById("email").value.trim();
   const address = document.getElementById("address").value.trim();
-  const note    = document.getElementById("note").value.trim();
 
   // 驗證
   if (!name || !phone || !email || !address) {
@@ -200,34 +269,65 @@ window.submitOrder = async () => {
     return;
   }
 
-  // 產生訂單編號：ORD + 時間戳
   const orderId = "ORD" + Date.now().toString().slice(-8);
-
   const btn = document.getElementById("submitBtn");
   btn.disabled = true;
-  btn.textContent = "送出中...";
+  btn.textContent = "確認客戶資料...";
 
   try {
+    // ⭐ Step 1：查詢或建立客戶
+    const custCheck = await fetch(
+      CUSTOMER_API + "?email=" + encodeURIComponent(email)
+    );
+    const custData = await custCheck.json();
+
+    let customerId;
+    if (custData.found) {
+      customerId = custData.customerId;
+    } else {
+      const custCreate = await fetch(CUSTOMER_API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, name, phone, address }),
+      });
+      const custCreated = await custCreate.json();
+      if (!custCreated.customerId) throw new Error("客戶建立失敗");
+      customerId = custCreated.customerId;
+    }
+
+    // ⭐ Step 2：建立訂單
+    btn.textContent = "建立訂單...";
     const res = await fetch(ORDERS_API, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        orderId, name, phone, email, address, note,
+        orderId, customerId,
         items: orderItems,
         total: orderTotal,
       }),
     });
 
     const data = await res.json();
-
     if (!data.success) throw new Error(data.error || "送出失敗");
 
-    // 清空購物車
     localStorage.removeItem("cart");
+    if (email) localStorage.setItem("lastEmail", email);
 
-    // 顯示成功畫面
+    // ⭐ 更新合併的客製化訂單狀態為「處理中」
+    for (const co of mergeOrders) {
+      try {
+        await fetch("https://shop-project-azure.vercel.app/api/custom-order", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pageId: co.pageId, status: "處理中" }),
+        });
+      } catch {}
+    }
+    sessionStorage.removeItem("mergeCustomOrders");
+
     document.getElementById("displayOrderId").textContent = orderId;
-    document.getElementById("queryLink").href = `order-status.html?orderId=${orderId}`;
+    document.getElementById("displayCustomerId").textContent = customerId;
+    document.getElementById("queryLink").href = "order-status.html?orderId=" + orderId;
     document.getElementById("successScreen").classList.remove("hidden");
 
   } catch (err) {
@@ -244,6 +344,71 @@ window.copyOrderId = () => {
 };
 
 init();
+</script>
+<script>
+// ── Navibar 搜尋共用 JS ───────────────────────────────
+function toggleSearch() {
+  const box = document.getElementById("searchBox");
+  const isHidden = box.classList.contains("hidden");
+  box.classList.toggle("hidden", !isHidden);
+  box.classList.toggle("flex", isHidden);
+  if (isHidden) {
+    setTimeout(() => document.getElementById("navSearchInput").focus(), 50);
+  } else {
+    closeSearch();
+  }
+}
+
+function closeSearch() {
+  const box = document.getElementById("searchBox");
+  box.classList.add("hidden");
+  box.classList.remove("flex");
+  document.getElementById("navSearchInput").value = "";
+  const dd = document.getElementById("searchDropdown");
+  if (dd) { dd.classList.add("hidden"); dd.innerHTML = ""; }
+  if (typeof restoreList === "function") restoreList();
+}
+
+function onNavSearch(val) {
+  if (typeof handleNavSearch === "function") {
+    handleNavSearch(val);
+  }
+}
+
+// 非首頁：組字完成或按 Enter 才跳到 search.html
+document.addEventListener("DOMContentLoaded", () => {
+  const input = document.getElementById("navSearchInput");
+  if (!input) return;
+
+  let isComposing = false;
+
+  input.addEventListener("compositionstart", () => { isComposing = true; });
+  input.addEventListener("compositionend",   () => {
+    isComposing = false;
+    // 組字完成後如果有值就跳頁
+    const val = input.value.trim();
+    if (val) {
+      window.location.href = "search.html?q=" + encodeURIComponent(val);
+    }
+  });
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !isComposing && input.value.trim()) {
+      window.location.href = "search.html?q=" + encodeURIComponent(input.value.trim());
+    }
+  });
+});
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeSearch();
+});
+
+document.addEventListener("click", (e) => {
+  const wrap = document.getElementById("searchWrap");
+  const dd   = document.getElementById("searchDropdown");
+  if (wrap && !wrap.contains(e.target) && dd && !dd.contains(e.target)) {
+    closeSearch();
+  }
+});
 </script>
 </body>
 </html>

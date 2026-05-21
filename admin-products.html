@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>商品管理</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+<div class="px-4 py-4 max-w-4xl mx-auto">
+
+  <!-- 搜尋 + 篩選 -->
+  <div class="flex gap-2 mb-4">
+    <input id="searchInput" type="text" placeholder="搜尋商品名稱…"
+      class="flex-1 border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black">
+    <select id="filterStatus"
+      class="border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black bg-white">
+      <option value="all">全部</option>
+      <option value="on">上架中</option>
+      <option value="off">已下架</option>
+    </select>
+  </div>
+
+  <!-- 大分類篩選 -->
+  <div class="mb-2">
+    <div id="mainCatBtns" class="flex flex-wrap gap-1.5"></div>
+  </div>
+
+  <!-- 小分類篩選 -->
+  <div id="subCatWrap" class="hidden mb-3">
+    <div id="subCatBtns" class="flex flex-wrap gap-1.5"></div>
+  </div>
+
+  <div id="productCount" class="text-xs text-gray-400 mb-3"></div>
+  <div id="productList" class="space-y-2"></div>
+</div>
+
+<!-- 編輯 Modal -->
+<div id="editModal" class="hidden fixed inset-0 z-50 bg-black bg-opacity-40 flex items-end sm:items-center justify-center p-0 sm:p-4">
+  <div class="bg-white w-full sm:max-w-lg sm:rounded-2xl rounded-t-2xl max-h-[90vh] overflow-y-auto">
+    <div class="sticky top-0 bg-white flex justify-between items-center px-4 py-3 border-b rounded-t-2xl">
+      <h2 class="font-bold text-sm">編輯商品</h2>
+      <div class="flex items-center gap-2">
+        <button onclick="saveEdit()"
+          class="px-3 py-1.5 bg-black text-white text-xs font-medium rounded-lg active:bg-gray-800 transition">
+          儲存變更
+        </button>
+        <button onclick="closeEdit()" class="text-gray-400 hover:text-black text-xl w-8 h-8 flex items-center justify-center">✕</button>
+      </div>
+    </div>
+    <div class="px-4 py-4 space-y-3">
+      <div>
+        <label class="text-xs text-gray-500 mb-1 block">商品名稱</label>
+        <input id="editName" type="text" class="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black">
+      </div>
+      <div>
+        <label class="text-xs text-gray-500 mb-1 block">商品編號</label>
+        <input id="editIdnumber" type="text" placeholder="idnumber"
+          class="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black">
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="text-xs text-gray-500 mb-1 block">日幣原價</label>
+          <input id="editJprice" type="number" class="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black">
+        </div>
+        <div>
+          <label class="text-xs text-gray-500 mb-1 block">日幣特價</label>
+          <input id="editJsprice" type="number" class="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black">
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="text-xs text-gray-500 mb-1 block">大分類</label>
+          <input id="editMainCat" type="text" class="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black">
+        </div>
+        <div>
+          <label class="text-xs text-gray-500 mb-1 block">小分類</label>
+          <input id="editCat" type="text" class="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black">
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="text-xs text-gray-500 mb-1 block">重量（kg）</label>
+          <input id="editWeight" type="number" step="0.01" class="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black">
+        </div>
+        <div>
+          <label class="text-xs text-gray-500 mb-1 block">排序 <span class="text-gray-300">（數字小的排前面）</span></label>
+          <input id="editSort" type="number" placeholder="例：1" class="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black">
+        </div>
+      </div>
+      <!-- 圖片上傳 -->
+      <div>
+        <label class="text-xs text-gray-500 mb-2 block">圖片（第一張為主圖）</label>
+        <div class="flex flex-wrap gap-2 mb-2" id="editImgSlots"></div>
+        <button type="button" onclick="addEditImgSlot()"
+          class="w-full py-2 border border-dashed border-gray-300 rounded-xl text-xs text-gray-400 hover:border-gray-500 transition">
+          ＋ 新增圖片
+        </button>
+      </div>
+
+      <!-- AI 生成 -->
+      <div class="bg-purple-50 rounded-xl p-3 border border-purple-100">
+        <div class="text-xs font-medium text-purple-700 mb-2">🤖 AI 生成描述</div>
+        <div class="flex gap-2">
+          <input id="editAiName" type="text" placeholder="輸入日文名稱或編號"
+            class="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white"
+            onkeydown="if(event.key==='Enter') generateEditDesc()">
+          <button id="editAiBtn" onclick="generateEditDesc()"
+            class="px-3 py-2 bg-purple-600 text-white text-xs font-medium rounded-lg hover:bg-purple-700 transition shrink-0">
+            ✨ 生成
+          </button>
+        </div>
+        <p id="editAiStatus" class="text-xs mt-1.5 hidden"></p>
+      </div>
+
+      <div>
+        <label class="text-xs text-gray-500 mb-1 block">商品描述</label>
+        <textarea id="editDesc" rows="5"
+          class="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black resize-none"></textarea>
+      </div>
+      <div class="grid grid-cols-2 gap-2">
+        <label class="flex items-center gap-2 border rounded-xl px-3 py-2.5 cursor-pointer hover:bg-gray-50">
+          <input id="editIsView" type="checkbox" class="w-4 h-4 accent-black">
+          <span class="text-sm">上架</span>
+        </label>
+        <label class="flex items-center gap-2 border rounded-xl px-3 py-2.5 cursor-pointer hover:bg-gray-50">
+          <input id="editIsNew" type="checkbox" class="w-4 h-4 accent-black">
+          <span class="text-sm">🆕 新品</span>
+        </label>
+        <label class="flex items-center gap-2 border rounded-xl px-3 py-2.5 cursor-pointer hover:bg-gray-50">
+          <input id="editIsHot" type="checkbox" class="w-4 h-4 accent-black">
+          <span class="text-sm">🔥 熱賣</span>
+        </label>
+        <label class="flex items-center gap-2 border rounded-xl px-3 py-2.5 cursor-pointer hover:bg-gray-50">
+          <input id="editIsSale" type="checkbox" class="w-4 h-4 accent-black">
+          <span class="text-sm">🈹 特價</span>
+        </label>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+const PRODUCTS_API = "https://shop-project-azure.vercel.app/api/products";
+const UPDATE_API   = "https://shop-project-azure.vercel.app/api/product-update";
+
+let allProducts    = [];
+let editingProduct = null;
+let activeMain     = "";
+let activeSub      = "";
+let editImgUrls    = [];
+
+const BTN_NORMAL = "px-3 py-1 rounded-full border text-xs transition bg-white text-gray-600 border-gray-300 hover:border-black active:bg-gray-100";
+const BTN_ACTIVE = "px-3 py-1 rounded-full border text-xs transition bg-black text-white border-black";
+
+// ── 初始化 ───────────────────────────────────────────
+async function init() {
+  document.getElementById("productList").innerHTML =
+    `<div class="text-center text-gray-400 py-10 text-sm">載入中...</div>`;
+  try {
+    const res = await fetch(PRODUCTS_API + "?showAll=1");
+    allProducts = await res.json();
+
+    // ⭐ 與首頁相同排序：sort 小的排前面，沒有 sort 排最後，再依時間
+    allProducts.sort((a, b) => {
+      const sa = a.sort || 9999;
+      const sb = b.sort || 9999;
+      if (sa !== sb) return sa - sb;
+      return new Date(b.update || b.createdTime) - new Date(a.update || a.createdTime);
+    });
+
+    renderCatBtns();
+    renderList();
+  } catch (err) {
+    document.getElementById("productList").innerHTML =
+      `<div class="text-center text-red-400 py-6 text-sm">載入失敗</div>`;
+  }
+}
+
+// ── 分類按鈕 ─────────────────────────────────────────
+function renderCatBtns() {
+  // 大分類
+  const mains = ["全部", ...new Set(allProducts.map(p => p.mainCategory).filter(Boolean))].sort((a,b) => a==="全部"?-1:b==="全部"?1:a.localeCompare(b));
+  const mainEl = document.getElementById("mainCatBtns");
+  mainEl.innerHTML = "";
+  mains.forEach(m => {
+    const btn = document.createElement("button");
+    btn.textContent = m;
+    btn.className = (m === (activeMain||"全部")) ? BTN_ACTIVE : BTN_NORMAL;
+    btn.onclick = () => {
+      activeMain = m === "全部" ? "" : m;
+      activeSub  = "";
+      renderCatBtns();
+      renderSubBtns();
+      renderList();
+    };
+    mainEl.appendChild(btn);
+  });
+  renderSubBtns();
+}
+
+function renderSubBtns() {
+  const pool = activeMain
+    ? allProducts.filter(p => p.mainCategory === activeMain)
+    : allProducts;
+  const subs = [...new Set(pool.map(p => p.category).filter(Boolean))].sort();
+
+  const wrap  = document.getElementById("subCatWrap");
+  const subEl = document.getElementById("subCatBtns");
+
+  if (!subs.length) { wrap.classList.add("hidden"); return; }
+  wrap.classList.remove("hidden");
+  subEl.innerHTML = "";
+
+  ["全部", ...subs].forEach(s => {
+    const btn = document.createElement("button");
+    btn.textContent = s;
+    btn.className = (s === (activeSub||"全部")) ? BTN_ACTIVE : BTN_NORMAL;
+    btn.onclick = () => {
+      activeSub = s === "全部" ? "" : s;
+      renderSubBtns();
+      renderList();
+    };
+    subEl.appendChild(btn);
+  });
+}
+
+// ── 列表渲染 ─────────────────────────────────────────
+function renderList() {
+  const kw     = document.getElementById("searchInput").value.trim().toLowerCase();
+  const status = document.getElementById("filterStatus").value;
+
+  let list = allProducts;
+  if (kw)             list = list.filter(p => (p.name||"").toLowerCase().includes(kw));
+  if (status==="on")  list = list.filter(p => p.isView);
+  if (status==="off") list = list.filter(p => !p.isView);
+  if (activeMain)     list = list.filter(p => p.mainCategory === activeMain);
+  if (activeSub)      list = list.filter(p => p.category     === activeSub);
+
+  document.getElementById("productCount").textContent = `共 ${list.length} 件`;
+
+  if (!list.length) {
+    document.getElementById("productList").innerHTML =
+      `<div class="text-center text-gray-400 py-10 text-sm">沒有符合的商品</div>`;
+    return;
+  }
+
+  document.getElementById("productList").innerHTML = list.map(p => {
+    const img = p.image || p.images?.[0] || "";
+    return `
+      <div class="bg-white rounded-xl border px-3 py-3 flex items-center gap-3">
+        ${img ? `<img src="${img}" class="w-14 h-14 object-cover rounded-lg shrink-0">` : `<div class="w-14 h-14 bg-gray-100 rounded-lg shrink-0 flex items-center justify-center text-gray-300 text-xl">📷</div>`}
+        <div class="flex-1 min-w-0">
+          <div class="text-sm font-semibold truncate">${p.name}</div>
+          <div class="text-xs text-gray-400 mt-0.5">${[p.mainCategory,p.category].filter(Boolean).join(" · ")}</div>
+          ${p.idnumber ? `<div class="text-xs text-gray-300 mt-0.5">#${p.idnumber}</div>` : ""}
+          ${p.sort ? `<div class="text-xs text-gray-300 mt-0.5">排序：${p.sort}</div>` : ""}
+          <div class="text-xs text-red-500 mt-0.5 font-medium">NT$ ${Math.round(p.price||0).toLocaleString()}</div>
+        </div>
+        <div class="flex flex-col items-end gap-2 shrink-0">
+          <span class="text-xs px-2 py-0.5 rounded-full font-medium ${p.isView ? "bg-green-100 text-green-600" : "bg-gray-100 text-gray-400"}">
+            ${p.isView ? "上架" : "下架"}
+          </span>
+          <div class="flex gap-1.5">
+            <button onclick="toggleView('${p.id}', ${!p.isView})"
+              class="text-xs px-2 py-1 border rounded-lg hover:bg-gray-50 active:bg-gray-100">
+              ${p.isView ? "下架" : "上架"}
+            </button>
+            <button onclick="openEdit('${p.id}')"
+              class="text-xs px-2 py-1 border rounded-lg hover:bg-gray-50 active:bg-gray-100">
+              編輯
+            </button>
+          </div>
+        </div>
+      </div>`;
+  }).join("");
+}
+
+// ── 快速上下架 ────────────────────────────────────────
+async function toggleView(id, newVal) {
+  const p = allProducts.find(x => x.id === id);
+  if (!p) return;
+  try {
+    const res  = await fetch(UPDATE_API, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pageId: id, isView: newVal, update: true }),
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error);
+    p.isView = newVal;
+    renderList();
+  } catch (err) {
+    alert("更新失敗：" + err.message);
+  }
+}
+
+// ── 編輯 Modal ────────────────────────────────────────
+function openEdit(id) {
+  try {
+  editingProduct = allProducts.find(x => x.id === id);
+  if (!editingProduct) { console.error("找不到商品 id:", id); return; }
+  const p = editingProduct;
+  document.getElementById("editName").value     = p.name    || "";
+  document.getElementById("editIdnumber").value = p.idnumber || "";
+  document.getElementById("editJprice").value   = p.jprice  || "";
+  document.getElementById("editJsprice").value  = p.jsprice || "";
+  document.getElementById("editWeight").value   = p.weight      || "";
+  document.getElementById("editSort").value     = p.sort        || "";
+  document.getElementById("editMainCat").value  = p.mainCategory|| "";
+  document.getElementById("editCat").value      = p.category    || "";
+  document.getElementById("editDesc").value     = p.description || "";
+  document.getElementById("editIsView").checked = p.isView;
+  document.getElementById("editIsNew").checked  = p.isNew;
+  document.getElementById("editIsHot").checked  = p.isHot;
+  document.getElementById("editIsSale").checked = p.isSale;
+  editImgUrls = [];
+  document.getElementById("editImgSlots").innerHTML = "";
+  const imagesRaw = Array.isArray(p.images) ? p.images.join(",") : (p.images || "");
+  const allImgs = imagesRaw.split(",").map(s => s.trim()).filter(Boolean);
+  const existingImgs = p.image ? [p.image, ...allImgs.filter(u => u !== p.image)] : allImgs;
+  existingImgs.forEach(url => addEditImgSlot(url));
+  if (!existingImgs.length) addEditImgSlot();
+  document.getElementById("editModal").classList.remove("hidden");
+  document.body.style.overflow = "hidden";
+  } catch(err) { console.error("openEdit 錯誤:", err); alert("編輯開啟失敗：" + err.message); }
+}
+
+function closeEdit() {
+  document.getElementById("editModal").classList.add("hidden");
+  document.body.style.overflow = "";
+  editingProduct = null;
+}
+
+document.getElementById("editModal").addEventListener("click", (e) => {
+  if (e.target === document.getElementById("editModal")) closeEdit();
+});
+
+async function saveEdit() {
+  if (!editingProduct) return;
+  const payload = {
+    pageId:       editingProduct.id,
+    tname:        document.getElementById("editName").value.trim(),
+    mainCategory: document.getElementById("editMainCat").value.trim(),
+    category:     document.getElementById("editCat").value.trim(),
+    description:  document.getElementById("editDesc").value.trim(),
+    idnumber:     document.getElementById("editIdnumber").value !== "" ? document.getElementById("editIdnumber").value : undefined,
+    weight:       Number(document.getElementById("editWeight").value) || 0,
+    sort:         document.getElementById('editSort').value !== '' ? Number(document.getElementById('editSort').value) : undefined,
+    isView:       document.getElementById("editIsView").checked,
+    isNew:        document.getElementById("editIsNew").checked,
+    isHot:        document.getElementById("editIsHot").checked,
+    isSale:       document.getElementById("editIsSale").checked,
+    update:       true,
+  };
+  const jp  = document.getElementById("editJprice").value;
+  const jsp = document.getElementById("editJsprice").value;
+  if (jp)  payload.jprice  = Number(jp);
+  if (jsp) payload.jsprice = Number(jsp);
+
+  // ⭐ 圖片
+  // 不管有無圖片都送，讓 Notion 可以被清空
+  const validImgs = editImgUrls.filter(Boolean);
+  payload.image  = validImgs[0]  || "";
+  payload.images = validImgs.join(",");
+
+  const btn = document.querySelector("#editModal .sticky button:first-child");
+  btn.textContent = "儲存中..."; btn.disabled = true;
+
+  try {
+    const res  = await fetch(UPDATE_API, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || "儲存失敗");
+
+    // 本地更新
+    Object.assign(editingProduct, {
+      name:         payload.tname,
+      mainCategory: payload.mainCategory,
+      category:     payload.category,
+      description:  payload.description,
+      weight:       payload.weight,
+      isView:       payload.isView,
+      isNew:        payload.isNew,
+      isHot:        payload.isHot,
+      isSale:       payload.isSale,
+      sort:         payload.sort,
+      idnumber:     payload.idnumber,
+      image:        payload.image,
+      images:       payload.images,
+    });
+
+    // ⭐ 重新排序（sort 小的排前面，沒有 sort 排最後）
+    allProducts.sort((a, b) => {
+      const sa = a.sort || 9999;
+      const sb = b.sort || 9999;
+      return sa !== sb ? sa - sb : 0;
+    });
+
+    closeEdit();
+    // ⭐ 重新從 API 載入最新資料（確保圖片等欄位同步）
+    await init();
+  } catch (err) {
+    alert("儲存失敗：" + err.message);
+  } finally {
+    btn.textContent = "儲存變更"; btn.disabled = false;
+  }
+}
+
+// ── 商品管理圖片上傳 ─────────────────────────────────
+const CLOUD_NAME_P    = "doue38blc";
+const UPLOAD_PRESET_P = "shop_upload";
+function addEditImgSlot(existingUrl) {
+  const slotIdx   = editImgUrls.length;
+  editImgUrls.push(existingUrl || "");
+  const container = document.getElementById("editImgSlots");
+  const slot      = document.createElement("div");
+  slot.id         = `editSlot-${slotIdx}`;
+  slot.className  = "relative w-16 h-16 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center cursor-pointer hover:border-gray-400 transition overflow-hidden bg-gray-50 shrink-0";
+  const hasImg    = !!existingUrl;
+
+  // 用 DOM 操作避免字串拼接問題
+  const ph = document.createElement("span");
+  ph.className = "slot-ph text-gray-300 text-lg pointer-events-none" + (hasImg ? " hidden" : "");
+  ph.textContent = "📷";
+
+  const img = document.createElement("img");
+  img.className = "slot-img absolute inset-0 w-full h-full object-cover";
+  img.style.display = hasImg ? "block" : "none";
+  if (hasImg) img.src = existingUrl;
+
+  const loader = document.createElement("div");
+  loader.className = "slot-load hidden absolute inset-0 bg-gray-50 flex items-center justify-center text-xs";
+  loader.textContent = "⏳";
+
+  const delBtn = document.createElement("button");
+  delBtn.className = "slot-del absolute top-0 right-0 bg-black bg-opacity-60 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs z-10" + (hasImg ? "" : " hidden");
+  delBtn.textContent = "✕";
+  delBtn.onclick = (e) => removeEditSlot(slotIdx, e);
+
+  slot.appendChild(ph);
+  slot.appendChild(img);
+  slot.appendChild(loader);
+  slot.appendChild(delBtn);
+
+  if (slotIdx === 0) {
+    const label = document.createElement("span");
+    label.className = "absolute bottom-0 left-0 right-0 bg-black bg-opacity-40 text-white text-xs text-center leading-4";
+    label.textContent = "主圖";
+    slot.appendChild(label);
+  }
+
+  if (!hasImg) slot.onclick = () => pickEditSlot(slotIdx, slot);
+  container.appendChild(slot);
+}
+
+function pickEditSlot(slotIdx, slot) {
+  const input = document.createElement("input");
+  input.type = "file"; input.accept = "image/*";
+  input.onchange = async (e) => {
+    const file = e.target.files[0]; if (!file) return;
+    slot.querySelector(".slot-ph").classList.add("hidden");
+    slot.querySelector(".slot-load").classList.remove("hidden");
+    try {
+      const fd = new FormData();
+      fd.append("file", file); fd.append("upload_preset", UPLOAD_PRESET_P);
+      const res  = await fetch("https://api.cloudinary.com/v1_1/"+CLOUD_NAME_P+"/image/upload", {method:"POST",body:fd});
+      const data = await res.json();
+      if (!data.secure_url) throw new Error("失敗");
+      editImgUrls[slotIdx] = data.secure_url;
+      slot.querySelector(".slot-img").src = data.secure_url;
+      slot.querySelector(".slot-img").style.display = "block";
+      slot.querySelector(".slot-ph").style.display = "none";
+      slot.querySelector(".slot-del").style.display = "flex";
+      slot.onclick = null;
+    } catch { alert("上傳失敗"); slot.querySelector(".slot-ph").classList.remove("hidden"); }
+    finally { slot.querySelector(".slot-load").classList.add("hidden"); }
+  };
+  input.click();
+}
+
+function removeEditSlot(slotIdx, e) {
+  e.stopPropagation();
+  editImgUrls[slotIdx] = "";
+  const slot = document.getElementById("editSlot-"+slotIdx);
+  slot.querySelector(".slot-img").style.display = "none";
+  slot.querySelector(".slot-del").style.display = "none";
+  slot.querySelector(".slot-ph").style.display = "";
+  slot.onclick = () => pickEditSlot(slotIdx, slot);
+}
+
+// ── AI 生成描述 ──────────────────────────────────────
+const GENERATE_API = "https://shop-project-azure.vercel.app/api/generate-description";
+
+async function generateEditDesc() {
+  const name   = document.getElementById("editAiName").value.trim();
+  const btn    = document.getElementById("editAiBtn");
+  const status = document.getElementById("editAiStatus");
+
+  if (!name) {
+    alert("請輸入日文商品名稱或編號");
+    document.getElementById("editAiName").focus();
+    return;
+  }
+
+  btn.disabled    = true;
+  btn.textContent = "⏳...";
+  status.textContent = "生成中，約需 5-10 秒…";
+  status.className   = "text-xs mt-1.5 text-gray-400";
+  status.classList.remove("hidden");
+
+  try {
+    // 優先用 jname+idnumber，否則用手動輸入
+    const body = name
+      ? { productName: "コストコ " + name }
+      : { jname: editingProduct?.jname || "", idnumber: editingProduct?.idnumber || "" };
+
+    const res  = await fetch(GENERATE_API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "生成失敗");
+
+    const text = data.text || "";
+
+    // 填入商品名稱
+    const nameMatch = text.match(/商品名稱[：:]\s*(.+)/);
+    if (nameMatch && !document.getElementById("editName").value.trim()) {
+      document.getElementById("editName").value = nameMatch[1].trim();
+    }
+
+    // 填入描述
+    const descMatch = text.match(/商品內容跟特點[\s\S]*/);
+    if (descMatch) {
+      document.getElementById("editDesc").value = descMatch[0].trim();
+    }
+
+    status.textContent = "✅ 已生成，請確認內容";
+    status.className   = "text-xs mt-1.5 text-green-600";
+
+  } catch (err) {
+    status.textContent = "❌ " + err.message;
+    status.className   = "text-xs mt-1.5 text-red-500";
+  } finally {
+    btn.disabled    = false;
+    btn.textContent = "✨ 生成";
+  }
+}
+
+// 搜尋 + 篩選
+document.getElementById("searchInput").addEventListener("input", renderList);
+document.getElementById("filterStatus").addEventListener("change", renderList);
+
+init();
+</script>
+</body>
+</html>

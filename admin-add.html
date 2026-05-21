@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>新增商品</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+<div class="px-4 py-5 max-w-2xl mx-auto space-y-4">
+
+  <!-- 🤖 AI 描述生成工具 -->
+  <div class="bg-gradient-to-r from-purple-50 to-blue-50 rounded-2xl p-4 shadow-sm border border-purple-100">
+    <div class="flex items-center gap-2 mb-3">
+      <span class="text-lg">🤖</span>
+      <h2 class="font-semibold text-sm text-purple-800">AI 商品描述生成</h2>
+    </div>
+
+    <div class="space-y-2">
+      <div>
+        <label class="text-xs text-gray-500 mb-1 block">輸入日文商品名稱或商品編號</label>
+        <div class="flex gap-2">
+          <input id="aiProductName" type="text"
+            placeholder="例：カークランド アーモンドミルク"
+            class="flex-1 border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white"
+            onkeydown="if(event.key==='Enter') generateDescription()">
+          <button id="aiGenerateBtn" onclick="generateDescription()"
+            class="px-4 py-2.5 bg-purple-600 text-white text-sm font-medium rounded-xl hover:bg-purple-700 active:bg-purple-800 transition shrink-0">
+            ✨ 一鍵生成
+          </button>
+        </div>
+      </div>
+      <p id="aiStatus" class="text-xs text-gray-400 hidden"></p>
+
+      <!-- 生成結果預覽 -->
+      <div id="aiPreview" class="hidden bg-white rounded-xl border border-purple-100 p-3 text-xs text-gray-600 leading-relaxed whitespace-pre-wrap max-h-48 overflow-y-auto"></div>
+    </div>
+  </div>
+
+  <!-- ① 照片上傳 -->
+  <div class="bg-white rounded-2xl p-4 shadow-sm">
+    <div class="flex items-center gap-2 mb-4">
+      <span class="w-6 h-6 bg-black text-white rounded-full text-xs flex items-center justify-center font-bold">1</span>
+      <h2 class="font-semibold text-sm">上傳照片</h2>
+    </div>
+    <div class="space-y-3">
+      <div>
+        <div class="text-xs text-gray-500 mb-1.5">首頁主圖 <span class="text-red-400">（封面用，建議正方形）</span></div>
+        <div id="mainImgBox"
+          class="relative flex items-center justify-center border-2 border-dashed border-gray-200 rounded-xl h-36 cursor-pointer hover:border-gray-400 transition overflow-hidden"
+          onclick="document.getElementById('mainImgInput').click()">
+          <div id="mainImgPlaceholder" class="flex flex-col items-center text-gray-400">
+            <span class="text-3xl mb-1">🖼</span>
+            <span class="text-xs">點擊上傳主圖</span>
+          </div>
+          <img id="mainImgPreview" class="hidden absolute inset-0 w-full h-full object-cover">
+          <div id="mainImgLoading" class="hidden absolute inset-0 bg-gray-50 flex items-center justify-center text-sm text-gray-400">⏳ 上傳中...</div>
+          <button id="mainImgRemove" onclick="removeMainImg(event)"
+            class="hidden absolute top-2 right-2 bg-black bg-opacity-60 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs z-10">✕</button>
+        </div>
+        <input id="mainImgInput" type="file" accept="image/*" class="hidden">
+      </div>
+      <div>
+        <div class="text-xs text-gray-500 mb-1.5">商品詳細圖 <span class="text-gray-400">（依序顯示於商品頁）</span></div>
+        <div id="detailSlots" class="grid grid-cols-3 sm:grid-cols-4 gap-2 mb-2"></div>
+        <button type="button" onclick="addDetailSlot()"
+          class="w-full py-2 border border-dashed border-gray-300 rounded-xl text-xs text-gray-400 hover:border-gray-500 hover:text-gray-600 transition">
+          ＋ 新增一張詳細圖
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ② 基本資料 -->
+  <div class="bg-white rounded-2xl p-4 shadow-sm">
+    <div class="flex items-center gap-2 mb-3">
+      <span class="w-6 h-6 bg-black text-white rounded-full text-xs flex items-center justify-center font-bold">2</span>
+      <h2 class="font-semibold text-sm">基本資料</h2>
+    </div>
+    <div class="space-y-3">
+      <div>
+        <label class="text-xs text-gray-500 mb-1 block">商品名稱 <span class="text-red-500">*</span></label>
+        <input id="tname" type="text" placeholder="請輸入商品名稱"
+          class="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black">
+      </div>
+      <div>
+        <label class="text-xs text-gray-500 mb-1 block">商品編號 <span class="text-gray-400">（選填）</span></label>
+        <div class="relative">
+          <input id="idnumber" type="text" placeholder="請輸入商品編號"
+            class="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black pr-24">
+          <div id="idnumberStatus" class="absolute right-3 top-2.5 text-xs"></div>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="text-xs text-gray-500 mb-1 block">原價 <span class="text-red-500">*</span></label>
+          <input id="tprice" type="number" placeholder="0"
+            class="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black">
+        </div>
+        <div>
+          <label class="text-xs text-gray-500 mb-1 block">特價（選填）</label>
+          <input id="sprice" type="number" placeholder="0"
+            class="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black">
+        </div>
+      </div>
+      <div>
+        <label class="text-xs text-gray-500 mb-1 block">重量（kg）</label>
+        <input id="weight" type="number" step="0.01" placeholder="例：0.5"
+          class="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black">
+      </div>
+      <div>
+        <label class="text-xs text-gray-500 mb-2 block">大分類</label>
+        <div id="mainCategoryBtns" class="flex flex-wrap gap-2 mb-2 min-h-[28px]">
+          <span class="text-xs text-gray-300 self-center">載入中...</span>
+        </div>
+        <input id="mainCategory" type="text" placeholder="或直接輸入新分類"
+          class="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black">
+      </div>
+      <div id="subCatSection" class="hidden">
+        <label class="text-xs text-gray-500 mb-2 block">小分類</label>
+        <div id="categoryBtns" class="flex flex-wrap gap-2 mb-2 min-h-[28px]"></div>
+        <input id="category" type="text" placeholder="或直接輸入新分類"
+          class="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black">
+      </div>
+    </div>
+  </div>
+
+  <!-- ③ 商品描述 -->
+  <div class="bg-white rounded-2xl p-4 shadow-sm">
+    <div class="flex items-center gap-2 mb-3">
+      <span class="w-6 h-6 bg-black text-white rounded-full text-xs flex items-center justify-center font-bold">3</span>
+      <h2 class="font-semibold text-sm">商品描述</h2>
+    </div>
+    <textarea id="description" rows="6"
+      placeholder="商品內容跟特點&#10;• 特點一&#10;• 特點二&#10;重量：1kg&#10;產地：日本"
+      class="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black resize-none leading-relaxed"></textarea>
+    <p class="text-xs text-gray-400 mt-1.5">• 開頭 → 清單　｜　key：value → 規格表　｜　其餘 → 段落</p>
+  </div>
+
+  <!-- ④ 標籤設定 -->
+  <div class="bg-white rounded-2xl p-4 shadow-sm">
+    <div class="flex items-center gap-2 mb-3">
+      <span class="w-6 h-6 bg-black text-white rounded-full text-xs flex items-center justify-center font-bold">4</span>
+      <h2 class="font-semibold text-sm">標籤設定</h2>
+    </div>
+    <div class="grid grid-cols-2 gap-2">
+      <label class="flex items-center gap-3 border rounded-xl px-3 py-3 cursor-pointer hover:bg-gray-50">
+        <input id="isView" type="checkbox" checked class="w-4 h-4 accent-black">
+        <div><div class="text-sm font-medium">上架</div><div class="text-xs text-gray-400">isView</div></div>
+      </label>
+      <label class="flex items-center gap-3 border rounded-xl px-3 py-3 cursor-pointer hover:bg-gray-50">
+        <input id="isNew" type="checkbox" class="w-4 h-4 accent-black">
+        <div><div class="text-sm font-medium">🆕 新品</div><div class="text-xs text-gray-400">isNew</div></div>
+      </label>
+      <label class="flex items-center gap-3 border rounded-xl px-3 py-3 cursor-pointer hover:bg-gray-50">
+        <input id="isHot" type="checkbox" class="w-4 h-4 accent-black">
+        <div><div class="text-sm font-medium">🔥 熱賣</div><div class="text-xs text-gray-400">isHot</div></div>
+      </label>
+      <label class="flex items-center gap-3 border rounded-xl px-3 py-3 cursor-pointer hover:bg-gray-50">
+        <input id="isSale" type="checkbox" class="w-4 h-4 accent-black">
+        <div><div class="text-sm font-medium">🈹 特價</div><div class="text-xs text-gray-400">isSale</div></div>
+      </label>
+    </div>
+  </div>
+
+  <button id="submitBtn" onclick="submitProduct()"
+    class="w-full py-4 bg-black text-white font-semibold rounded-2xl active:bg-gray-800 transition text-base shadow-sm">
+    ＋ 新增商品
+  </button>
+  <div class="pb-8"></div>
+</div>
+
+<!-- 成功畫面 -->
+<div id="successScreen" class="hidden fixed inset-0 bg-white z-50 flex flex-col items-center justify-center px-6">
+  <div class="text-6xl mb-4">🎉</div>
+  <h2 class="text-2xl font-bold mb-2">商品已新增！</h2>
+  <p class="text-gray-400 text-sm mb-8">已成功寫入 Notion</p>
+  <button onclick="resetForm()"
+    class="w-full max-w-xs py-3 bg-black text-white font-medium rounded-xl active:bg-gray-800">
+    繼續新增商品
+  </button>
+</div>
+
+<script>
+const CLOUD_NAME    = "doue38blc";
+const UPLOAD_PRESET = "shop_upload";
+const ADD_API       = "https://shop-project-azure.vercel.app/api/add-product";
+const PRODUCTS_API  = "https://shop-project-azure.vercel.app/api/products";
+const CHECK_ID_API  = "https://shop-project-azure.vercel.app/api/check-idnumber";
+
+let mainImgUrl = "", detailUrls = [], allProductData = [];
+
+const BTN_NORMAL = "px-3 py-1.5 rounded-full border text-xs transition bg-white text-gray-700 border-gray-300 hover:border-black active:bg-gray-100";
+const BTN_ACTIVE = "px-3 py-1.5 rounded-full border text-xs transition bg-black text-white border-black";
+
+(async () => {
+  try {
+    const res = await fetch(PRODUCTS_API);
+    allProductData = await res.json();
+    renderMainBtns();
+    renderSubBtns("");
+  } catch { document.getElementById("mainCategoryBtns").innerHTML = '<span class="text-xs text-gray-300">載入失敗</span>'; }
+  addDetailSlot();
+
+  document.getElementById("mainImgInput").addEventListener("change", async (e) => {
+    const file = e.target.files[0]; if (file) { e.target.value = ""; await uploadMainImg(file); }
+  });
+  document.getElementById("mainCategory").addEventListener("input", (e) => renderSubBtns(e.target.value.trim()));
+
+  let idCheckTimer = null;
+  document.getElementById("idnumber").addEventListener("input", (e) => {
+    const val = e.target.value.trim(), statusEl = document.getElementById("idnumberStatus");
+    clearTimeout(idCheckTimer);
+    if (!val) { statusEl.textContent = ""; return; }
+    statusEl.textContent = "⏳";
+    statusEl.className = "absolute right-3 top-2.5 text-xs text-gray-400";
+    idCheckTimer = setTimeout(async () => {
+      try {
+        const res = await fetch(`${CHECK_ID_API}?idnumber=${encodeURIComponent(val)}`);
+        const data = await res.json();
+        if (data.exists) {
+          statusEl.textContent = "⚠️ 已存在";
+          statusEl.className = "absolute right-3 top-2.5 text-xs text-orange-500 font-medium";
+          e.target.classList.add("border-orange-400"); e.target.classList.remove("border-green-400");
+        } else {
+          statusEl.textContent = "✅ 可使用";
+          statusEl.className = "absolute right-3 top-2.5 text-xs text-green-500 font-medium";
+          e.target.classList.add("border-green-400"); e.target.classList.remove("border-orange-400");
+        }
+      } catch { statusEl.textContent = ""; }
+    }, 600);
+  });
+})();
+
+function renderMainBtns() {
+  const mains = [...new Set(allProductData.map(p => p.mainCategory).filter(Boolean))].sort();
+  const el = document.getElementById("mainCategoryBtns");
+  el.innerHTML = "";
+  if (!mains.length) { el.innerHTML = '<span class="text-xs text-gray-300">尚無大分類</span>'; return; }
+  mains.forEach(m => {
+    const btn = document.createElement("button"); btn.type = "button"; btn.textContent = m; btn.className = BTN_NORMAL;
+    btn.onclick = () => { document.getElementById("mainCategory").value = m; document.getElementById("mainCategoryBtns").querySelectorAll("button").forEach(b => b.className = BTN_NORMAL); btn.className = BTN_ACTIVE; document.getElementById("category").value = ""; renderSubBtns(m); };
+    el.appendChild(btn);
+  });
+}
+
+function renderSubBtns(selectedMain) {
+  const section = document.getElementById("subCatSection");
+  if (!selectedMain) { section.classList.add("hidden"); return; }
+  const subs = [...new Set(allProductData.filter(p => p.mainCategory === selectedMain).map(p => p.category).filter(Boolean))].sort();
+  const el = document.getElementById("categoryBtns"); el.innerHTML = "";
+  if (!subs.length) { section.classList.add("hidden"); return; }
+  section.classList.remove("hidden");
+  subs.forEach(s => {
+    const btn = document.createElement("button"); btn.type = "button"; btn.textContent = s; btn.className = BTN_NORMAL;
+    btn.onclick = () => { document.getElementById("category").value = s; el.querySelectorAll("button").forEach(b => b.className = BTN_NORMAL); btn.className = BTN_ACTIVE; };
+    el.appendChild(btn);
+  });
+}
+
+async function uploadMainImg(file) {
+  document.getElementById("mainImgPlaceholder").classList.add("hidden");
+  document.getElementById("mainImgLoading").classList.remove("hidden");
+  try {
+    mainImgUrl = await uploadToCloudinary(file);
+    document.getElementById("mainImgPreview").src = mainImgUrl;
+    document.getElementById("mainImgPreview").classList.remove("hidden");
+    document.getElementById("mainImgRemove").classList.remove("hidden");
+  } catch { alert("主圖上傳失敗"); document.getElementById("mainImgPlaceholder").classList.remove("hidden"); }
+  finally { document.getElementById("mainImgLoading").classList.add("hidden"); }
+}
+
+function removeMainImg(e) {
+  e.stopPropagation(); mainImgUrl = "";
+  document.getElementById("mainImgPreview").classList.add("hidden");
+  document.getElementById("mainImgRemove").classList.add("hidden");
+  document.getElementById("mainImgPlaceholder").classList.remove("hidden");
+}
+
+function addDetailSlot() {
+  const idx = detailUrls.length; detailUrls.push("");
+  const container = document.getElementById("detailSlots");
+  const slot = document.createElement("div");
+  slot.id = `slot-${idx}`;
+  slot.className = "relative aspect-square rounded-xl overflow-hidden bg-gray-50 border-2 border-dashed border-gray-200 flex items-center justify-center cursor-pointer hover:border-gray-400 transition";
+  slot.innerHTML = `<div class="slot-ph flex flex-col items-center text-gray-400 pointer-events-none"><span class="text-xl">📷</span><span class="text-xs mt-0.5">圖${idx+1}</span></div><img class="slot-img hidden absolute inset-0 w-full h-full object-cover"><div class="slot-load hidden absolute inset-0 bg-gray-50 flex items-center justify-center text-xs text-gray-400">⏳</div><button class="slot-del hidden absolute top-1 right-1 bg-black bg-opacity-60 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs z-10">✕</button>`;
+  slot.querySelector(".slot-del").onclick = (e) => { e.stopPropagation(); clearSlot(idx, slot); };
+  slot.onclick = () => pickFile(idx, slot);
+  container.appendChild(slot);
+}
+
+function pickFile(idx, slot) {
+  const input = document.createElement("input"); input.type = "file"; input.accept = "image/*";
+  input.onchange = async (e) => {
+    const file = e.target.files[0]; if (!file) return;
+    slot.querySelector(".slot-ph").classList.add("hidden"); slot.querySelector(".slot-load").classList.remove("hidden");
+    try {
+      const url = await uploadToCloudinary(file); detailUrls[idx] = url;
+      slot.querySelector(".slot-img").src = url; slot.querySelector(".slot-img").classList.remove("hidden"); slot.querySelector(".slot-del").classList.remove("hidden"); slot.onclick = null; slot.classList.remove("cursor-pointer","hover:border-gray-400");
+    } catch { alert(`圖${idx+1}上傳失敗`); slot.querySelector(".slot-ph").classList.remove("hidden"); }
+    finally { slot.querySelector(".slot-load").classList.add("hidden"); }
+  }; input.click();
+}
+
+function clearSlot(idx, slot) {
+  detailUrls[idx] = "";
+  const imgEl = slot.querySelector(".slot-img");
+  imgEl.src = ""; imgEl.classList.add("hidden"); imgEl.style.display = "none";
+  slot.querySelector(".slot-del").classList.add("hidden");
+  slot.querySelector(".slot-ph").classList.remove("hidden");
+  slot.classList.add("cursor-pointer","hover:border-gray-400");
+  slot.onclick = () => pickFile(idx, slot);
+}
+
+async function uploadToCloudinary(file) {
+  const fd = new FormData(); fd.append("file", file); fd.append("upload_preset", UPLOAD_PRESET);
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { method: "POST", body: fd });
+  const data = await res.json(); if (!data.secure_url) throw new Error("上傳失敗"); return data.secure_url;
+}
+
+async function submitProduct() {
+  const tname = document.getElementById("tname").value.trim(), tprice = document.getElementById("tprice").value.trim();
+  if (!tname) { alert("請填寫商品名稱"); return; } if (!tprice) { alert("請填寫原價"); return; }
+  const btn = document.getElementById("submitBtn"); btn.disabled = true; btn.textContent = "送出中...";
+  try {
+    const validDetails = detailUrls.filter(Boolean);
+    const allImages = mainImgUrl ? [mainImgUrl, ...validDetails.filter(u => u !== mainImgUrl)] : validDetails;
+    const payload = { tname, jprice: Number(tprice), jsprice: Number(document.getElementById("sprice").value)||0, mainCategory: document.getElementById("mainCategory").value.trim(), category: document.getElementById("category").value.trim(), description: document.getElementById("description").value.trim(), weight: Number(document.getElementById("weight").value)||0, idnumber: document.getElementById("idnumber").value.trim()||null, image: mainImgUrl, images: allImages.join(","), isView: document.getElementById("isView").checked, isNew: document.getElementById("isNew").checked, isHot: document.getElementById("isHot").checked, isSale: document.getElementById("isSale").checked };
+    const res = await fetch(ADD_API, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+    const data = await res.json(); if (!data.success) throw new Error(data.error||"新增失敗");
+    document.getElementById("successScreen").classList.remove("hidden");
+  } catch (err) { alert("新增失敗：" + err.message); btn.disabled = false; btn.textContent = "＋ 新增商品"; }
+}
+
+// ── AI 一鍵生成 ──────────────────────────────────────
+const GENERATE_API = "https://shop-project-azure.vercel.app/api/generate-description";
+
+async function generateDescription() {
+  const name   = document.getElementById("aiProductName").value.trim();
+  const btn    = document.getElementById("aiGenerateBtn");
+  const status = document.getElementById("aiStatus");
+
+  if (!name) {
+    alert("請先填入商品名稱或編號");
+    document.getElementById("aiProductName").focus();
+    return;
+  }
+
+  btn.disabled    = true;
+  btn.textContent = "⏳ 生成中...";
+  status.textContent = "AI 正在查詢商品資訊，約需 5-10 秒…";
+  status.className   = "text-xs text-gray-400";
+  status.classList.remove("hidden");
+
+  try {
+    const res  = await fetch(GENERATE_API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ productName: name }),
+    });
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data.error || "生成失敗");
+
+    const text = data.text || "";
+
+    // 解析並填入欄位
+    const nameMatch = text.match(/商品名稱[：:]\s*(.+)/);
+    if (nameMatch) {
+      document.getElementById("tname").value = nameMatch[1].trim();
+    }
+
+    const descMatch = text.match(/商品內容跟特點[\s\S]*/);
+    if (descMatch) {
+      document.getElementById("description").value = descMatch[0].trim();
+    }
+
+    status.textContent = "✅ 已生成並填入，請確認內容後繼續！";
+    status.className   = "text-xs text-green-600";
+
+    // 顯示預覽
+    const preview = document.getElementById("aiPreview");
+    preview.textContent = text;
+    preview.classList.remove("hidden");
+
+    // 滾動到商品名稱
+    document.getElementById("tname").scrollIntoView({ behavior: "smooth", block: "center" });
+
+  } catch (err) {
+    status.textContent = "❌ 生成失敗：" + err.message;
+    status.className   = "text-xs text-red-500";
+  } finally {
+    btn.disabled    = false;
+    btn.textContent = "✨ 一鍵生成";
+  }
+}
+
+function resetForm() {
+  document.getElementById("successScreen").classList.add("hidden");
+  ["tname","idnumber","tprice","sprice","weight","mainCategory","category","description"].forEach(id => document.getElementById(id).value = "");
+  document.getElementById("idnumberStatus").textContent = ""; document.getElementById("idnumber").classList.remove("border-orange-400","border-green-400");
+  document.getElementById("isView").checked = true; ["isNew","isHot","isSale"].forEach(id => document.getElementById(id).checked = false);
+  mainImgUrl = ""; document.getElementById("mainImgPreview").classList.add("hidden"); document.getElementById("mainImgRemove").classList.add("hidden"); document.getElementById("mainImgPlaceholder").classList.remove("hidden");
+  detailUrls = []; document.getElementById("detailSlots").innerHTML = ""; addDetailSlot();
+  document.getElementById("submitBtn").disabled = false; document.getElementById("submitBtn").textContent = "＋ 新增商品";
+}
+</script>
+</body>
+</html>

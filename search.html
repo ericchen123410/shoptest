@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>搜尋商品</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+<div class="sticky top-0 z-50 bg-white border-b shadow-sm">
+  <div class="flex justify-between items-center px-4 py-2 max-w-7xl mx-auto">
+    <div class="flex items-center gap-1">
+      <a href="index.html" class="font-bold px-2 py-1.5 rounded-lg hover:bg-gray-100 text-sm">🏠 <span class="hidden lg:inline">首頁</span></a>
+      <a href="new.html"   class="px-2 py-1.5 rounded-lg hover:bg-gray-100 text-xs lg:text-sm">🆕 <span class="hidden sm:inline">新品</span></a>
+      <a href="hot.html"   class="px-2 py-1.5 rounded-lg hover:bg-gray-100 text-xs lg:text-sm">🔥 <span class="hidden sm:inline">熱賣</span></a>
+      <a href="sale.html"  class="px-2 py-1.5 rounded-lg hover:bg-gray-100 text-xs lg:text-sm">🈹 <span class="hidden sm:inline">特價</span></a>
+    </div>
+    <div class="flex items-center gap-1">
+      <div id="searchWrap" class="flex items-center">
+        <div id="searchBox" class="flex items-center gap-1 bg-gray-50 border rounded-xl px-2 py-1 mr-1">
+          <input id="navSearchInput" type="text" placeholder="搜尋商品…"
+            class="bg-transparent text-sm outline-none w-36 sm:w-56"
+            onkeydown="if(event.key==='Escape') clearSearch()">
+          <button onclick="clearSearch()" class="text-gray-400 hover:text-black text-sm leading-none">✕</button>
+        </div>
+        <button onclick="toggleSearch()" id="searchToggleBtn"
+          class="px-2 py-1.5 rounded-lg hover:bg-gray-100 text-base">🔍</button>
+      </div>
+      <a href="order-status.html" class="px-2 py-1.5 rounded-lg hover:bg-gray-100 text-xs lg:text-sm">📋 <span class="hidden sm:inline">訂單查詢</span></a>
+      <button onclick="history.back()" class="px-2 py-1.5 rounded-lg hover:bg-gray-100 text-sm">⬅️</button>
+      <a href="cart.html" class="px-2 py-1.5 rounded-lg hover:bg-gray-100 text-sm">
+        🛒 <span id="cartCount" class="bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full">0</span>
+      </a>
+    </div>
+  </div>
+  <div id="searchDropdown" class="hidden"></div>
+</div>
+
+<div class="px-3 sm:px-6 lg:px-8 py-4 max-w-7xl mx-auto">
+  <div id="searchHeader" class="mb-3"></div>
+  <div id="list" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4"></div>
+</div>
+
+<script src="./js/cartCount.js"></script>
+<script type="module">
+import { renderCard } from "./js/cardUtils.js";
+
+const API_URL = "https://shop-project-azure.vercel.app/api/products";
+const el      = document.getElementById("list");
+const header  = document.getElementById("searchHeader");
+
+let allData = [];
+
+async function init() {
+  el.innerHTML = `<div class="col-span-2 text-center text-gray-400 py-10">載入中...</div>`;
+
+  const res = await fetch(API_URL);
+  allData   = await res.json();
+  allData.sort((a, b) =>
+    new Date(b.update || b.createdTime) - new Date(a.update || a.createdTime)
+  );
+
+  // 讀取 URL 的 ?q= 參數
+  const urlQ = new URLSearchParams(location.search).get("q") || "";
+  if (urlQ) {
+    document.getElementById("navSearchInput").value = urlQ;
+    doSearch(urlQ);
+  } else {
+    header.innerHTML = `<p class="text-sm text-gray-400">請輸入關鍵字搜尋</p>`;
+    el.innerHTML = "";
+  }
+}
+
+function doSearch(kw) {
+  const keyword = kw.trim().toLowerCase();
+
+  // 更新 URL（不跳頁）
+  history.replaceState(null, "", keyword
+    ? `search.html?q=${encodeURIComponent(keyword)}`
+    : "search.html"
+  );
+
+  if (!keyword) {
+    header.innerHTML = `<p class="text-sm text-gray-400">請輸入關鍵字搜尋</p>`;
+    el.innerHTML = "";
+    return;
+  }
+
+  const results = allData.filter(p =>
+    (p.name        || "").toLowerCase().includes(keyword) ||
+    (p.mainCategory|| "").toLowerCase().includes(keyword) ||
+    (p.category    || "").toLowerCase().includes(keyword) ||
+    (p.description || "").toLowerCase().includes(keyword)
+  );
+
+  header.innerHTML = `
+    <p class="text-sm text-gray-500">
+      「<span class="font-semibold text-gray-800">${kw}</span>」
+      共找到 <span class="font-semibold text-black">${results.length}</span> 件商品
+    </p>`;
+
+  el.innerHTML = results.length
+    ? results.map(renderCard).join("")
+    : `<div class="col-span-2 flex flex-col items-center py-16 text-gray-400">
+         <div class="text-4xl mb-3">🔍</div>
+         <div class="text-sm">找不到「${kw}」相關商品</div>
+         <a href="index.html" class="mt-4 text-xs text-black underline">回到首頁瀏覽</a>
+       </div>`;
+}
+
+// 供 navibar 呼叫
+window.handleNavSearch = (val) => doSearch(val);
+window.restoreList = () => {
+  document.getElementById("navSearchInput").value = "";
+  doSearch("");
+};
+
+init();
+</script>
+
+<script>
+// ── search.html：用 compositionend 避免注音截斷 ──────
+document.addEventListener("DOMContentLoaded", () => {
+  const input = document.getElementById("navSearchInput");
+  if (!input) return;
+
+  let isComposing = false;
+
+  input.addEventListener("compositionstart", () => { isComposing = true; });
+  input.addEventListener("compositionend", () => {
+    isComposing = false;
+    if (typeof handleNavSearch === "function") handleNavSearch(input.value);
+  });
+  input.addEventListener("input", () => {
+    if (!isComposing && typeof handleNavSearch === "function") {
+      handleNavSearch(input.value);
+    }
+  });
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !isComposing && input.value.trim()) {
+      if (typeof handleNavSearch === "function") handleNavSearch(input.value);
+    }
+  });
+});
+
+// ── Navibar 搜尋（search.html 專用：搜尋框常駐展開）──
+function toggleSearch() {
+  document.getElementById("navSearchInput").focus();
+}
+
+function closeSearch() {
+  // search 頁不收合，只清空
+  clearSearch();
+}
+
+function clearSearch() {
+  document.getElementById("navSearchInput").value = "";
+  if (typeof restoreList === "function") restoreList();
+}
+
+function onNavSearch(val) {
+  if (typeof handleNavSearch === "function") handleNavSearch(val);
+}
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") clearSearch();
+});
+</script>
+
+</body>
+</html>

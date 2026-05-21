@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>批次生成商品描述</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+<div class="px-4 py-5 max-w-3xl mx-auto space-y-4">
+
+  <div class="bg-white rounded-2xl p-4 shadow-sm">
+    <div class="flex items-center gap-2 mb-1">
+      <span class="text-xl">🤖</span>
+      <h1 class="font-bold text-base">批次 AI 生成商品描述</h1>
+    </div>
+    <p class="text-xs text-gray-400 mb-4">依照商品的 jname（日文名稱）自動生成並覆蓋描述，每筆間隔 2 秒避免 API 過載</p>
+
+    <!-- 控制列 -->
+    <div class="flex gap-2 mb-4">
+      <button onclick="loadProducts()"
+        class="px-4 py-2 border rounded-xl text-sm hover:bg-gray-50 transition">
+        📋 載入商品
+      </button>
+      <button id="startBtn" onclick="startBatch()" disabled
+        class="px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-xl hover:bg-purple-700 disabled:opacity-40 disabled:cursor-not-allowed transition">
+        ✨ 開始批次生成
+      </button>
+      <button id="stopBtn" onclick="stopBatch()" disabled
+        class="px-4 py-2 bg-red-500 text-white text-sm font-medium rounded-xl hover:bg-red-600 disabled:opacity-40 disabled:cursor-not-allowed transition">
+        ⏹ 停止
+      </button>
+    </div>
+
+    <!-- 進度 -->
+    <div id="progressWrap" class="hidden mb-4">
+      <div class="flex justify-between text-xs text-gray-500 mb-1">
+        <span id="progressText">0 / 0</span>
+        <span id="progressPct">0%</span>
+      </div>
+      <div class="w-full bg-gray-100 rounded-full h-2">
+        <div id="progressBar" class="bg-purple-500 h-2 rounded-full transition-all" style="width:0%"></div>
+      </div>
+    </div>
+
+    <!-- 統計 -->
+    <div id="statsWrap" class="hidden flex gap-4 text-xs mb-4">
+      <span class="text-green-600">✅ 成功：<span id="statSuccess">0</span></span>
+      <span class="text-red-500">❌ 失敗：<span id="statFail">0</span></span>
+      <span class="text-gray-400">⏭ 跳過：<span id="statSkip">0</span></span>
+    </div>
+  </div>
+
+  <!-- 商品列表 -->
+  <div id="productList" class="space-y-2"></div>
+
+</div>
+
+<script>
+const PRODUCTS_API  = "https://shop-project-azure.vercel.app/api/products";
+const GENERATE_API  = "https://shop-project-azure.vercel.app/api/generate-description";
+const UPDATE_API    = "https://shop-project-azure.vercel.app/api/product-update";
+
+let products  = [];
+let isRunning = false;
+let stopFlag  = false;
+let stats     = { success: 0, fail: 0, skip: 0 };
+
+// ── 載入商品 ─────────────────────────────────────────
+async function loadProducts() {
+  document.getElementById("productList").innerHTML =
+    `<div class="text-center text-gray-400 py-6 text-sm">載入中...</div>`;
+
+  try {
+    const res  = await fetch(PRODUCTS_API + "?showAll=1");
+    products   = await res.json();
+
+    // 只保留有 jname 或 idnumber 的商品
+    renderList();
+    document.getElementById("startBtn").disabled = false;
+  } catch (err) {
+    document.getElementById("productList").innerHTML =
+      `<div class="text-center text-red-400 py-6 text-sm">載入失敗：${err.message}</div>`;
+  }
+}
+
+// ── 商品列表 ─────────────────────────────────────────
+function renderList() {
+  const el = document.getElementById("productList");
+  if (!products.length) {
+    el.innerHTML = `<div class="text-center text-gray-400 py-6 text-sm">沒有商品</div>`;
+    return;
+  }
+
+  el.innerHTML = products.map((p, i) => {
+    const keyword = p.jname || (p.idnumber ? `商品編號 ${p.idnumber}` : "");
+    return `
+      <div id="row-${p.id}" class="bg-white rounded-xl border px-4 py-3 flex items-center gap-3">
+        <input type="checkbox" id="chk-${p.id}" checked
+          class="w-4 h-4 accent-purple-600 shrink-0">
+        <div class="flex-1 min-w-0">
+          <div class="text-sm font-medium truncate">${p.name || "未命名"}</div>
+          <div class="text-xs text-gray-400 mt-0.5">
+            ${p.jname ? `🇯🇵 ${p.jname}` : ""}
+            ${p.idnumber ? ` · #${p.idnumber}` : ""}
+            ${!keyword ? '<span class="text-orange-400">⚠️ 無日文名稱和編號</span>' : ""}
+          </div>
+        </div>
+        <div id="status-${p.id}" class="text-xs text-gray-300 shrink-0">待處理</div>
+      </div>`;
+  }).join("");
+
+  document.getElementById("statsWrap").classList.remove("hidden");
+  document.getElementById("progressWrap").classList.remove("hidden");
+}
+
+// ── 批次生成 ─────────────────────────────────────────
+async function startBatch() {
+  if (isRunning) return;
+  isRunning = true;
+  stopFlag  = false;
+  stats     = { success: 0, fail: 0, skip: 0 };
+
+  document.getElementById("startBtn").disabled = true;
+  document.getElementById("stopBtn").disabled  = false;
+  updateStats();
+
+  const selected = products.filter(p =>
+    document.getElementById(`chk-${p.id}`)?.checked
+  );
+
+  for (let i = 0; i < selected.length; i++) {
+    if (stopFlag) break;
+
+    const p       = selected[i];
+    const keyword = p.jname || (p.idnumber ? `商品編號 ${p.idnumber}` : "");
+    const statusEl = document.getElementById(`status-${p.id}`);
+    const rowEl    = document.getElementById(`row-${p.id}`);
+
+    // 更新進度
+    updateProgress(i, selected.length);
+
+    if (!keyword) {
+      statusEl.textContent = "⏭ 跳過";
+      statusEl.className   = "text-xs text-gray-400 shrink-0";
+      stats.skip++;
+      updateStats();
+      continue;
+    }
+
+    // 生成中
+    statusEl.textContent = "⏳ 生成中...";
+    statusEl.className   = "text-xs text-purple-500 shrink-0";
+    rowEl.classList.add("bg-purple-50");
+
+    try {
+      // 1. 生成描述
+      const genRes  = await fetch(GENERATE_API, {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({
+          jname:    p.jname    || "",
+          idnumber: p.idnumber || "",
+        }),
+      });
+      const genData = await genRes.json();
+      if (!genRes.ok) throw new Error(genData.error || "生成失敗");
+
+      const text = genData.text || "";
+
+      // 解析
+      const nameMatch = text.match(/商品名稱[：:]\s*(.+)/);
+      const descMatch = text.match(/商品內容跟特點[\s\S]*/);
+
+      // 2. 寫回 Notion
+      const updatePayload = {
+        pageId:      p.id,
+        description: descMatch ? descMatch[0].trim() : text,
+        update:      true,
+      };
+      if (nameMatch && nameMatch[1].trim()) {
+        updatePayload.tname = nameMatch[1].trim();
+      }
+
+      const updRes  = await fetch(UPDATE_API, {
+        method:  "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify(updatePayload),
+      });
+      const updData = await updRes.json();
+      if (!updData.success) throw new Error(updData.error || "寫入失敗");
+
+      statusEl.textContent = "✅ 完成";
+      statusEl.className   = "text-xs text-green-600 shrink-0";
+      rowEl.classList.remove("bg-purple-50");
+      rowEl.classList.add("bg-green-50");
+      stats.success++;
+
+    } catch (err) {
+      statusEl.textContent = `❌ ${err.message}`;
+      statusEl.className   = "text-xs text-red-500 shrink-0";
+      rowEl.classList.remove("bg-purple-50");
+      rowEl.classList.add("bg-red-50");
+      stats.fail++;
+    }
+
+    updateStats();
+
+    // 間隔 2 秒
+    if (i < selected.length - 1 && !stopFlag) {
+      await new Promise(r => setTimeout(r, 2000));
+    }
+  }
+
+  updateProgress(selected.length, selected.length);
+  isRunning = false;
+  stopFlag  = false;
+  document.getElementById("startBtn").disabled = false;
+  document.getElementById("stopBtn").disabled  = true;
+}
+
+function stopBatch() {
+  stopFlag = true;
+  document.getElementById("stopBtn").disabled = true;
+}
+
+function updateProgress(current, total) {
+  const pct = total ? Math.round(current / total * 100) : 0;
+  document.getElementById("progressText").textContent = `${current} / ${total}`;
+  document.getElementById("progressPct").textContent  = `${pct}%`;
+  document.getElementById("progressBar").style.width  = `${pct}%`;
+}
+
+function updateStats() {
+  document.getElementById("statSuccess").textContent = stats.success;
+  document.getElementById("statFail").textContent    = stats.fail;
+  document.getElementById("statSkip").textContent    = stats.skip;
+}
+</script>
+</body>
+</html>

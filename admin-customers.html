@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>客戶管理</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+<div class="px-4 py-4 max-w-4xl mx-auto">
+
+  <!-- 搜尋 -->
+  <div class="relative mb-4">
+    <input id="searchInput" type="text" placeholder="搜尋客戶編號、姓名、Email…"
+      class="w-full border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black pr-10">
+    <span class="absolute right-3 top-2.5 text-gray-400">🔍</span>
+  </div>
+
+  <div id="customerCount" class="text-xs text-gray-400 mb-3"></div>
+  <div id="customerList" class="space-y-2"></div>
+</div>
+
+<!-- 客戶詳情 Modal -->
+<div id="modal" class="hidden fixed inset-0 z-50 bg-black bg-opacity-40 flex items-end sm:items-center justify-center p-0 sm:p-4">
+  <div class="bg-white w-full sm:max-w-lg sm:rounded-2xl rounded-t-2xl max-h-[90vh] overflow-y-auto">
+
+    <div class="sticky top-0 bg-white flex justify-between items-center px-4 py-3 border-b rounded-t-2xl">
+      <div>
+        <div id="modalCustomerId" class="font-bold text-base text-blue-500"></div>
+        <div id="modalEmail" class="text-xs text-gray-400"></div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button onclick="openEdit()"
+          class="text-xs px-3 py-1.5 border rounded-lg hover:bg-gray-50 font-medium">編輯</button>
+        <button onclick="closeModal()" class="text-gray-400 hover:text-black text-xl w-8 h-8 flex items-center justify-center">✕</button>
+      </div>
+    </div>
+
+    <div class="px-4 py-4 space-y-4">
+
+      <!-- 客戶資料 -->
+      <div id="customerDetail" class="bg-gray-50 rounded-xl p-3 space-y-2"></div>
+
+      <!-- 訂單列表 -->
+      <div>
+        <div class="text-xs font-semibold text-gray-500 mb-2">訂單紀錄</div>
+        <div id="orderList" class="space-y-2">
+          <div class="text-xs text-gray-400 text-center py-3">載入中...</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- 編輯 Modal -->
+<div id="editModal" class="hidden fixed inset-0 z-50 bg-black bg-opacity-40 flex items-end sm:items-center justify-center p-0 sm:p-4">
+  <div class="bg-white w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl">
+    <div class="sticky top-0 bg-white flex justify-between items-center px-4 py-3 border-b rounded-t-2xl">
+      <h2 class="font-bold text-sm">編輯客戶資料</h2>
+      <div class="flex items-center gap-2">
+        <button onclick="saveCustomer()"
+          class="px-3 py-1.5 bg-black text-white text-xs font-medium rounded-lg active:bg-gray-800">
+          儲存
+        </button>
+        <button onclick="closeEdit()" class="text-gray-400 hover:text-black text-xl w-8 h-8 flex items-center justify-center">✕</button>
+      </div>
+    </div>
+    <div class="px-4 py-4 space-y-3">
+      <div>
+        <label class="text-xs text-gray-500 mb-1 block">姓名</label>
+        <input id="editName" type="text"
+          class="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black">
+      </div>
+      <div>
+        <label class="text-xs text-gray-500 mb-1 block">電話</label>
+        <input id="editPhone" type="tel"
+          class="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black">
+      </div>
+      <div>
+        <label class="text-xs text-gray-500 mb-1 block">地址</label>
+        <input id="editAddress" type="text"
+          class="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black">
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const CUSTOMER_API = "https://shop-project-azure.vercel.app/api/customer";
+const ORDERS_API   = "https://shop-project-azure.vercel.app/api/orders-manage?type=list";
+
+const STATUS_STYLE = {
+  "待處理": "bg-yellow-100 text-yellow-700",
+  "處理中": "bg-blue-100 text-blue-600",
+  "已出貨": "bg-purple-100 text-purple-600",
+  "已完成": "bg-green-100 text-green-600",
+  "已取消": "bg-gray-100 text-gray-500",
+};
+
+let allCustomers   = [];
+let currentCustomer = null;
+
+// ── 初始化 ───────────────────────────────────────────
+async function init() {
+  document.getElementById("customerList").innerHTML =
+    `<div class="text-center text-gray-400 py-10 text-sm">載入中...</div>`;
+  try {
+    const res  = await fetch(CUSTOMER_API + "?type=list");
+    allCustomers = await res.json();
+    renderList();
+  } catch (err) {
+    document.getElementById("customerList").innerHTML =
+      `<div class="text-center text-red-400 py-6 text-sm">載入失敗</div>`;
+  }
+}
+
+// ── 客戶列表 ─────────────────────────────────────────
+function renderList() {
+  const kw = document.getElementById("searchInput").value.trim().toLowerCase();
+  let list = allCustomers;
+  if (kw) list = list.filter(c =>
+    (c.customerId || "").toLowerCase().includes(kw) ||
+    (c.name       || "").toLowerCase().includes(kw) ||
+    (c.email      || "").toLowerCase().includes(kw) ||
+    (c.phone      || "").includes(kw)
+  );
+
+  document.getElementById("customerCount").textContent = `共 ${allCustomers.length} 位客戶`;
+
+  if (!list.length) {
+    document.getElementById("customerList").innerHTML =
+      `<div class="text-center text-gray-400 py-10 text-sm">沒有符合的客戶</div>`;
+    return;
+  }
+
+  document.getElementById("customerList").innerHTML = list.map(c => {
+    const date = new Date(c.createdAt);
+    const dateStr = `${date.getFullYear()}/${date.getMonth()+1}/${date.getDate()}`;
+    return `
+      <div onclick="openModal('${c.pageId}')"
+        class="bg-white rounded-xl border px-4 py-3 cursor-pointer hover:shadow-md active:bg-gray-50 transition">
+        <div class="flex items-center justify-between">
+          <div class="min-w-0">
+            <div class="flex items-center gap-2 mb-0.5">
+              <span class="text-xs font-bold text-blue-500">${c.customerId}</span>
+              <span class="text-sm font-medium text-gray-800">${c.name || "—"}</span>
+            </div>
+            <div class="text-xs text-gray-400">${c.email}</div>
+            ${c.phone ? `<div class="text-xs text-gray-400">${c.phone}</div>` : ""}
+          </div>
+          <div class="text-xs text-gray-300 shrink-0 ml-2">${dateStr}</div>
+        </div>
+      </div>`;
+  }).join("");
+}
+
+// ── 客戶詳情 Modal ────────────────────────────────────
+async function openModal(pageId) {
+  currentCustomer = allCustomers.find(c => c.pageId === pageId);
+  if (!currentCustomer) return;
+
+  const c = currentCustomer;
+  document.getElementById("modalCustomerId").textContent = c.customerId;
+  document.getElementById("modalEmail").textContent      = c.email;
+
+  document.getElementById("customerDetail").innerHTML = `
+    <div class="space-y-2 text-sm">
+      <div class="flex justify-between">
+        <span class="text-gray-500">姓名</span>
+        <span class="font-medium">${c.name || "—"}</span>
+      </div>
+      <div class="flex justify-between">
+        <span class="text-gray-500">電話</span>
+        <a href="tel:${c.phone}" class="font-medium text-blue-500">${c.phone || "—"}</a>
+      </div>
+      <div class="flex justify-between">
+        <span class="text-gray-500">Email</span>
+        <a href="mailto:${c.email}" class="font-medium text-blue-500 text-xs">${c.email}</a>
+      </div>
+      <div class="text-sm">
+        <span class="text-gray-500">地址　</span>
+        <span class="font-medium">${c.address || "—"}</span>
+      </div>
+    </div>`;
+
+  document.getElementById("modal").classList.remove("hidden");
+  document.body.style.overflow = "hidden";
+
+  // 載入該客戶訂單
+  loadCustomerOrders(c.customerId, c.email);
+}
+
+async function loadCustomerOrders(customerId, email) {
+  const el = document.getElementById("orderList");
+  try {
+    const res  = await fetch(ORDERS_API);
+    const allOrders = await res.json();
+    const orders = allOrders.filter(o => o.customerId === customerId);
+
+    if (!orders.length) {
+      el.innerHTML = `<div class="text-xs text-gray-400 text-center py-3">尚無訂單紀錄</div>`;
+      return;
+    }
+
+    el.innerHTML = orders.map(o => {
+      const style   = STATUS_STYLE[o.status] || "bg-gray-100 text-gray-500";
+      const date    = new Date(o.createdAt);
+      const dateStr = `${date.getMonth()+1}/${date.getDate()} ${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}`;
+      const firstItem = o.items?.split("\n")[0] || "";
+      return `
+        <div class="flex items-center justify-between border rounded-xl px-3 py-2.5 bg-gray-50">
+          <div class="min-w-0">
+            <div class="flex items-center gap-2 mb-0.5">
+              <span class="text-xs font-bold">${o.orderId}</span>
+              <span class="text-xs px-1.5 py-0.5 rounded-full ${style}">${o.status}</span>
+            </div>
+            <div class="text-xs text-gray-400 truncate max-w-[180px]">${firstItem}</div>
+          </div>
+          <div class="text-right shrink-0 ml-2">
+            <div class="text-sm font-bold text-red-500">NT$ ${Math.round(o.total||0).toLocaleString()}</div>
+            <div class="text-xs text-gray-400">${dateStr}</div>
+          </div>
+        </div>`;
+    }).join("");
+  } catch {
+    el.innerHTML = `<div class="text-xs text-red-400 text-center py-3">訂單載入失敗</div>`;
+  }
+}
+
+function closeModal() {
+  document.getElementById("modal").classList.add("hidden");
+  document.body.style.overflow = "";
+  currentCustomer = null;
+}
+
+document.getElementById("modal").addEventListener("click", (e) => {
+  if (e.target === document.getElementById("modal")) closeModal();
+});
+
+// ── 編輯客戶資料 ─────────────────────────────────────
+function openEdit() {
+  if (!currentCustomer) return;
+  document.getElementById("editName").value    = currentCustomer.name    || "";
+  document.getElementById("editPhone").value   = currentCustomer.phone   || "";
+  document.getElementById("editAddress").value = currentCustomer.address || "";
+  document.getElementById("editModal").classList.remove("hidden");
+}
+
+function closeEdit() {
+  document.getElementById("editModal").classList.add("hidden");
+}
+
+document.getElementById("editModal").addEventListener("click", (e) => {
+  if (e.target === document.getElementById("editModal")) closeEdit();
+});
+
+async function saveCustomer() {
+  if (!currentCustomer) return;
+  const name    = document.getElementById("editName").value.trim();
+  const phone   = document.getElementById("editPhone").value.trim();
+  const address = document.getElementById("editAddress").value.trim();
+
+  const btn = document.querySelector("#editModal .sticky button:first-child");
+  btn.textContent = "儲存中..."; btn.disabled = true;
+
+  try {
+    const res  = await fetch(CUSTOMER_API, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pageId: currentCustomer.pageId, name, phone, address }),
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || "儲存失敗");
+
+    // 本地更新
+    Object.assign(currentCustomer, { name, phone, address });
+    closeEdit();
+    openModal(currentCustomer.pageId);
+    renderList();
+  } catch (err) {
+    alert("儲存失敗：" + err.message);
+  } finally {
+    btn.textContent = "儲存"; btn.disabled = false;
+  }
+}
+
+// 搜尋
+document.getElementById("searchInput").addEventListener("input", renderList);
+
+init();
+</script>
+</body>
+</html>

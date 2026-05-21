@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>批次上架商品</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+<div class="px-4 py-5 max-w-5xl mx-auto space-y-4">
+
+  <!-- 標題 -->
+  <div class="bg-white rounded-2xl p-4 shadow-sm">
+    <div class="flex items-center justify-between mb-1">
+      <div class="flex items-center gap-2">
+        <span class="text-xl">📦</span>
+        <h1 class="font-bold text-base">批次上架商品</h1>
+      </div>
+      <div class="flex items-center gap-2">
+        <button onclick="addRow()"
+          class="px-3 py-1.5 border rounded-xl text-sm hover:bg-gray-50 transition">
+          ＋ 新增一列
+        </button>
+        <button id="submitBtn" onclick="submitAll()"
+          class="px-4 py-1.5 bg-black text-white text-sm font-medium rounded-xl hover:bg-gray-800 transition">
+          ✅ 全部送出
+        </button>
+      </div>
+    </div>
+    <p class="text-xs text-gray-400">填完所有商品後，點「全部送出」一次寫入 Notion</p>
+  </div>
+
+  <!-- 進度條（送出時顯示）-->
+  <div id="progressWrap" class="hidden bg-white rounded-2xl p-4 shadow-sm">
+    <div class="flex justify-between text-xs text-gray-500 mb-1.5">
+      <span id="progressText">0 / 0</span>
+      <span id="progressPct">0%</span>
+    </div>
+    <div class="w-full bg-gray-100 rounded-full h-2 mb-2">
+      <div id="progressBar" class="bg-black h-2 rounded-full transition-all" style="width:0%"></div>
+    </div>
+    <div class="flex gap-4 text-xs">
+      <span class="text-green-600">✅ 成功：<span id="statSuccess">0</span></span>
+      <span class="text-red-500">❌ 失敗：<span id="statFail">0</span></span>
+    </div>
+  </div>
+
+  <!-- 表格標題 -->
+  <div class="hidden sm:grid gap-2 px-1 text-xs text-gray-400 font-medium"
+    style="grid-template-columns: 2fr 1fr 1fr 1fr 1fr 80px 32px;">
+    <span>商品名稱 *</span>
+    <span>日幣售價 *</span>
+    <span>大分類</span>
+    <span>小分類</span>
+    <span>商品編號</span>
+    <span>圖片</span>
+    <span></span>
+  </div>
+
+  <!-- 商品列表 -->
+  <div id="rowList" class="space-y-2"></div>
+
+  <!-- 底部按鈕 -->
+  <div class="flex justify-between items-center pb-8">
+    <button onclick="addRow()"
+      class="px-4 py-2.5 border-2 border-dashed border-gray-300 rounded-xl text-sm text-gray-400 hover:border-gray-500 hover:text-gray-600 transition w-full">
+      ＋ 新增一列
+    </button>
+  </div>
+
+</div>
+
+<script>
+const ADD_API       = "https://shop-project-azure.vercel.app/api/add-product";
+const CLOUD_NAME    = "doue38blc";
+const UPLOAD_PRESET = "shop_upload";
+const imgUrls       = {}; // rowId → uploadedUrl
+const PRODUCTS_API = "https://shop-project-azure.vercel.app/api/products";
+
+let rowCount = 0;
+let mainCategories = [];
+let subCategories  = [];
+
+// ── 圖片上傳 ─────────────────────────────────────────
+function addImgSlot(rowId) {
+  if (!imgUrls[rowId]) imgUrls[rowId] = [];
+  const slotIdx   = imgUrls[rowId].length;
+  imgUrls[rowId].push("");
+
+  const container = document.getElementById(`imgSlots-${rowId}`);
+  const slot      = document.createElement("div");
+  slot.id         = `slot-${rowId}-${slotIdx}`;
+  slot.className  = "relative w-16 h-16 rounded-lg border-2 border-dashed border-gray-200 flex items-center justify-center cursor-pointer hover:border-gray-400 transition overflow-hidden bg-gray-50 shrink-0";
+  slot.innerHTML  = `
+    <span class="slot-ph text-gray-300 text-lg pointer-events-none">📷</span>
+    <img class="slot-img hidden absolute inset-0 w-full h-full object-cover">
+    <div class="slot-load hidden absolute inset-0 bg-gray-50 flex items-center justify-center text-xs">⏳</div>
+    <button onclick="removeImgSlot(${rowId},${slotIdx},event)"
+      class="slot-del hidden absolute top-0 right-0 bg-black bg-opacity-60 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs z-10">✕</button>
+    ${slotIdx === 0 ? '<span class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-40 text-white text-xs text-center leading-4">主圖</span>' : ""}`;
+  slot.onclick = () => pickSlotImg(rowId, slotIdx, slot);
+  container.appendChild(slot);
+}
+
+function pickSlotImg(rowId, slotIdx, slot) {
+  const input = document.createElement("input");
+  input.type = "file"; input.accept = "image/*";
+  input.onchange = async (e) => {
+    const file = e.target.files[0]; if (!file) return;
+    slot.querySelector(".slot-ph").classList.add("hidden");
+    slot.querySelector(".slot-load").classList.remove("hidden");
+    try {
+      const fd = new FormData();
+      fd.append("file", file); fd.append("upload_preset", UPLOAD_PRESET);
+      const res  = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { method:"POST", body:fd });
+      const data = await res.json();
+      if (!data.secure_url) throw new Error("上傳失敗");
+      imgUrls[rowId][slotIdx] = data.secure_url;
+      slot.querySelector(".slot-img").src = data.secure_url;
+      slot.querySelector(".slot-img").classList.remove("hidden");
+      slot.querySelector(".slot-del").classList.remove("hidden");
+      slot.onclick = null;
+    } catch { alert("圖片上傳失敗"); slot.querySelector(".slot-ph").classList.remove("hidden"); }
+    finally { slot.querySelector(".slot-load").classList.add("hidden"); }
+  };
+  input.click();
+}
+
+function removeImgSlot(rowId, slotIdx, e) {
+  e.stopPropagation();
+  imgUrls[rowId][slotIdx] = "";
+  const slot = document.getElementById(`slot-${rowId}-${slotIdx}`);
+  const imgEl = slot.querySelector(".slot-img");
+  imgEl.src = "";
+  imgEl.style.display = "none";
+  imgEl.classList.add("hidden");
+  slot.querySelector(".slot-del").style.display = "none";
+  slot.querySelector(".slot-del").classList.add("hidden");
+  slot.querySelector(".slot-ph").style.display = "";
+  slot.querySelector(".slot-ph").classList.remove("hidden");
+  slot.onclick = () => pickSlotImg(rowId, slotIdx, slot);
+}
+
+// ── 初始化：載入現有分類 ──────────────────────────────
+(async () => {
+  try {
+    const res  = await fetch(PRODUCTS_API);
+    const data = await res.json();
+    mainCategories = [...new Set(data.map(p => p.mainCategory).filter(Boolean))].sort();
+    subCategories  = data.map(p => ({ main: p.mainCategory, sub: p.category })).filter(p => p.sub);
+  } catch {}
+  // 預設加 3 列
+  addRow(); addRow(); addRow();
+})();
+
+// ── 新增一列 ─────────────────────────────────────────
+function addRow() {
+  rowCount++;
+  const id  = rowCount;
+  const div = document.createElement("div");
+  div.id    = `row-${id}`;
+  div.className = "bg-white rounded-xl border p-3 shadow-sm";
+
+  div.innerHTML = `
+    <div class="flex flex-col gap-2 sm:grid sm:items-start" style="--cols: 2fr 1fr 1fr 1fr 1fr 80px 32px;">
+
+      <!-- 商品名稱 -->
+      <div>
+        <label class="text-xs text-gray-400 sm:hidden mb-0.5 block">商品名稱 *</label>
+        <input id="name-${id}" type="text" placeholder="商品名稱"
+          class="w-full border rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black">
+      </div>
+
+      <!-- 台幣售價 -->
+      <div>
+        <label class="text-xs text-gray-400 sm:hidden mb-0.5 block">日幣售價 *</label>
+        <input id="jprice-${id}" type="number" placeholder="¥0"
+          class="w-full border rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black">
+      </div>
+
+      <!-- 大分類 -->
+      <div>
+        <label class="text-xs text-gray-400 sm:hidden mb-0.5 block">大分類</label>
+        <div id="mainBtns-${id}" class="flex flex-wrap gap-1 mb-1">
+          ${mainCategories.map(m => `
+            <button type="button" onclick="selectMain(${id}, '${m}')"
+              class="main-btn-${id} px-2 py-0.5 rounded-full border text-xs transition bg-white text-gray-600 border-gray-300 hover:border-black">
+              ${m}
+            </button>`).join("")}
+        </div>
+        <input id="main-${id}" type="text" placeholder="或輸入新分類"
+          class="w-full border rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+          oninput="onMainInput(${id})">
+      </div>
+
+      <!-- 小分類 -->
+      <div>
+        <label class="text-xs text-gray-400 sm:hidden mb-0.5 block">小分類</label>
+        <div id="subBtns-${id}" class="flex flex-wrap gap-1 mb-1 hidden"></div>
+        <input id="sub-${id}" type="text" placeholder="或輸入新分類"
+          class="w-full border rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black">
+      </div>
+
+      <!-- 商品編號 -->
+      <div>
+        <label class="text-xs text-gray-400 sm:hidden mb-0.5 block">商品編號</label>
+        <input id="idnum-${id}" type="text" placeholder="編號"
+          class="w-full border rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black">
+      </div>
+
+      <!-- 圖片區（跨欄，多張）-->
+      <div class="sm:col-span-full">
+        <label class="text-xs text-gray-400 mb-1.5 block">圖片（第一張為主圖）</label>
+        <div class="flex flex-wrap gap-2" id="imgSlots-${id}"></div>
+        <button type="button" onclick="addImgSlot(${id})"
+          class="mt-2 w-full py-1.5 border border-dashed border-gray-300 rounded-lg text-xs text-gray-400 hover:border-gray-500 transition">
+          ＋ 新增圖片
+        </button>
+      </div>
+
+      <!-- 刪除 -->
+      <button onclick="removeRow(${id})"
+        class="self-end sm:mt-1 w-full sm:w-8 h-8 flex items-center justify-center text-red-300 hover:text-red-500 text-sm rounded-lg hover:bg-red-50 transition border border-red-100 sm:border-0">
+        <span class="sm:hidden text-xs mr-1">刪除此列</span>
+        ✕
+      </button>
+
+    </div>
+    <div id="rowStatus-${id}" class="text-xs mt-1.5 hidden"></div>
+  `;
+
+  const gridEl = div.querySelector(".sm\\:grid");
+  if (gridEl) gridEl.style.gridTemplateColumns = "2fr 1fr 1fr 1fr 1fr 80px 32px";
+  document.getElementById("rowList").appendChild(div);
+  imgUrls[id] = [];
+  setTimeout(() => addImgSlot(id), 0);
+}
+
+function removeRow(id) {
+  const el = document.getElementById(`row-${id}`);
+  if (el) el.remove();
+}
+
+const BTN_NORMAL = "px-2 py-0.5 rounded-full border text-xs transition bg-white text-gray-600 border-gray-300 hover:border-black";
+const BTN_ACTIVE = "px-2 py-0.5 rounded-full border text-xs transition bg-black text-white border-black";
+
+function selectMain(id, value) {
+  document.getElementById(`main-${id}`).value = value;
+  // 更新按鈕樣式
+  document.querySelectorAll(`.main-btn-${id}`).forEach(btn => {
+    btn.className = btn.textContent.trim() === value ? BTN_ACTIVE : BTN_NORMAL;
+  });
+  // 清空小分類
+  document.getElementById(`sub-${id}`).value = "";
+  renderSubBtns(id, value);
+}
+
+function onMainInput(id) {
+  const val = document.getElementById(`main-${id}`).value.trim();
+  // 取消所有大分類按鈕選中
+  document.querySelectorAll(`.main-btn-${id}`).forEach(btn => {
+    btn.className = BTN_NORMAL;
+  });
+  renderSubBtns(id, val);
+}
+
+function renderSubBtns(id, selectedMain) {
+  const el = document.getElementById(`subBtns-${id}`);
+  if (!selectedMain) { el.classList.add("hidden"); return; }
+
+  const subs = [...new Set(
+    subCategories.filter(s => s.main === selectedMain).map(s => s.sub)
+  )].sort();
+
+  if (!subs.length) { el.classList.add("hidden"); return; }
+  el.classList.remove("hidden");
+  el.innerHTML = subs.map(s => `
+    <button type="button" onclick="selectSub(${id}, '${s}')"
+      class="sub-btn-${id} ${BTN_NORMAL}">
+      ${s}
+    </button>`).join("");
+}
+
+function selectSub(id, value) {
+  document.getElementById(`sub-${id}`).value = value;
+  document.querySelectorAll(`.sub-btn-${id}`).forEach(btn => {
+    btn.className = btn.textContent.trim() === value ? BTN_ACTIVE : BTN_NORMAL;
+  });
+}
+
+// ── 全部送出 ─────────────────────────────────────────
+async function submitAll() {
+  // 收集所有列
+  const rows = [];
+  document.querySelectorAll("[id^='row-']").forEach(el => {
+    const id = el.id.replace("row-", "");
+    const name  = document.getElementById(`name-${id}`)?.value.trim();
+    const price = document.getElementById(`jprice-${id}`)?.value.trim();
+    if (!name && !price) return; // 完全空的跳過
+    rows.push({ id: id, name, price,
+      main:  document.getElementById(`main-${id}`)?.value.trim() || "",
+      sub:   document.getElementById(`sub-${id}`)?.value.trim()  || "",
+      idnum: document.getElementById(`idnum-${id}`)?.value.trim() || "",
+    });
+  });
+
+  if (!rows.length) { alert("請至少填寫一筆商品"); return; }
+
+  // 驗證
+  const invalid = rows.filter(r => !r.name || !r.price);
+  if (invalid.length) {
+    alert(`有 ${invalid.length} 筆商品未填寫名稱或日幣售價，請補齊後再送出`);
+    return;
+  }
+
+  const btn = document.getElementById("submitBtn");
+  btn.disabled = true;
+  btn.textContent = "送出中...";
+
+  document.getElementById("progressWrap").classList.remove("hidden");
+  let success = 0, fail = 0;
+
+  for (let i = 0; i < rows.length; i++) {
+    const r = rows[i];
+    updateProgress(i, rows.length);
+
+    const statusEl = document.getElementById(`rowStatus-${r.id}`);
+    const rowEl    = document.getElementById(`row-${r.id}`);
+    statusEl.classList.remove("hidden");
+    statusEl.textContent = "⏳ 送出中...";
+    statusEl.className   = "text-xs mt-1.5 text-purple-500";
+    rowEl.classList.add("bg-purple-50");
+
+    try {
+      const res  = await fetch(ADD_API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tname:        r.name,
+          jprice:       Number(r.price) || 0,
+          jsprice:      0,
+          mainCategory: r.main,
+          category:     r.sub,
+          idnumber:     r.idnum ? r.idnum : null,
+          image:        (imgUrls[Number(r.id)] || imgUrls[r.id] || []).filter(Boolean)[0] || "",
+          images:       (imgUrls[Number(r.id)] || imgUrls[r.id] || []).filter(Boolean).join(","),
+          isView:       true,
+          isNew:        false,
+          isHot:        false,
+          isSale:       false,
+          description:  "",
+          weight:       0,
+        }),
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || "新增失敗");
+
+      statusEl.textContent = "✅ 已上架";
+      statusEl.className   = "text-xs mt-1.5 text-green-600 font-medium";
+      rowEl.classList.remove("bg-purple-50");
+      rowEl.classList.add("bg-green-50");
+      success++;
+    } catch (err) {
+      statusEl.textContent = `❌ ${err.message}`;
+      statusEl.className   = "text-xs mt-1.5 text-red-500";
+      rowEl.classList.remove("bg-purple-50");
+      rowEl.classList.add("bg-red-50");
+      fail++;
+    }
+
+    document.getElementById("statSuccess").textContent = success;
+    document.getElementById("statFail").textContent    = fail;
+
+    // 間隔 500ms 避免 API 過載
+    if (i < rows.length - 1) await new Promise(r => setTimeout(r, 500));
+  }
+
+  updateProgress(rows.length, rows.length);
+  btn.disabled = false;
+  btn.textContent = "✅ 全部送出";
+}
+
+function updateProgress(current, total) {
+  const pct = total ? Math.round(current / total * 100) : 0;
+  document.getElementById("progressText").textContent = `${current} / ${total}`;
+  document.getElementById("progressPct").textContent  = `${pct}%`;
+  document.getElementById("progressBar").style.width  = `${pct}%`;
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>後台管理</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+<!-- 登入頁 -->
+<div id="loginScreen" class="min-h-screen flex items-center justify-center px-4">
+  <div class="bg-white rounded-2xl shadow-sm p-8 w-full max-w-sm">
+    <div class="text-center mb-6">
+      <div class="text-4xl mb-2">🛠</div>
+      <h1 class="text-xl font-bold text-gray-900">後台管理</h1>
+      <p class="text-xs text-gray-400 mt-1">請輸入管理員密碼</p>
+    </div>
+    <div class="space-y-3">
+      <input id="passwordInput" type="password" placeholder="請輸入密碼"
+        class="w-full border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+        onkeydown="if(event.key==='Enter') doLogin()">
+      <button onclick="doLogin()"
+        class="w-full py-3 bg-black text-white font-medium rounded-xl active:bg-gray-800 transition">
+        登入
+      </button>
+      <p id="loginError" class="text-xs text-red-500 text-center hidden">密碼錯誤，請再試一次</p>
+    </div>
+  </div>
+</div>
+
+<!-- 後台主畫面（登入後顯示）-->
+<div id="adminScreen" class="hidden min-h-screen">
+
+  <!-- Navibar -->
+  <div class="sticky top-0 z-50 bg-white border-b shadow-sm">
+    <div class="flex justify-between items-center px-4 py-3 max-w-4xl mx-auto">
+      <div class="flex items-center gap-2">
+        <span class="text-base">🛠</span>
+        <h1 class="font-bold text-sm">後台管理</h1>
+      </div>
+      <div class="flex items-center gap-2">
+        <a href="index.html" target="_blank"
+          class="text-xs text-gray-400 hover:text-black px-2 py-1 rounded-lg hover:bg-gray-100">
+          前台 ↗
+        </a>
+        <button onclick="doLogout()"
+          class="text-xs text-gray-400 hover:text-red-500 px-2 py-1 rounded-lg hover:bg-gray-100">
+          登出
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 功能選單 -->
+  <div class="px-4 py-5 max-w-4xl mx-auto">
+
+    <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 mb-6">
+      <button onclick="showPage('products')"
+        class="admin-menu-btn bg-white rounded-2xl p-4 shadow-sm text-center hover:shadow-md transition active:bg-gray-50">
+        <div class="text-3xl mb-2">📦</div>
+        <div class="text-sm font-semibold">商品管理</div>
+        <div class="text-xs text-gray-400 mt-0.5">查看 / 編輯 / 上下架</div>
+      </button>
+      <button onclick="showPage('add')"
+        class="admin-menu-btn bg-white rounded-2xl p-4 shadow-sm text-center hover:shadow-md transition active:bg-gray-50">
+        <div class="text-3xl mb-2">➕</div>
+        <div class="text-sm font-semibold">新增商品</div>
+        <div class="text-xs text-gray-400 mt-0.5">上傳照片 / 填寫資料</div>
+      </button>
+      <button onclick="showPage('orders')"
+        class="admin-menu-btn bg-white rounded-2xl p-4 shadow-sm text-center hover:shadow-md transition active:bg-gray-50">
+        <div class="text-3xl mb-2">📋</div>
+        <div class="text-sm font-semibold">訂單管理</div>
+        <div class="text-xs text-gray-400 mt-0.5">查看 / 更新狀態</div>
+      </button>
+      <button onclick="showPage('banners')"
+        class="admin-menu-btn bg-white rounded-2xl p-4 shadow-sm text-center hover:shadow-md transition active:bg-gray-50">
+        <div class="text-3xl mb-2">🖼</div>
+        <div class="text-sm font-semibold">輪播管理</div>
+        <div class="text-xs text-gray-400 mt-0.5">上傳 / 排序 / 顯示</div>
+      </button>
+      <button onclick="showPage('customers')"
+        class="admin-menu-btn bg-white rounded-2xl p-4 shadow-sm text-center hover:shadow-md transition active:bg-gray-50">
+        <div class="text-3xl mb-2">👥</div>
+        <div class="text-sm font-semibold">客戶管理</div>
+        <div class="text-xs text-gray-400 mt-0.5">查看 / 編輯資料</div>
+      </button>
+      <button onclick="showPage('customorders')"
+        class="admin-menu-btn bg-white rounded-2xl p-4 shadow-sm text-center hover:shadow-md transition active:bg-gray-50">
+        <div class="text-3xl mb-2">✏️</div>
+        <div class="text-sm font-semibold">客製化訂單</div>
+        <div class="text-xs text-gray-400 mt-0.5">查看 / 定價 / 狀態</div>
+      </button>
+      <button onclick="showPage('batch')"
+        class="admin-menu-btn bg-white rounded-2xl p-4 shadow-sm text-center hover:shadow-md transition active:bg-gray-50">
+        <div class="text-3xl mb-2">🤖</div>
+        <div class="text-sm font-semibold">批次生成</div>
+        <div class="text-xs text-gray-400 mt-0.5">AI 一鍵更新描述</div>
+      </button>
+      <button onclick="showPage('batchadd')"
+        class="admin-menu-btn bg-white rounded-2xl p-4 shadow-sm text-center hover:shadow-md transition active:bg-gray-50">
+        <div class="text-3xl mb-2">📦</div>
+        <div class="text-sm font-semibold">批次上架</div>
+        <div class="text-xs text-gray-400 mt-0.5">一次新增多筆商品</div>
+      </button>
+    </div>
+
+    <!-- 各功能 iframe -->
+    <div id="pageContainer" class="hidden bg-white rounded-2xl shadow-sm overflow-hidden">
+      <div class="flex items-center justify-between px-4 py-2.5 border-b bg-gray-50">
+        <span id="pageTitle" class="text-sm font-semibold text-gray-700"></span>
+        <button onclick="closePage()" class="text-gray-400 hover:text-black text-sm px-2">✕ 關閉</button>
+      </div>
+      <iframe id="pageFrame"
+        class="w-full border-0"
+        style="height: calc(100vh - 180px); min-height: 500px;">
+      </iframe>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const LOGIN_API = "https://shop-project-azure.vercel.app/api/admin-login";
+
+const PAGES = {
+  products: { title: "📦 商品管理", url: "admin-products.html" },
+  add:      { title: "➕ 新增商品", url: "admin-add.html"      },
+  orders:   { title: "📋 訂單管理", url: "admin-orders.html"   },
+  banners:   { title: "🖼 輪播管理", url: "admin-banners.html"   },
+  customers:    { title: "👥 客戶管理",    url: "admin-customers.html"       },
+  customorders: { title: "✏️ 客製化訂單",  url: "admin-custom-orders.html"   },
+  batch:     { title: "🤖 批次生成",  url: "admin-batch-generate.html" },
+  batchadd:  { title: "📦 批次上架",  url: "admin-batch-add.html"      },
+};
+
+// ── 初始化：檢查是否已登入 ───────────────────────────
+(function init() {
+  const token = sessionStorage.getItem("adminToken");
+  if (token) showAdmin();
+})();
+
+// ── 登入 ─────────────────────────────────────────────
+async function doLogin() {
+  const pw  = document.getElementById("passwordInput").value;
+  const err = document.getElementById("loginError");
+  const btn = document.querySelector("#loginScreen button");
+
+  if (!pw) return;
+  btn.textContent = "驗證中...";
+  btn.disabled    = true;
+  err.classList.add("hidden");
+
+  try {
+    const res  = await fetch(LOGIN_API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password: pw }),
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      sessionStorage.setItem("adminToken", data.token);
+      showAdmin();
+    } else {
+      err.classList.remove("hidden");
+      document.getElementById("passwordInput").value = "";
+      document.getElementById("passwordInput").focus();
+    }
+  } catch (e) {
+    err.textContent = "連線失敗，請稍後再試";
+    err.classList.remove("hidden");
+  } finally {
+    btn.textContent = "登入";
+    btn.disabled    = false;
+  }
+}
+
+function showAdmin() {
+  document.getElementById("loginScreen").classList.add("hidden");
+  document.getElementById("adminScreen").classList.remove("hidden");
+}
+
+function doLogout() {
+  sessionStorage.removeItem("adminToken");
+  document.getElementById("adminScreen").classList.add("hidden");
+  document.getElementById("loginScreen").classList.remove("hidden");
+  document.getElementById("passwordInput").value = "";
+  closePage();
+}
+
+// ── 頁面切換 ─────────────────────────────────────────
+function showPage(key) {
+  const p = PAGES[key];
+  if (!p) return;
+  document.getElementById("pageTitle").textContent = p.title;
+  document.getElementById("pageFrame").src = p.url;
+  document.getElementById("pageContainer").classList.remove("hidden");
+  document.getElementById("pageContainer").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function closePage() {
+  document.getElementById("pageContainer").classList.add("hidden");
+  document.getElementById("pageFrame").src = "";
+}
+
+// Enter 登入
+document.getElementById("passwordInput")
+  .addEventListener("keydown", e => { if (e.key === "Enter") doLogin(); });
+</script>
+
+</body>
+</html>
