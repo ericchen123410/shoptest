@@ -13,28 +13,21 @@ export default async function handler(req, res) {
     const searchQuery = [jname, idnumber].filter(Boolean).join(" ") || productName;
     if (!searchQuery) return res.status(400).json({ error: "請提供商品資訊" });
 
-    const prompt = `請幫我在 https://www.costco.co.jp 搜尋以下商品，找到該商品的詳細頁面，從「商品の詳細」中整理資訊。
+    const prompt = `搜尋 costco.co.jp 商品「${searchQuery}」，整理商品詳細資訊。
 
-商品關鍵字：${searchQuery}
+格式輸出（不加說明和markdown）：
 
-請按照以下格式輸出，不要加其他說明、不要加 markdown 符號：
-
-商品名稱：[繁體中文商品名稱，簡潔清楚]
-日文名稱：[日文原始商品名稱，從網頁取得]
-商品編號：[商品編號，從網頁取得，如果已知是 ${idnumber || "未提供"}]
-商品圖片網址：[商品主圖的完整URL，從網頁取得，如果找不到則留空]
+商品名稱：[繁體中文名稱]
+日文名稱：[日文名稱]
+商品編號：[編號]
+商品圖片網址：[主圖URL，找不到留空]
 
 商品內容跟特點
 • [特點一]
 • [特點二]
 • [特點三]
 • [特點四]
-• [特點五]
-
-產地：[產地]
-保存方式：[常溫／冷藏／冷凍]
-
-如果找不到該商品，請根據商品名稱用你的知識盡量填寫，商品圖片網址留空。`;
+• [特點五]`;
 
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -45,7 +38,7 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         model:      "claude-sonnet-4-5",
-        max_tokens: 1500,
+        max_tokens: 800,
         tools: [{
           type: "web_search_20250305",
           name: "web_search",
