@@ -366,18 +366,39 @@ async function generateDescription() {
     const text = data.text || "";
 
     // 解析並填入欄位
-    const nameMatch = text.match(/商品名稱[：:]\s*(.+)/);
-    if (nameMatch) {
-      document.getElementById("tname").value = nameMatch[1].trim();
-    }
+    const nameMatch  = text.match(/商品名稱[：:]\s*(.+)/);
+    const jnameMatch = text.match(/日文名稱[：:]\s*(.+)/);
+    const idMatch    = text.match(/商品編號[：:]\s*(.+)/);
+    const descMatch  = text.match(/商品內容跟特點[\s\S]*/);
 
-    const descMatch = text.match(/商品內容跟特點[\s\S]*/);
+    if (nameMatch)  document.getElementById("tname").value       = nameMatch[1].trim();
+    if (jnameMatch) {
+      const jnameEl = document.getElementById("jname");
+      if (jnameEl) jnameEl.value = jnameMatch[1].trim();
+    }
+    if (idMatch) {
+      const idnumEl = document.getElementById("idnumber");
+      if (idnumEl && !idnumEl.value) idnumEl.value = idMatch[1].trim();
+    }
     if (descMatch) {
-      document.getElementById("description").value = descMatch[0].trim();
+      // 移除商品名稱、日文名稱、商品編號那幾行，只保留描述部分
+      const desc = descMatch[0].trim();
+      document.getElementById("description").value = desc;
     }
 
-    status.textContent = "✅ 已生成並填入，請確認內容後繼續！";
-    status.className   = "text-xs text-green-600";
+    // 如果有圖片，自動填入主圖
+    if (data.imageUrl) {
+      mainImgUrl = data.imageUrl;
+      const preview = document.getElementById("mainImgPreview");
+      preview.src = mainImgUrl;
+      preview.classList.remove("hidden");
+      document.getElementById("mainImgRemove").classList.remove("hidden");
+      document.getElementById("mainImgPlaceholder").classList.add("hidden");
+      status.textContent = "✅ 已生成並填入（含商品圖片），請確認後繼續！";
+    } else {
+      status.textContent = "✅ 已生成並填入，請確認內容後繼續！";
+    }
+    status.className = "text-xs text-green-600";
 
     // 顯示預覽
     const preview = document.getElementById("aiPreview");
