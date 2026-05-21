@@ -201,7 +201,7 @@ const BTN_ACTIVE = "px-3 py-1.5 rounded-full border text-xs transition bg-black 
 
 (async () => {
   try {
-    const res = await fetch(PRODUCTS_API);
+    const res = await fetch(PRODUCTS_API, { cache: "no-store" });
     allProductData = await res.json();
     renderMainBtns();
     renderSubBtns("");
