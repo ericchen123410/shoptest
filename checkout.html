@@ -156,9 +156,9 @@
 <script type="module">
 import { formatPrice } from "./js/utils.js";
 
-const PRODUCTS_API = "https://shop-project-azure.vercel.app/api/products";
-const ORDERS_API   = "https://shop-project-azure.vercel.app/api/orders-manage";
-const CUSTOMER_API = "https://shop-project-azure.vercel.app/api/customer";
+const PRODUCTS_API = "https://shoptest-chi.vercel.app/api/products";
+const ORDERS_API   = "https://shoptest-chi.vercel.app/api/orders-manage";
+const CUSTOMER_API = "https://shoptest-chi.vercel.app/api/customer";
 
 const RATE       = 220;
 const SURCHARGE  = 150;
@@ -316,7 +316,7 @@ window.submitOrder = async () => {
     // ⭐ 更新合併的客製化訂單狀態為「處理中」
     for (const co of mergeOrders) {
       try {
-        await fetch("https://shop-project-azure.vercel.app/api/custom-order", {
+        await fetch("https://shoptest-chi.vercel.app/api/custom-order", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ pageId: co.pageId, status: "處理中" }),

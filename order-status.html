@@ -96,8 +96,8 @@
 <script type="module">
 import { formatPrice } from "./js/utils.js";
 
-const QUERY_API    = "https://shop-project-azure.vercel.app/api/orders-manage?type=query";
-const CUSTOMER_API_URL = "https://shop-project-azure.vercel.app/api/orders-manage?type=customer";
+const QUERY_API    = "https://shoptest-chi.vercel.app/api/orders-manage?type=query";
+const CUSTOMER_API_URL = "https://shoptest-chi.vercel.app/api/orders-manage?type=customer";
 
 const STATUS_MAP = {
   "待處理": { icon: "🕐", color: "bg-yellow-100 text-yellow-700", bar: 1 },
@@ -241,7 +241,7 @@ window.showOrderDetail = async (orderId, customer) => {
 async function fetchCustomer(customerId) {
   if (!customerId) return {};
   try {
-    const res  = await fetch(`https://shop-project-azure.vercel.app/api/customer?customerId=${encodeURIComponent(customerId)}`);
+    const res  = await fetch(`https://shoptest-chi.vercel.app/api/customer?customerId=${encodeURIComponent(customerId)}`);
     const data = await res.json();
     return data.found ? data : {};
   } catch { return {}; }
