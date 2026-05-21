@@ -6,7 +6,7 @@ window.goToCheckout = function() {
   location.href = "merge-checkout.html?from=cart" + (email ? "&email=" + encodeURIComponent(email) : "");
 };
 
-const API_URL     = "https://shop-project-azure.vercel.app/api/products";
+const API_URL     = "https://shoptest-chi.vercel.app/api/products";
 const el          = document.getElementById("cart");
 
 
