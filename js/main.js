@@ -76,12 +76,6 @@ function renderMainTabs() {
     mainTabs.appendChild(btn);
   });
 
-  // 客製化訂單 Tab
-  const customBtn = document.createElement("a");
-  customBtn.href = "custom-order.html";
-  customBtn.textContent = "✏️ 客製化訂單";
-  customBtn.className = "px-3 py-1.5 rounded-full text-xs font-medium transition bg-gray-900 text-white shrink-0";
-  mainTabs.appendChild(customBtn);
 }
 
 // ── 小分類 Tab ────────────────────────────────────────
@@ -128,10 +122,6 @@ function renderList() {
     el.innerHTML = `<div class="text-center text-gray-400 py-10">此分類沒有商品</div>`;
     return;
   }
-
-  // 客製化訂單 banner 顯示控制
-  const bannerEl = document.getElementById("customOrderBanner");
-  if (bannerEl) bannerEl.classList.toggle("hidden", activeMain !== "全部");
 
   // ── 選了大分類或小分類：正常 grid 顯示 ──────────────
   if (activeMain !== "全部") {

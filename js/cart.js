@@ -1,10 +1,5 @@
 import { formatPrice } from "./utils.js";
 
-// 前往結帳（先詢問是否合併客製化訂單）
-window.goToCheckout = function() {
-  const email = localStorage.getItem("lastEmail") || "";
-  location.href = "merge-checkout.html?from=cart" + (email ? "&email=" + encodeURIComponent(email) : "");
-};
 
 const API_URL     = "https://shoptest-chi.vercel.app/api/products";
 const el          = document.getElementById("cart");
@@ -139,10 +134,10 @@ async function init() {
         <span class="text-xl sm:text-2xl font-bold">${formatPrice(grandTotal)}</span>
       </div>
 
-      <button onclick="goToCheckout()"
-        class="w-full py-3 bg-black text-white font-medium rounded-xl active:bg-gray-800 transition">
+      <a href="checkout.html"
+         class="block w-full py-3 bg-black text-white font-medium rounded-xl active:bg-gray-800 transition text-center">
         前往結帳 →
-      </button>
+      </a>
     </div>`;
 }
 
