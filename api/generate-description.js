@@ -4,7 +4,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { ANTHROPIC_API_KEY, CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET } = process.env;
+    const { ANTHROPIC_API_KEY } = process.env;
     if (!ANTHROPIC_API_KEY) return res.status(500).json({ error: "API Key 未設定" });
 
     const { productName, jname, idnumber } = req.body;
@@ -20,7 +20,6 @@ export default async function handler(req, res) {
 商品名稱：[繁體中文名稱]
 日文名稱：[日文名稱]
 商品編號：[編號]
-商品圖片網址：[主圖URL，找不到留空]
 
 商品內容跟特點
 • [特點一]
@@ -57,38 +56,8 @@ export default async function handler(req, res) {
       .join("\n")
       .trim();
 
-    // 解析圖片網址
-    const imgMatch = text.match(/商品圖片網址：(.+)/);
-    let imageUrl   = imgMatch ? imgMatch[1].trim() : "";
 
-    // 如果有圖片網址，透過 Cloudinary 轉存（用 unsigned upload preset）
-    let cloudinaryUrl = "";
-    if (imageUrl && imageUrl.startsWith("http") && CLOUDINARY_CLOUD_NAME) {
-      try {
-        const fd = new FormData();
-        fd.append("file",          imageUrl);
-        fd.append("upload_preset", "shop_upload");
-
-        const upRes  = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
-          method: "POST",
-          body:   fd,
-        });
-        const upData = await upRes.json();
-        console.log("Cloudinary response:", JSON.stringify(upData));
-        if (upData.secure_url) cloudinaryUrl = upData.secure_url;
-      } catch (err) {
-        console.error("Cloudinary upload error:", err.message);
-      }
-    }
-
-    // 清理輸出文字（移除圖片網址那行）
-    const cleanText = text.replace(/商品圖片網址：.+\n?/, "").trim();
-
-    res.status(200).json({
-      text:      cleanText,
-      imageUrl:  cloudinaryUrl || imageUrl,
-      hasImage:  !!cloudinaryUrl,
-    });
+    res.status(200).json({ text });
 
   } catch (err) {
     res.status(500).json({ error: err.message });

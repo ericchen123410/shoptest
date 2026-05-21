@@ -6,7 +6,7 @@ export default async function handler(req, res) {
   try {
     const { NOTION_TOKEN, DATABASE_ID } = process.env;
     const {
-      tname, jprice, jsprice, idnumber,
+      tname, jname, jprice, jsprice, idnumber,
       mainCategory, category,
       description,
       image, images,
@@ -31,6 +31,7 @@ export default async function handler(req, res) {
           tname: {
             title: [{ text: { content: tname } }],
           },
+          jname: { rich_text: [{ text: { content: jname || "" } }] },
           jprice: {
             number: Number(jprice) || 0,
           },
