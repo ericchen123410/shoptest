@@ -123,6 +123,7 @@ export default async function handler(req, res) {
       ? products
       : products.filter(p => p.isView);
 
+    res.setHeader("Cache-Control", "public, max-age=30, stale-while-revalidate=10");
     res.status(200).json(visible);
 
   } catch (err) {
