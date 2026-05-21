@@ -2,19 +2,32 @@ export default async function handler(req, res) {
   try {
     const { NOTION_TOKEN, DATABASE_ID } = process.env;
 
-    const response = await fetch(
-      `https://api.notion.com/v1/databases/${DATABASE_ID}/query`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${NOTION_TOKEN}`,
-          "Notion-Version": "2022-06-28",
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    // ⭐ 分頁讀取全部商品（Notion 每次最多 100 筆）
+    const headers = {
+      Authorization: `Bearer ${NOTION_TOKEN}`,
+      "Notion-Version": "2022-06-28",
+      "Content-Type": "application/json",
+    };
 
-    const data = await response.json();
+    let allResults = [];
+    let hasMore    = true;
+    let cursor     = undefined;
+
+    while (hasMore) {
+      const body = { page_size: 100 };
+      if (cursor) body.start_cursor = cursor;
+
+      const response = await fetch(
+        `https://api.notion.com/v1/databases/${DATABASE_ID}/query`,
+        { method: "POST", headers, body: JSON.stringify(body) }
+      );
+      const data = await response.json();
+      allResults = allResults.concat(data.results || []);
+      hasMore    = data.has_more || false;
+      cursor     = data.next_cursor || undefined;
+    }
+
+    const data = { results: allResults };
 
     // ⭐ 文字
     const getText = (prop) => {
@@ -59,9 +72,7 @@ export default async function handler(req, res) {
 
     // ⭐ 多圖
     const getImages = (prop) => {
-      const text = getText(prop);
-      if (!text) return [];
-      return text.split(",").map(s => s.trim()).filter(Boolean);
+      return getText(prop); // 回傳原始字串，前端自行 split
     };
 
     const products = data.results.map((page) => {
@@ -72,12 +83,15 @@ export default async function handler(req, res) {
       const isSale = getCheckbox(props.isSale);
       const isNew  = getCheckbox(props.isNew);
 
-      const price  = getNumber(props.tprice);
-      const sprice = getNumber(props.sprice);
+      const price   = getNumber(props.tprice);  // formula：台幣售價
+      const sprice  = getNumber(props.sprice);  // formula：台幣特價
+      const jprice  = getNumber(props.jprice);  // 日幣原價
+      const jsprice = getNumber(props.jsprice); // 日幣特價
 
       return {
         id: page.id,
-        name: getText(props.tname),
+        name:  getText(props.tname),
+        jname: getText(props.jname),   // ⭐ 日文名稱
         description: getText(props.description),
 
         price: isSale ? sprice || price : price,
@@ -88,7 +102,13 @@ export default async function handler(req, res) {
         isNew,
         isView,
 
-        category: getSelect(props.category), // ⭐ 分類
+        weight:    getNumber(props.weight),          // ⭐ 重量
+        idnumber:  getText(props.idnumber),            // ⭐ 商品編號（text）
+        sort:    getNumber(props.sort),               // ⭐ 排序
+        jprice:  jprice,                                // ⭐ 日幣原價
+        jsprice: jsprice,                               // ⭐ 日幣特價
+        mainCategory: getSelect(props.mainCategory), // ⭐ 大分類
+        category: getSelect(props.category),     // ⭐ 小分類
 
         image: getImage(props.image),
         images: getImages(props.images),
@@ -98,8 +118,10 @@ export default async function handler(req, res) {
       };
     });
 
-    // ⭐ 只回傳 isView = true 的商品（下架商品不顯示）
-    const visible = products.filter(p => p.isView);
+    // ⭐ showAll=1 時回傳全部（後台用），否則只回傳上架商品
+    const visible = req.query.showAll === "1"
+      ? products
+      : products.filter(p => p.isView);
 
     res.status(200).json(visible);
 
