@@ -68,29 +68,24 @@ export default async function handler(req, res) {
     const imgMatch = text.match(/商品圖片網址：(.+)/);
     let imageUrl   = imgMatch ? imgMatch[1].trim() : "";
 
-    // 如果有圖片網址，透過 Cloudinary 轉存
+    // 如果有圖片網址，透過 Cloudinary 轉存（用 unsigned upload preset）
     let cloudinaryUrl = "";
-    if (imageUrl && imageUrl.startsWith("http") && CLOUDINARY_CLOUD_NAME && CLOUDINARY_API_KEY && CLOUDINARY_API_SECRET) {
+    if (imageUrl && imageUrl.startsWith("http") && CLOUDINARY_CLOUD_NAME) {
       try {
-        const timestamp  = Math.floor(Date.now() / 1000);
-        const str        = `file=${encodeURIComponent(imageUrl)}&timestamp=${timestamp}&upload_preset=shop_upload${CLOUDINARY_API_SECRET}`;
-        const crypto     = await import("crypto");
-        const signature  = crypto.createHash("sha1").update(str).digest("hex");
-
-        const fd = new URLSearchParams();
-        fd.append("file",           imageUrl);
-        fd.append("upload_preset",  "shop_upload");
-        fd.append("timestamp",      timestamp);
-        fd.append("api_key",        CLOUDINARY_API_KEY);
-        fd.append("signature",      signature);
+        const fd = new FormData();
+        fd.append("file",          imageUrl);
+        fd.append("upload_preset", "shop_upload");
 
         const upRes  = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
           method: "POST",
           body:   fd,
         });
         const upData = await upRes.json();
+        console.log("Cloudinary response:", JSON.stringify(upData));
         if (upData.secure_url) cloudinaryUrl = upData.secure_url;
-      } catch {}
+      } catch (err) {
+        console.error("Cloudinary upload error:", err.message);
+      }
     }
 
     // 清理輸出文字（移除圖片網址那行）
