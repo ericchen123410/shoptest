@@ -161,7 +161,7 @@ async function init() {
   document.getElementById("productList").innerHTML =
     `<div class="text-center text-gray-400 py-10 text-sm">載入中...</div>`;
   try {
-    const res = await fetch(PRODUCTS_API + "?showAll=1");
+    const res = await fetch(PRODUCTS_API + "?showAll=1", { cache: "no-store" });
     allProducts = await res.json();
 
     // ⭐ 與首頁相同排序：sort 小的排前面，沒有 sort 排最後，再依時間

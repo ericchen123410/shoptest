@@ -178,7 +178,7 @@ async function init() {
     return;
   }
 
-  const res = await fetch(PRODUCTS_API);
+  const res = await fetch(PRODUCTS_API, { cache: "no-store" });
   const products = await res.json();
 
   orderItems    = [];
@@ -196,10 +196,9 @@ async function init() {
 
 
   // ⭐ 運費計算
-  const baseShipping = Math.ceil(totalWeight * RATE);
-  const needSurcharge = totalWeight < FREE_KG;
-  orderShipping      = baseShipping + (needSurcharge ? SURCHARGE : 0);
-  orderTotal         = orderSubtotal + orderShipping;
+  const isFreeShipping = orderSubtotal >= FREE_AMOUNT;
+  orderShipping        = isFreeShipping ? 0 : FLAT_SHIPPING;
+  orderTotal           = orderSubtotal + orderShipping;
 
   // 訂單明細
   document.getElementById("orderItems").innerHTML = orderItems.map(i => `
@@ -215,9 +214,7 @@ async function init() {
   const shippingRow = document.getElementById("orderShippingRow");
   shippingRow.className = "flex justify-between items-center mt-1 text-sm text-gray-500";
 
-  let shippingText = formatPrice(baseShipping) + "（" + totalWeight.toFixed(2).replace(/\.?0+$/, "") + "kg × NT$" + RATE + "）";
-  if (needSurcharge) shippingText += " + NT$" + SURCHARGE + " 附加費";
-  shippingEl.textContent = shippingText;
+  shippingEl.textContent = isFreeShipping ? "免運費" : "NT$200";
 
   document.getElementById("orderTotal").textContent = formatPrice(orderTotal);
 }

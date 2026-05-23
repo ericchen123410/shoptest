@@ -73,7 +73,7 @@ async function loadProducts() {
     `<div class="text-center text-gray-400 py-6 text-sm">載入中...</div>`;
 
   try {
-    const res  = await fetch(PRODUCTS_API + "?showAll=1");
+    const res  = await fetch(PRODUCTS_API + "?showAll=1", { cache: "no-store" });
     products   = await res.json();
 
     // 只保留有 jname 或 idnumber 的商品

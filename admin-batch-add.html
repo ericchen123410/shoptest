@@ -145,7 +145,7 @@ function removeImgSlot(rowId, slotIdx, e) {
 // ── 初始化：載入現有分類 ──────────────────────────────
 (async () => {
   try {
-    const res  = await fetch(PRODUCTS_API);
+    const res  = await fetch(PRODUCTS_API, { cache: "no-store" });
     const data = await res.json();
     mainCategories = [...new Set(data.map(p => p.mainCategory).filter(Boolean))].sort();
     subCategories  = data.map(p => ({ main: p.mainCategory, sub: p.category })).filter(p => p.sub);
