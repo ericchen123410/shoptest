@@ -79,6 +79,7 @@ export default async function handler(req, res) {
       const page  = data.results[0];
       const props = page.properties;
       return res.status(200).json({
+        pageId:     page.id,
         orderId:    getText(props.orderId),
         customerId: getText(props.customerId),
         items:      parseItems(props.items),
