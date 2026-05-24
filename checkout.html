@@ -292,17 +292,6 @@ window.submitOrder = async () => {
 
     localStorage.removeItem("cart");
 
-    // ⭐ 更新合併的客製化訂單狀態為「處理中」
-    for (const co of mergeOrders) {
-      try {
-        await fetch("https://shoptest-chi.vercel.app/api/custom-order", {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ pageId: co.pageId, status: "處理中" }),
-        });
-      } catch {}
-    }
-    sessionStorage.removeItem("mergeCustomOrders");
 
     document.getElementById("displayOrderId").textContent = orderId;
     document.getElementById("displayCustomerId").textContent = customerId;
