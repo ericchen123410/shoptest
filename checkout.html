@@ -274,23 +274,30 @@ window.submitOrder = async () => {
 
   try {
     // ⭐ Step 1：查詢或建立客戶
-    const custCheck = await fetch(
-      CUSTOMER_API + "?email=" + encodeURIComponent(email)
-    );
-    const custData = await custCheck.json();
-
     let customerId;
-    if (custData.found) {
-      customerId = custData.customerId;
+
+    // hinamecute 優惠碼固定使用 C-161
+    const isCouponOrder = sessionStorage.getItem("appliedCoupon") === "hinamecute";
+    if (isCouponOrder) {
+      customerId = "C-161";
     } else {
-      const custCreate = await fetch(CUSTOMER_API, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, name, phone, address }),
-      });
-      const custCreated = await custCreate.json();
-      if (!custCreated.customerId) throw new Error("客戶建立失敗");
-      customerId = custCreated.customerId;
+      const custCheck = await fetch(
+        CUSTOMER_API + "?email=" + encodeURIComponent(email)
+      );
+      const custData = await custCheck.json();
+
+      if (custData.found) {
+        customerId = custData.customerId;
+      } else {
+        const custCreate = await fetch(CUSTOMER_API, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, name, phone, address }),
+        });
+        const custCreated = await custCreate.json();
+        if (!custCreated.customerId) throw new Error("客戶建立失敗");
+        customerId = custCreated.customerId;
+      }
     }
 
     // ⭐ Step 2：建立訂單
