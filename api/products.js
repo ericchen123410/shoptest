@@ -104,6 +104,7 @@ export default async function handler(req, res) {
 
         weight:    getNumber(props.weight),          // ⭐ 重量
         idnumber:  getText(props.idnumber),            // ⭐ 商品編號（text）
+        variants:  (props.variants?.multi_select || []).map(v => v.name),
         sort:    getNumber(props.sort),               // ⭐ 排序
         jprice:  jprice,                                // ⭐ 日幣原價
         jsprice: jsprice,                               // ⭐ 日幣特價
