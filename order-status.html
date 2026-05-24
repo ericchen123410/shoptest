@@ -319,21 +319,21 @@ function renderOrderDetail(data) {
     </div>
 
     <!-- 操作按鈕（待處理或處理中才顯示）-->
-    \${["待處理","處理中"].includes(data.status) ? \`
+    ${["待處理","處理中"].includes(data.status) ? `
     <div class="flex gap-2 mt-3">
-      <button onclick="openEditModal(\${encodeData({pageId:data.pageId,name:data.name,phone:data.phone,address:data.address,customerId:data.customerId,status:data.status})})"
+      <button onclick="openEditModal('${encodeData({pageId:data.pageId,name:data.name,phone:data.phone,address:data.address,customerId:data.customerId,status:data.status})}')"
         class="flex-1 py-2.5 border rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition">
         ✏️ 修改收件資料
       </button>
-      <button onclick="openCancelModal(\${encodeData({pageId:data.pageId,orderId:data.orderId,status:data.status})})"
+      <button onclick="openCancelModal('${encodeData({pageId:data.pageId,orderId:data.orderId,status:data.status})}')"
         class="flex-1 py-2.5 border border-red-200 rounded-xl text-sm text-red-400 hover:bg-red-50 transition">
-        \${data.status === "待處理" ? "❌ 取消訂單" : "📋 申請取消"}
+        ${data.status === "待處理" ? "❌ 取消訂單" : "📋 申請取消"}
       </button>
-    </div>\` : ""}`;
+    </div>` : ""}`;
 }
 
 function encodeData(obj) {
-  return "'" + encodeURIComponent(JSON.stringify(obj)) + "'";
+  return encodeURIComponent(JSON.stringify(obj));
 }
 
 function notFoundHTML(msg) {
