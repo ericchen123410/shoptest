@@ -130,7 +130,7 @@ export default async function handler(req, res) {
 
     // ── POST：新增客戶 + 自動產生編號 ────────────────
     if (req.method === "POST") {
-      const { email, name, phone, address } = req.body;
+      const { email, name, phone, address, prefix } = req.body;
       if (!email) return res.status(400).json({ error: "email 為必填" });
 
       // 先查一次確保不重複
@@ -170,8 +170,8 @@ export default async function handler(req, res) {
       const allData = await allRes.json();
 
       // 產生下一個客戶編號（從 W-82I 開始）
-      const PREFIX  = "W-82";
-      const KNOWN_START = "I"; // 已知到 W-82H，下一個從 I 開始
+      const PREFIX      = prefix || "W-82";
+      const KNOWN_START = PREFIX === "W-82" ? "I" : "A";
 
       // 取出所有現有編號的後綴
       const suffixes = (allData.results || [])
