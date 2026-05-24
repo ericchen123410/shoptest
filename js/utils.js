@@ -4,7 +4,7 @@ export const formatPrice = (n) =>
     currency: "TWD",
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
-  }).format(Math.round(Number(n || 0)));
+  }).format(Math.floor(Number(n || 0)));
 
 export const getCart = () =>
   JSON.parse(localStorage.getItem("cart") || "{}");
