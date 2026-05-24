@@ -196,7 +196,11 @@ async function init() {
   const grandTotal     = subtotal + shipping;
 
   const amountLeft   = FREE_AMOUNT - subtotal;
-  const shippingHint = isFreeShipping
+  const shippingHint = appliedCoupon
+    ? `<div class="flex items-center gap-1.5 text-xs text-blue-500 font-medium">
+         <span>✨</span><span>已套用hiname折扣碼，價格為商品總價，商品運費請找咩咩另計</span>
+       </div>`
+    : isFreeShipping
     ? `<div class="flex items-center gap-1.5 text-xs text-green-600 font-medium">
          <span>✅</span><span>已達 NT$5,000，免運費！</span>
        </div>`
