@@ -335,7 +335,7 @@ function renderOrderDetail(data) {
     ${["待處理","處理中"].includes(data.status) ? `
     <div class="flex flex-col gap-2 mt-3">
       ${data.status === "待處理" && Array.isArray(data.items) ? `
-      <button onclick="openItemsModal('${encodeData({pageId:data.pageId,items:data.items,status:data.status})}')"
+      <button onclick="openItemsModal('${encodeData({pageId:data.pageId,status:data.status})}', ${JSON.stringify(data.items).replace(/"/g, '&quot;')})"
         class="w-full py-2.5 border rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition">
         🛒 修改商品數量 / 刪除商品
       </button>` : ""}
@@ -474,13 +474,43 @@ const CUSTOMER_API_MOD = "https://shoptest-chi.vercel.app/api/customer";
 let _editData = null, _cancelData = null, _itemsData = null;
 
 // ── 修改商品 ─────────────────────────────────────────
-window.openItemsModal = (encoded) => {
+window.openItemsModal = async (encoded, itemsJson) => {
   _itemsData = JSON.parse(decodeURIComponent(encoded));
-  _itemsData._editItems = JSON.parse(JSON.stringify(_itemsData.items)); // 深拷貝
-  renderItemsEditor();
+  const rawItems = typeof itemsJson === 'string' ? JSON.parse(itemsJson) : itemsJson;
+
+  // 顯示 loading
+  document.getElementById("itemsEditor").innerHTML = '<div class="text-center text-gray-400 py-6 text-sm">載入最新商品資料...</div>';
   document.getElementById("itemsSaveStatus").classList.add("hidden");
   document.getElementById("itemsModal").classList.remove("hidden");
   document.body.style.overflow = "hidden";
+
+  try {
+    // 取得最新商品資料
+    const res      = await fetch("https://shoptest-chi.vercel.app/api/products", { cache: "no-store" });
+    const products = await res.json();
+
+    // 用 idnumber 或 id 對應最新價格和名稱
+    _itemsData._editItems = rawItems.map(item => {
+      const p = products.find(x =>
+        (item.idnumber && String(x.idnumber) === String(item.idnumber)) ||
+        x.id === item.id
+      );
+      if (p) {
+        return {
+          ...item,
+          name:  p.name,
+          price: p.price,
+          jprice: p.jprice,
+          idnumber: p.idnumber || item.idnumber,
+        };
+      }
+      return item; // 找不到商品就用原本資料
+    });
+  } catch {
+    _itemsData._editItems = JSON.parse(JSON.stringify(rawItems));
+  }
+
+  renderItemsEditor();
 };
 
 function closeItemsModal() {
@@ -503,7 +533,9 @@ function renderItemsEditor() {
     <div class="flex items-center gap-3 border rounded-xl p-3 ${item.qty === 0 ? "opacity-40" : ""}">
       <div class="flex-1 min-w-0">
         <div class="text-sm font-medium">${item.name}${item.variant ? ` <span class="text-xs text-gray-400">（${item.variant}）</span>` : ""}</div>
-        <div class="text-xs text-gray-400 mt-0.5">NT$${Math.round(item.price).toLocaleString()} / 件</div>
+        <div class="text-xs text-gray-400 mt-0.5">
+          ${item.idnumber ? `<span class="text-gray-300">#${item.idnumber}</span> · ` : ""}NT$${Math.floor(item.price).toLocaleString()} / 件
+        </div>
       </div>
       <div class="flex items-center gap-2 shrink-0">
         <div class="flex items-center border rounded-lg overflow-hidden">

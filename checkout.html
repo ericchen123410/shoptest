@@ -202,7 +202,7 @@ async function init() {
     orderSubtotal += sub;
     totalWeight   += (p.weight || 0) * qty;
     const name = variant ? `${p.name}（${variant}）` : p.name;
-    orderItems.push({ id, variant: variant || "", name, qty, price: unitPrice, sub });
+    orderItems.push({ id, idnumber: p.idnumber || "", variant: variant || "", name, qty, price: unitPrice, sub });
   });
 
 
