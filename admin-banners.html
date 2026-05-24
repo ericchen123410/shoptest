@@ -104,8 +104,8 @@ const BANNER_API    = "https://shoptest-chi.vercel.app/api/banner-manage";
 
 // 目標裁切比例 16:7
 const TARGET_RATIO = 16 / 7;
-const TARGET_W = 1400;
-const TARGET_H = 613;
+const TARGET_W = 2800;
+const TARGET_H = 1226;
 
 let banners    = [];
 let origFile   = null;
@@ -185,7 +185,7 @@ function renderCropBox() {
   const pw = Math.round(crop.w * scale);
   const ph = Math.round(crop.h * scale);
   document.getElementById("cropSizeHint").textContent =
-    `裁切區域：${pw} × ${ph} px → 輸出 ${TARGET_W} × ${TARGET_H} px`;
+    `裁切區域：${pw} × ${ph} px → 輸出 2800 × 1226 px（高解析度）`;
 }
 
 // ── 拖曳邏輯 ─────────────────────────────────────────
@@ -306,10 +306,10 @@ async function cropAndUpload() {
 
     // 轉 blob 上傳
     status.textContent = "⏳ 上傳至 Cloudinary...";
-    const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.92));
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/png"));
 
     const fd = new FormData();
-    fd.append("file", blob, "banner.jpg");
+    fd.append("file", blob, "banner.png");
     fd.append("upload_preset", UPLOAD_PRESET);
 
     const upRes  = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
