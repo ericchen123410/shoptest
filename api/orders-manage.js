@@ -151,6 +151,7 @@ export default async function handler(req, res) {
       const orders = (ordersData.results || []).map(page => {
         const props = page.properties;
         return {
+          pageId:     page.id,
           orderId:    getText(props.orderId),
           customerId: getText(props.customerId),
           items:      parseItems(props.items),
