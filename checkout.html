@@ -31,7 +31,7 @@
           class="px-2 py-1.5 rounded-lg hover:bg-gray-100 text-base">🔍</button>
       </div>
       <a href="order-status.html" class="px-2 py-1.5 rounded-lg hover:bg-gray-100 text-xs lg:text-sm">📋 <span class="hidden sm:inline">訂單查詢</span></a>
-      <a href="cart.html" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-gray-100 text-sm text-gray-500 hover:text-black transition">← 返回購物車</a>
+      <button onclick="history.back()" class="px-2 py-1.5 rounded-lg hover:bg-gray-100 text-sm">⬅️</button>
       <a href="cart.html" class="px-2 py-1.5 rounded-lg hover:bg-gray-100 text-sm">
         🛒 <span id="cartCount" class="bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full">0</span>
       </a>
@@ -111,10 +111,16 @@
   </div>
 
   <!-- 送出按鈕 -->
-  <button id="submitBtn" onclick="submitOrder()"
-    class="w-full py-3.5 bg-black text-white font-medium rounded-xl active:bg-gray-800 transition text-base">
-    確認送出訂單
-  </button>
+  <div class="flex gap-3">
+    <a href="cart.html"
+      class="flex-1 py-3.5 border border-gray-300 text-gray-600 font-medium rounded-xl text-center hover:bg-gray-50 active:bg-gray-100 transition text-base">
+      ← 回到購物車
+    </a>
+    <button id="submitBtn" onclick="submitOrder()"
+      class="flex-1 py-3.5 bg-black text-white font-medium rounded-xl active:bg-gray-800 transition text-base">
+      確認送出訂單
+    </button>
+  </div>
 
   <p class="text-xs text-center text-gray-400 mt-3">送出後將建立訂單，我們會盡快與您聯繫</p>
 
