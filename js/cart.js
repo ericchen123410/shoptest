@@ -108,7 +108,7 @@ async function init() {
   const FLAT_SHIPPING = 200;   // 固定運費（台幣）
   const FREE_AMOUNT   = 5000;  // 免運門檻（台幣）
 
-  const isFreeShipping = subtotal >= FREE_AMOUNT;
+  const isFreeShipping = appliedCoupon ? true : subtotal >= FREE_AMOUNT;
   const shipping       = isFreeShipping ? 0 : FLAT_SHIPPING;
   const grandTotal     = subtotal + shipping;
 
