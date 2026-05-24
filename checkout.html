@@ -212,7 +212,7 @@ async function init() {
   const COUPONS        = { "hinamecute": { type: "jprice_rate", rate: 0.3 } };
   const couponCode     = sessionStorage.getItem("appliedCoupon") || "";
   const appliedCoupon  = COUPONS[couponCode] || null;
-  const isFreeShipping = orderSubtotal >= FREE_AMOUNT;
+  const isFreeShipping = appliedCoupon ? true : orderSubtotal >= FREE_AMOUNT;
   orderShipping        = isFreeShipping ? 0 : FLAT_SHIPPING;
   orderTotal           = orderSubtotal + orderShipping;
 
