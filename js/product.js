@@ -144,6 +144,20 @@ async function init() {
             </div>` : ""}
           </div>` : ""}
 
+          <!-- 規格選擇（有 variants 才顯示）-->
+          ${p.variants && p.variants.length > 0 ? `
+          <div class="mt-5">
+            <div class="text-sm text-gray-500 mb-2">規格</div>
+            <div class="flex flex-wrap gap-2" id="variantBtns">
+              ${p.variants.map(v => `
+                <button onclick="selectVariant(this, '${v}')"
+                  class="variant-btn px-4 py-2 border rounded-lg text-sm font-medium transition hover:border-black active:bg-gray-100">
+                  ${v}
+                </button>`).join("")}
+            </div>
+            <p id="variantHint" class="text-xs text-red-400 mt-1.5 hidden">請先選擇規格</p>
+          </div>` : ""}
+
           <!-- 數量 -->
           <div class="flex items-center gap-4 mt-5">
             <span class="text-sm text-gray-500">數量</span>
@@ -183,6 +197,17 @@ async function init() {
       };
     });
 
+    // 規格選擇
+    let selectedVariant = "";
+    window.selectVariant = (btn, value) => {
+      selectedVariant = value;
+      document.querySelectorAll(".variant-btn").forEach(b => {
+        b.className = "variant-btn px-4 py-2 border rounded-lg text-sm font-medium transition hover:border-black active:bg-gray-100";
+      });
+      btn.className = "variant-btn px-4 py-2 border-2 border-black rounded-lg text-sm font-medium transition bg-black text-white";
+      document.getElementById("variantHint")?.classList.add("hidden");
+    };
+
     // 數量控制
     let qty = 1;
     const qtyEl = document.getElementById("qty");
@@ -191,10 +216,17 @@ async function init() {
 
     // 加入購物車
     document.getElementById("addBtn").onclick = () => {
+      // 有規格但未選擇
+      if (p.variants && p.variants.length > 0 && !selectedVariant) {
+        document.getElementById("variantHint")?.classList.remove("hidden");
+        return;
+      }
       const cart = JSON.parse(localStorage.getItem("cart") || "{}");
-      cart[p.id] = (cart[p.id] || 0) + qty;
+      // 規格用 id:規格 作為 key
+      const cartKey = selectedVariant ? `${p.id}:${selectedVariant}` : p.id;
+      cart[cartKey] = (cart[cartKey] || 0) + qty;
       localStorage.setItem("cart", JSON.stringify(cart));
-      alert("已加入購物車");
+      alert(selectedVariant ? `已加入購物車（${selectedVariant}）` : "已加入購物車");
       location.reload();
     };
 

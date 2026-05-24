@@ -25,8 +25,9 @@ async function init() {
   let subtotal   = 0;
   let totalWeight = 0;
 
-  const rows = ids.map(id => {
-    const qty = cart[id];
+  const rows = ids.map(cartKey => {
+    const [id, variant] = cartKey.split(":");
+    const qty = cart[cartKey];
     const p   = products.find(x => x.id === id);
     if (!p) return "";
 
@@ -35,7 +36,6 @@ async function init() {
     subtotal    += sub;
     totalWeight += weight;
 
-    // 沒有填重量的商品顯示提示
     const weightNote = !p.weight
       ? `<div class="text-xs text-orange-400 mt-0.5">⚠️ 未設定重量</div>`
       : `<div class="text-xs text-gray-400 mt-0.5">${p.weight} kg／件</div>`;
@@ -49,20 +49,21 @@ async function init() {
 
         <div class="flex-1 min-w-0">
           <div class="text-sm sm:text-base font-semibold leading-snug line-clamp-2 text-gray-800">${p.name}</div>
+          ${variant ? `<div class="text-xs text-gray-500 mt-0.5">規格：${variant}</div>` : ""}
           <div class="text-red-500 text-sm mt-1 font-medium">${formatPrice(p.price)}</div>
           ${weightNote}
 
           <div class="flex items-center mt-2 border rounded-lg overflow-hidden w-fit">
-            <button onclick="updateQty('${id}', -1)"
+            <button onclick="updateQty('${cartKey}', -1)"
               class="w-9 h-9 text-lg flex items-center justify-center active:bg-gray-100">−</button>
             <span class="w-8 text-center text-sm font-medium">${qty}</span>
-            <button onclick="updateQty('${id}', 1)"
+            <button onclick="updateQty('${cartKey}', 1)"
               class="w-9 h-9 text-lg flex items-center justify-center active:bg-gray-100">＋</button>
           </div>
         </div>
 
         <div class="flex flex-col items-end gap-3 shrink-0">
-          <button onclick="removeItem('${id}')"
+          <button onclick="removeItem('${cartKey}')"
             class="text-gray-300 active:text-red-400 text-xl leading-none">✕</button>
           <div class="text-sm font-bold text-gray-800">${formatPrice(sub)}</div>
         </div>
