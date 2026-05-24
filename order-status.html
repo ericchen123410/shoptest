@@ -490,15 +490,11 @@ window.openItemsModal = async (encoded, itemsJson) => {
     const products = await res.json();
 
     // 用 idnumber 或 id 對應最新價格和名稱
-    console.log("rawItems:", JSON.stringify(rawItems));
-    console.log("products sample:", JSON.stringify(products.slice(0,2).map(x=>({id:x.id,idnumber:x.idnumber,name:x.name}))));
     _itemsData._editItems = rawItems.map(item => {
-      console.log("matching item idnumber:", item.idnumber, "id:", item.id);
       const p = products.find(x =>
         (item.idnumber && String(x.idnumber) === String(item.idnumber)) ||
         x.id === item.id
       );
-      console.log("found:", p ? p.name : "NOT FOUND");
       if (p) {
         return {
           ...item,

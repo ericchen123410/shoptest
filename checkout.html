@@ -186,6 +186,11 @@ async function init() {
   const res = await fetch(PRODUCTS_API, { cache: "no-store" });
   const products = await res.json();
 
+  // ⭐ 優惠碼（要在使用前宣告）
+  const COUPONS2       = { "hinamecute": { type: "jprice_rate", rate: 0.3 } };
+  const couponCode2    = sessionStorage.getItem("appliedCoupon") || "";
+  const activeCoupon   = COUPONS2[couponCode2] || null;
+
   orderItems    = [];
   orderSubtotal = 0;
   let totalWeight = 0;
@@ -195,8 +200,8 @@ async function init() {
     const p = products.find(x => x.id === id);
     if (!p) return;
     let unitPrice = p.price;
-    if (appliedCoupon?.type === "jprice_rate" && p.jprice) {
-      unitPrice = Math.round(p.jprice * appliedCoupon.rate);
+    if (activeCoupon?.type === "jprice_rate" && p.jprice) {
+      unitPrice = Math.floor(p.jprice * activeCoupon.rate);
     }
     const sub  = unitPrice * qty;
     orderSubtotal += sub;
@@ -209,10 +214,7 @@ async function init() {
   // ⭐ 運費計算
   const FLAT_SHIPPING  = 200;
   const FREE_AMOUNT    = 5000;
-  const COUPONS        = { "hinamecute": { type: "jprice_rate", rate: 0.3 } };
-  const couponCode     = sessionStorage.getItem("appliedCoupon") || "";
-  const appliedCoupon  = COUPONS[couponCode] || null;
-  const isFreeShipping = appliedCoupon ? true : orderSubtotal >= FREE_AMOUNT;
+  const isFreeShipping = activeCoupon ? true : orderSubtotal >= FREE_AMOUNT;
   orderShipping        = isFreeShipping ? 0 : FLAT_SHIPPING;
   orderTotal           = orderSubtotal + orderShipping;
 
@@ -293,8 +295,6 @@ window.submitOrder = async () => {
 
     // ⭐ Step 2：建立訂單
     btn.textContent = "建立訂單...";
-    console.log("送出 items:", JSON.stringify(orderItems));
-    console.log("送出 total:", orderTotal);
     const res = await fetch(ORDERS_API, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
