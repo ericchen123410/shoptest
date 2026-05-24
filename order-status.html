@@ -137,7 +137,7 @@ window.queryByOrder = async () => {
 
     // 查客戶資料
     const customer = await fetchCustomer(data.customerId);
-    const order    = { ...customer, ...data };
+    const order    = { ...customer, ...data, customerPageId: customer.pageId };
     el.innerHTML   = renderOrderDetail(order);
 
   } catch (err) {
@@ -238,7 +238,7 @@ window.showOrderDetail = async (orderId, customer) => {
       <button onclick="queryByCustomer()" class="flex items-center gap-1 text-sm text-gray-400 hover:text-black mb-4">
         ← 返回訂單列表
       </button>
-      ${renderOrderDetail({ ...customer, ...data })}`;
+      ${renderOrderDetail({ ...customer, ...data, customerPageId: customer.pageId })}`;
   } catch {}
 };
 
@@ -340,7 +340,7 @@ function renderOrderDetail(data) {
         🛒 修改商品數量 / 刪除商品
       </button>` : ""}
       <div class="flex gap-2">
-        <button onclick="openEditModal('${encodeData({pageId:data.pageId,name:data.name,phone:data.phone,address:data.address,customerId:data.customerId,status:data.status})}')"
+        <button onclick="openEditModal('${encodeData({pageId:data.customerPageId||data.pageId,name:data.name,phone:data.phone,address:data.address,customerId:data.customerId,status:data.status})}')"
           class="flex-1 py-2.5 border rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition">
           ✏️ 修改收件資料
         </button>
