@@ -83,8 +83,8 @@ export default async function handler(req, res) {
       const isSale = getCheckbox(props.isSale);
       const isNew  = getCheckbox(props.isNew);
 
-      const price   = getNumber(props.tprice);  // formula：台幣售價
-      const sprice  = getNumber(props.sprice);  // formula：台幣特價
+      const price   = Math.floor(getNumber(props.tprice));  // formula：台幣售價
+      const sprice  = Math.floor(getNumber(props.sprice));  // formula：台幣特價
       const jprice  = getNumber(props.jprice);  // 日幣原價
       const jsprice = getNumber(props.jsprice); // 日幣特價
 
