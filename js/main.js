@@ -46,13 +46,15 @@ async function init() {
   if (urlQ) {
     window.location.replace("search.html?q=" + encodeURIComponent(urlQ));
   } else if (urlMain) {
-    // 自動選大分類
+    // 自動選大分類，然後清除 URL 參數
     activeMain = urlMain;
     activeSub  = "全部";
     renderMainTabs();
     renderSubTabs();
     renderList();
     scrollToList();
+    // 清除 URL 參數避免重新整理時重複套用
+    history.replaceState(null, "", "index.html");
   }
 }
 
