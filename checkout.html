@@ -194,17 +194,24 @@ async function init() {
     const [id, variant] = cartKey.split(":");
     const p = products.find(x => x.id === id);
     if (!p) return;
-    const sub  = p.price * qty;
+    let unitPrice = p.price;
+    if (appliedCoupon?.type === "jprice_rate" && p.jprice) {
+      unitPrice = Math.round(p.jprice * appliedCoupon.rate);
+    }
+    const sub  = unitPrice * qty;
     orderSubtotal += sub;
     totalWeight   += (p.weight || 0) * qty;
     const name = variant ? `${p.name}（${variant}）` : p.name;
-    orderItems.push({ id, variant: variant || "", name, qty, price: p.price, sub });
+    orderItems.push({ id, variant: variant || "", name, qty, price: unitPrice, sub });
   });
 
 
   // ⭐ 運費計算
   const FLAT_SHIPPING  = 200;
   const FREE_AMOUNT    = 5000;
+  const COUPONS        = { "hinamecute": { type: "jprice_rate", rate: 0.3 } };
+  const couponCode     = sessionStorage.getItem("appliedCoupon") || "";
+  const appliedCoupon  = COUPONS[couponCode] || null;
   const isFreeShipping = orderSubtotal >= FREE_AMOUNT;
   orderShipping        = isFreeShipping ? 0 : FLAT_SHIPPING;
   orderTotal           = orderSubtotal + orderShipping;

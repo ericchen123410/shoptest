@@ -552,12 +552,20 @@ async function saveItems() {
     status.textContent = "✅ 已更新！";
     status.className   = "text-xs text-center text-green-600";
     status.classList.remove("hidden");
-    setTimeout(closeItemsModal, 1000);
+    setTimeout(() => { closeItemsModal(); refreshCurrentOrder(); }, 1000);
   } catch (err) {
     status.textContent = "❌ " + err.message;
     status.className   = "text-xs text-center text-red-500";
     status.classList.remove("hidden");
     btn.disabled = false; btn.textContent = "儲存變更";
+  }
+}
+
+// ── 重新載入當前訂單 ─────────────────────────────────
+async function refreshCurrentOrder() {
+  const orderId = document.getElementById("orderInput")?.value.trim();
+  if (orderId) {
+    await window.queryByOrder();
   }
 }
 
@@ -594,7 +602,7 @@ async function submitEditCustomer() {
     status.textContent = "✅ 已更新！";
     status.className   = "text-xs text-center text-green-600";
     status.classList.remove("hidden");
-    setTimeout(closeEditModal, 1000);
+    setTimeout(() => { closeEditModal(); refreshCurrentOrder(); }, 1000);
   } catch (err) {
     status.textContent = "❌ " + err.message;
     status.className   = "text-xs text-center text-red-500";
@@ -636,7 +644,7 @@ async function submitCancel() {
     status.className   = "text-xs text-center text-green-600";
     status.classList.remove("hidden");
     btn.textContent = "完成";
-    setTimeout(closeCancelModal, 1500);
+    setTimeout(() => { closeCancelModal(); refreshCurrentOrder(); }, 1500);
   } catch (err) {
     status.textContent = "❌ " + err.message;
     status.className   = "text-xs text-center text-red-500";
