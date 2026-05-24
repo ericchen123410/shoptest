@@ -16,6 +16,19 @@ let bundleOrders = []; // 選取的集運訂單
 let selectedBundleIds = new Set();
 
 window.toggleBundle = (checked) => {
+  if (checked && appliedCoupon) {
+    // hinamecute 不能使用集運
+    document.getElementById("bundleCheck").checked = false;
+    document.getElementById("bundleSection").classList.add("hidden");
+    const hint = document.getElementById("bundleHint");
+    if (hint) {
+      hint.textContent = "⚠️ 使用優惠碼時不可使用集運功能";
+      hint.classList.remove("hidden");
+    }
+    return;
+  }
+  const hint = document.getElementById("bundleHint");
+  if (hint) hint.classList.add("hidden");
   document.getElementById("bundleSection").classList.toggle("hidden", !checked);
   if (!checked) {
     selectedBundleIds.clear();
@@ -244,6 +257,7 @@ async function init() {
             <div class="text-xs text-gray-400">與其他待處理訂單合併計算運費</div>
           </div>
         </label>
+        <div id="bundleHint" class="hidden text-xs text-orange-500 mt-2"></div>
         <div id="bundleSection" class="hidden mt-3">
           <div class="text-xs text-gray-500 mb-2">輸入 Email 查詢可合併的訂單</div>
           <div class="flex gap-2">
