@@ -7,6 +7,12 @@ export default async function handler(req, res) {
   try {
     const { NOTION_TOKEN, ORDERS_DATABASE_ID } = process.env;
 
+    const parseItems = (prop) => {
+      const text = getText(prop);
+      if (!text) return [];
+      try { return JSON.parse(text); } catch { return text; }
+    };
+
     const getText = (prop) => {
       if (!prop) return "";
       if (prop.title)     return prop.title.map(t => t.plain_text).join("");
@@ -38,7 +44,7 @@ export default async function handler(req, res) {
           pageId:    page.id,
           orderId:    getText(props.orderId),
           customerId: getText(props.customerId),
-          items:      getText(props.items),
+          items:      parseItems(props.items),
           total:      props.total?.number || 0,
           status:     props.status?.select?.name || "待處理",
           createdAt:  page.created_time,
@@ -75,7 +81,7 @@ export default async function handler(req, res) {
       return res.status(200).json({
         orderId:    getText(props.orderId),
         customerId: getText(props.customerId),
-        items:      getText(props.items),
+        items:      parseItems(props.items),
         total:      props.total?.number || 0,
         status:     props.status?.select?.name || "待處理",
         createdAt:  page.created_time,
@@ -145,7 +151,7 @@ export default async function handler(req, res) {
         return {
           orderId:    getText(props.orderId),
           customerId: getText(props.customerId),
-          items:      getText(props.items),
+          items:      parseItems(props.items),
           total:      props.total?.number || 0,
           status:     props.status?.select?.name || "待處理",
           createdAt:  page.created_time,
@@ -158,7 +164,7 @@ export default async function handler(req, res) {
     // ── POST：建立訂單 ────────────────────────────────
     if (req.method === "POST") {
       const { orderId, customerId, items, total } = req.body;
-      const itemsText = items.map(i => `${i.name} × ${i.qty}（${i.price}）`).join("\n");
+      const itemsText = JSON.stringify(items);
       const response = await fetch("https://api.notion.com/v1/pages", {
         method: "POST",
         headers: {
@@ -186,10 +192,16 @@ export default async function handler(req, res) {
 
     // ── PATCH：更新訂單狀態 ───────────────────────────
     if (req.method === "PATCH") {
-      const { pageId, status } = req.body;
-      if (!pageId || !status) return res.status(400).json({ error: "缺少 pageId 或 status" });
-      const VALID = ["待處理","處理中","已出貨","已完成","已取消"];
-      if (!VALID.includes(status)) return res.status(400).json({ error: "無效狀態值" });
+      const { pageId, status, items, total } = req.body;
+      if (!pageId) return res.status(400).json({ error: "缺少 pageId" });
+      const properties = {};
+      if (status) {
+        const VALID = ["待處理","處理中","已出貨","已完成","已取消","申請取消中"];
+        if (!VALID.includes(status)) return res.status(400).json({ error: "無效狀態值" });
+        properties.status = { select: { name: status } };
+      }
+      if (items !== undefined) properties.items = { rich_text: [{ text: { content: JSON.stringify(items) } }] };
+      if (total !== undefined) properties.total = { number: total };
       const response = await fetch(`https://api.notion.com/v1/pages/${pageId}`, {
         method: "PATCH",
         headers: {
@@ -197,7 +209,7 @@ export default async function handler(req, res) {
           "Notion-Version": "2022-06-28",
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ properties: { status: { select: { name: status } } } }),
+        body: JSON.stringify({ properties }),
       });
       if (!response.ok) {
         const err = await response.json();
