@@ -89,15 +89,34 @@ export default async function handler(req, res) {
 
     // ── PATCH：更新客戶資料 ──────────────────────────────
     if (req.method === "PATCH") {
-      const { pageId, name, phone, address } = req.body;
-      if (!pageId) return res.status(400).json({ error: "缺少 pageId" });
+      const { pageId, customerId, name, phone, address } = req.body;
+
+      let targetPageId = pageId;
+
+      // 沒有 pageId 就用 customerId 查找
+      if (!targetPageId && customerId) {
+        const findRes  = await fetch(
+          `https://api.notion.com/v1/databases/${CUSTOMER_DATABASE_ID}/query`,
+          {
+            method: "POST", headers,
+            body: JSON.stringify({
+              filter: { property: "customerId", title: { equals: customerId.trim() } },
+              page_size: 1,
+            }),
+          }
+        );
+        const findData = await findRes.json();
+        if (findData.results?.length) targetPageId = findData.results[0].id;
+      }
+
+      if (!targetPageId) return res.status(400).json({ error: "缺少 pageId 或 customerId" });
 
       const properties = {};
       if (name    !== undefined) properties.name    = { rich_text:    [{ text: { content: name || "" } }] };
       if (phone   !== undefined) properties.phone   = { phone_number: phone || null };
       if (address !== undefined) properties.address = { rich_text:    [{ text: { content: address || "" } }] };
 
-      const response = await fetch(`https://api.notion.com/v1/pages/${pageId}`, {
+      const response = await fetch(`https://api.notion.com/v1/pages/${targetPageId}`, {
         method: "PATCH",
         headers,
         body: JSON.stringify({ properties }),
