@@ -203,6 +203,8 @@ async function init() {
 
 
   // ⭐ 運費計算
+  const FLAT_SHIPPING  = 200;
+  const FREE_AMOUNT    = 5000;
   const isFreeShipping = orderSubtotal >= FREE_AMOUNT;
   orderShipping        = isFreeShipping ? 0 : FLAT_SHIPPING;
   orderTotal           = orderSubtotal + orderShipping;
