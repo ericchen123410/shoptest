@@ -60,7 +60,7 @@ function renderBundleList() {
         class="w-4 h-4 accent-black shrink-0">
       <div class="flex-1 min-w-0">
         <div class="text-xs font-medium">${o.orderId}</div>
-        <div class="text-xs text-gray-400">NT$ ${Math.floor(o.total).toLocaleString()}</div>
+        <div class="text-xs text-gray-400">NT$ ${Math.floor(Number(o.total)||0).toLocaleString()}</div>
       </div>
     </label>`).join("");
   updateBundleTotal();
@@ -82,7 +82,7 @@ function updateBundleTotal() {
   const selected = bundleOrders.filter(o => selectedBundleIds.has(o.pageId));
   // 取得當前購物車小計（全域 subtotal 在 renderCart scope 裡，用近似值）
   const cartSubtotal = window._cartSubtotal || 0;
-  const bundleSubtotal = selected.reduce((s, o) => s + (o.total || 0), 0);
+  const bundleSubtotal = selected.reduce((s, o) => s + (Number(o.total) || 0), 0);
   const combinedTotal = cartSubtotal + bundleSubtotal;
   const shipping = combinedTotal >= 5000 ? 0 : 200;
 
