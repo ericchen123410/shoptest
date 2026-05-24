@@ -99,13 +99,24 @@ async function init() {
         <!-- 商品資訊 -->
         <div class="mt-5 lg:mt-0">
 
-          <!-- 分類麵包屑 -->
-          ${(p.mainCategory || p.category) ? `
-          <div class="text-xs text-gray-400 mb-2 flex items-center gap-1">
-            ${p.mainCategory ? `<span>${p.mainCategory}</span>` : ""}
-            ${p.mainCategory && p.category ? `<span>›</span>` : ""}
-            ${p.category ? `<span>${p.category}</span>` : ""}
-          </div>` : ""}
+          <!-- 麵包屑導覽 -->
+          <div class="flex items-center gap-1 flex-wrap mb-3">
+            <a href="index.html"
+              class="text-xs text-gray-400 hover:text-black transition px-2 py-1 rounded-lg hover:bg-gray-100">
+              🏠 首頁
+            </a>
+            ${p.mainCategory ? `
+            <span class="text-gray-300 text-xs">›</span>
+            <a href="index.html?main=${encodeURIComponent(p.mainCategory)}"
+              class="text-xs text-gray-400 hover:text-black transition px-2 py-1 rounded-lg hover:bg-gray-100">
+              ${p.mainCategory}
+            </a>` : ""}
+            ${p.category ? `
+            <span class="text-gray-300 text-xs">›</span>
+            <span class="text-xs text-gray-600 px-2 py-1">
+              ${p.category}
+            </span>` : ""}
+          </div>
 
           <!-- 標籤 -->
           <div class="flex gap-2 mb-2 flex-wrap">
