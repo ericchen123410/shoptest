@@ -310,6 +310,23 @@ window.submitOrder = async () => {
 
     localStorage.removeItem("cart");
 
+    // ⭐ 集運：更新所有選取訂單的 bundleId
+    const bundleOrdersRaw = sessionStorage.getItem("bundleOrders");
+    if (bundleOrdersRaw) {
+      const bundleOrders = JSON.parse(bundleOrdersRaw);
+      const bundleId = "BUNDLE" + Date.now().toString().slice(-8);
+      // 更新所有集運訂單（含本筆）
+      const patchPromises = bundleOrders.map(o =>
+        fetch(ORDERS_API, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pageId: o.pageId, bundleId }),
+        })
+      );
+      // 本筆訂單也標記 bundleId（需要 pageId，先查）
+      await Promise.all(patchPromises);
+      sessionStorage.removeItem("bundleOrders");
+    }
 
     document.getElementById("displayOrderId").textContent = orderId;
     document.getElementById("displayCustomerId").textContent = customerId;
