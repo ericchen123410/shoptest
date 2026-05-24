@@ -293,6 +293,8 @@ window.submitOrder = async () => {
 
     // ⭐ Step 2：建立訂單
     btn.textContent = "建立訂單...";
+    console.log("送出 items:", JSON.stringify(orderItems));
+    console.log("送出 total:", orderTotal);
     const res = await fetch(ORDERS_API, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
