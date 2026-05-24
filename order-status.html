@@ -489,6 +489,11 @@ window.openItemsModal = async (encoded, itemsJson) => {
     const res      = await fetch("https://shoptest-chi.vercel.app/api/products", { cache: "no-store" });
     const products = await res.json();
 
+    // 優惠碼
+    const COUPONS_OS     = { "hinamecute": { type: "jprice_rate", rate: 0.3 } };
+    const couponCode_OS  = sessionStorage.getItem("appliedCoupon") || "";
+    const activeCoupon_OS = COUPONS_OS[couponCode_OS] || null;
+
     // 用 idnumber 或 id 對應最新價格和名稱
     _itemsData._editItems = rawItems.map(item => {
       const p = products.find(x =>
@@ -496,15 +501,19 @@ window.openItemsModal = async (encoded, itemsJson) => {
         x.id === item.id
       );
       if (p) {
+        let price = p.price;
+        if (activeCoupon_OS?.type === "jprice_rate" && p.jprice) {
+          price = Math.floor(p.jprice * activeCoupon_OS.rate);
+        }
         return {
           ...item,
-          name:  p.name,
-          price: p.price,
-          jprice: p.jprice,
+          name:     p.name,
+          price,
+          jprice:   p.jprice,
           idnumber: p.idnumber || item.idnumber,
         };
       }
-      return item; // 找不到商品就用原本資料
+      return item;
     });
   } catch {
     _itemsData._editItems = JSON.parse(JSON.stringify(rawItems));
