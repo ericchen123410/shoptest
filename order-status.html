@@ -648,7 +648,14 @@ async function submitCancel() {
     status.className   = "text-xs text-center text-green-600";
     status.classList.remove("hidden");
     btn.textContent = "完成";
-    setTimeout(() => { closeCancelModal(); refreshCurrentOrder(); }, 1500);
+    setTimeout(() => {
+      closeCancelModal();
+      if (isPending) {
+        location.href = "index.html";
+      } else {
+        refreshCurrentOrder();
+      }
+    }, 1500);
   } catch (err) {
     status.textContent = "❌ " + err.message;
     status.className   = "text-xs text-center text-red-500";
