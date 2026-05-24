@@ -137,6 +137,8 @@ window.queryByOrder = async () => {
 
     // 查客戶資料
     const customer = await fetchCustomer(data.customerId);
+    console.log("order data:", JSON.stringify({pageId:data.pageId, customerId:data.customerId}));
+    console.log("customer:", JSON.stringify({pageId:customer.pageId, customerId:customer.customerId}));
     const order    = { ...customer, ...data, customerPageId: customer.pageId };
     el.innerHTML   = renderOrderDetail(order);
 
