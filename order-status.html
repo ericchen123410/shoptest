@@ -474,51 +474,14 @@ const CUSTOMER_API_MOD = "https://shoptest-chi.vercel.app/api/customer";
 let _editData = null, _cancelData = null, _itemsData = null;
 
 // ── 修改商品 ─────────────────────────────────────────
-window.openItemsModal = async (encoded, itemsJson) => {
+window.openItemsModal = (encoded, itemsJson) => {
   _itemsData = JSON.parse(decodeURIComponent(encoded));
   const rawItems = typeof itemsJson === 'string' ? JSON.parse(itemsJson) : itemsJson;
-
-  // 顯示 loading
-  document.getElementById("itemsEditor").innerHTML = '<div class="text-center text-gray-400 py-6 text-sm">載入最新商品資料...</div>';
+  // 直接用訂單裡儲存的 price（下單當時計算好的，含優惠碼）
+  _itemsData._editItems = JSON.parse(JSON.stringify(rawItems));
   document.getElementById("itemsSaveStatus").classList.add("hidden");
   document.getElementById("itemsModal").classList.remove("hidden");
   document.body.style.overflow = "hidden";
-
-  try {
-    // 取得最新商品資料
-    const res      = await fetch("https://shoptest-chi.vercel.app/api/products", { cache: "no-store" });
-    const products = await res.json();
-
-    // 優惠碼
-    const COUPONS_OS     = { "hinamecute": { type: "jprice_rate", rate: 0.3 } };
-    const couponCode_OS  = sessionStorage.getItem("appliedCoupon") || "";
-    const activeCoupon_OS = COUPONS_OS[couponCode_OS] || null;
-
-    // 用 idnumber 或 id 對應最新價格和名稱
-    _itemsData._editItems = rawItems.map(item => {
-      const p = products.find(x =>
-        (item.idnumber && String(x.idnumber) === String(item.idnumber)) ||
-        x.id === item.id
-      );
-      if (p) {
-        let price = p.price;
-        if (activeCoupon_OS?.type === "jprice_rate" && p.jprice) {
-          price = Math.floor(p.jprice * activeCoupon_OS.rate);
-        }
-        return {
-          ...item,
-          name:     p.name,
-          price,
-          jprice:   p.jprice,
-          idnumber: p.idnumber || item.idnumber,
-        };
-      }
-      return item;
-    });
-  } catch {
-    _itemsData._editItems = JSON.parse(JSON.stringify(rawItems));
-  }
-
   renderItemsEditor();
 };
 
