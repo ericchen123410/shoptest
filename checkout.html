@@ -31,7 +31,7 @@
           class="px-2 py-1.5 rounded-lg hover:bg-gray-100 text-base">🔍</button>
       </div>
       <a href="order-status.html" class="px-2 py-1.5 rounded-lg hover:bg-gray-100 text-xs lg:text-sm">📋 <span class="hidden sm:inline">訂單查詢</span></a>
-      <button onclick="history.back()" class="px-2 py-1.5 rounded-lg hover:bg-gray-100 text-sm">⬅️</button>
+      <a href="cart.html" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-gray-100 text-sm text-gray-500 hover:text-black transition">← 返回購物車</a>
       <a href="cart.html" class="px-2 py-1.5 rounded-lg hover:bg-gray-100 text-sm">
         🛒 <span id="cartCount" class="bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full">0</span>
       </a>
@@ -171,7 +171,6 @@ let orderShipping = 0;
 
 // ── 初始化：讀購物車 + 抓商品資料 ──────────────────────
 async function init() {
-  const mergeOrders = [];
   const cart = JSON.parse(localStorage.getItem("cart") || "{}");
   if (!Object.keys(cart).length) {
     location.href = "cart.html";
