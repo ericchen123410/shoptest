@@ -190,13 +190,15 @@ async function init() {
   orderSubtotal = 0;
   let totalWeight = 0;
 
-  Object.entries(cart).forEach(([id, qty]) => {
+  Object.entries(cart).forEach(([cartKey, qty]) => {
+    const [id, variant] = cartKey.split(":");
     const p = products.find(x => x.id === id);
     if (!p) return;
-    const sub = p.price * qty;
+    const sub  = p.price * qty;
     orderSubtotal += sub;
     totalWeight   += (p.weight || 0) * qty;
-    orderItems.push({ name: p.name, qty, price: formatPrice(p.price), sub });
+    const name = variant ? `${p.name}（${variant}）` : p.name;
+    orderItems.push({ name, qty, price: formatPrice(p.price), sub });
   });
 
 
