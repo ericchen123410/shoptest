@@ -166,7 +166,9 @@ function renderOrders() {
   document.getElementById("orderList").innerHTML = list.map(o => {
     const style = STATUS_STYLE[o.status] || "bg-gray-100 text-gray-500";
     const date  = formatDate(o.createdAt);
-    const firstItem = o.items?.split("\n")[0] || "";
+    const firstItem = Array.isArray(o.items)
+      ? (o.items[0] ? `${o.items[0].name}${o.items.length > 1 ? ` 等${o.items.length}件` : ''}` : "")
+      : (o.items?.split("\n")[0] || "");
 
     return `
       <div onclick="openModal('${o.orderId}')"
@@ -215,8 +217,13 @@ function openModal(orderId) {
   }
 
   // 商品明細
-  const items = (o.items || "").split("\n").filter(Boolean);
-  document.getElementById("modalItems").innerHTML = items.map(line => `
+  let itemsArr;
+  if (Array.isArray(o.items)) {
+    itemsArr = o.items.map(i => `${i.name}${i.variant ? `（${i.variant}）` : ""} × ${i.qty}（NT$${Math.round(i.price * i.qty).toLocaleString()}）`);
+  } else {
+    itemsArr = (o.items || "").split("\n").filter(Boolean);
+  }
+  document.getElementById("modalItems").innerHTML = itemsArr.map(line => `
     <div class="flex justify-between text-sm py-1.5 border-b border-gray-50 last:border-0">
       <span class="text-gray-700">${line.split("（")[0].trim()}</span>
       <span class="text-gray-500 shrink-0 ml-2">${line.match(/（(.+)）/)?.[1] || ""}</span>

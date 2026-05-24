@@ -198,7 +198,7 @@ async function init() {
     orderSubtotal += sub;
     totalWeight   += (p.weight || 0) * qty;
     const name = variant ? `${p.name}（${variant}）` : p.name;
-    orderItems.push({ name, qty, price: formatPrice(p.price), sub });
+    orderItems.push({ id, variant: variant || "", name, qty, price: p.price, sub });
   });
 
 
@@ -213,7 +213,7 @@ async function init() {
   document.getElementById("orderItems").innerHTML = orderItems.map(i => `
     <div class="flex justify-between py-2.5">
       <span class="text-gray-700">${i.name} <span class="text-gray-400">× ${i.qty}</span></span>
-      <span class="font-medium">${formatPrice(i.sub)}</span>
+      <span class="font-medium">${formatPrice(i.price * i.qty)}</span>
     </div>
   `).join("");
 

@@ -137,7 +137,7 @@ window.queryByOrder = async () => {
 
     // 查客戶資料
     const customer = await fetchCustomer(data.customerId);
-    const order    = { ...data, ...customer };
+    const order    = { ...customer, ...data };
     el.innerHTML   = renderOrderDetail(order);
 
   } catch (err) {
@@ -197,7 +197,9 @@ window.queryByCustomer = async () => {
           const date = new Date(o.createdAt);
           const dateStr = (date.getMonth()+1) + "/" + date.getDate() + " " +
             String(date.getHours()).padStart(2,"0") + ":" + String(date.getMinutes()).padStart(2,"0");
-          const firstItem = o.items?.split("\n")[0] || "";
+          const firstItem = Array.isArray(o.items)
+            ? (o.items[0] ? `${o.items[0].name}${o.items.length > 1 ? ` 等 ${o.items.length} 件` : ""}` : "")
+            : (o.items?.split("\n")[0] || "");
           return `
             <div class="bg-white rounded-xl border px-4 py-3 cursor-pointer hover:shadow-md transition"
               onclick="showOrderDetail('${o.orderId}', ${JSON.stringify(data.customer).replace(/"/g,'&quot;')})">
@@ -236,7 +238,7 @@ window.showOrderDetail = async (orderId, customer) => {
       <button onclick="queryByCustomer()" class="flex items-center gap-1 text-sm text-gray-400 hover:text-black mb-4">
         ← 返回訂單列表
       </button>
-      ${renderOrderDetail({ ...data, ...customer })}`;
+      ${renderOrderDetail({ ...customer, ...data })}`;
   } catch {}
 };
 
@@ -272,11 +274,22 @@ function renderOrderDetail(data) {
       ${i < STEPS.length - 1 ? `<div class="flex-1 h-0.5 mt-3.5 ${i < current ? "bg-black" : "bg-gray-200"}"></div>` : ""}`;
   }).join("");
 
-  const itemsHtml = (data.items || "").split("\n").filter(Boolean).map(line => `
-    <div class="flex justify-between py-2 text-sm border-b last:border-0">
-      <span class="text-gray-700">${line.split("（")[0].trim()}</span>
-      <span class="text-gray-500">${line.match(/（(.+)）/)?.[1] || ""}</span>
-    </div>`).join("");
+  // 支援 JSON 陣列（新格式）和純文字（舊格式）
+  let itemsHtml = "";
+  if (Array.isArray(data.items) && data.items.length) {
+    itemsHtml = data.items.map(i => `
+      <div class="flex justify-between py-2 text-sm border-b last:border-0">
+        <span class="text-gray-700">${i.name}${i.variant ? ` <span class="text-xs text-gray-400">（${i.variant}）</span>` : ""} × ${i.qty}</span>
+        <span class="text-gray-500">${formatPrice(i.price * i.qty)}</span>
+      </div>`).join("");
+  } else {
+    const text = typeof data.items === "string" ? data.items : "";
+    itemsHtml = text.split("\n").filter(Boolean).map(line => `
+      <div class="flex justify-between py-2 text-sm border-b last:border-0">
+        <span class="text-gray-700">${line.split("（")[0].trim()}</span>
+        <span class="text-gray-500">${line.match(/（(.+)）/)?.[1] || ""}</span>
+      </div>`).join("");
+  }
 
   return `
     <div class="bg-white rounded-xl border px-4 py-4 mb-3">
@@ -320,15 +333,22 @@ function renderOrderDetail(data) {
 
     <!-- 操作按鈕（待處理或處理中才顯示）-->
     ${["待處理","處理中"].includes(data.status) ? `
-    <div class="flex gap-2 mt-3">
-      <button onclick="openEditModal('${encodeData({pageId:data.pageId,name:data.name,phone:data.phone,address:data.address,customerId:data.customerId,status:data.status})}')"
-        class="flex-1 py-2.5 border rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition">
-        ✏️ 修改收件資料
-      </button>
-      <button onclick="openCancelModal('${encodeData({pageId:data.pageId,orderId:data.orderId,status:data.status})}')"
-        class="flex-1 py-2.5 border border-red-200 rounded-xl text-sm text-red-400 hover:bg-red-50 transition">
-        ${data.status === "待處理" ? "❌ 取消訂單" : "📋 申請取消"}
-      </button>
+    <div class="flex flex-col gap-2 mt-3">
+      ${data.status === "待處理" && Array.isArray(data.items) ? `
+      <button onclick="openItemsModal('${encodeData({pageId:data.pageId,items:data.items,status:data.status})}')"
+        class="w-full py-2.5 border rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition">
+        🛒 修改商品數量 / 刪除商品
+      </button>` : ""}
+      <div class="flex gap-2">
+        <button onclick="openEditModal('${encodeData({pageId:data.pageId,name:data.name,phone:data.phone,address:data.address,customerId:data.customerId,status:data.status})}')"
+          class="flex-1 py-2.5 border rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition">
+          ✏️ 修改收件資料
+        </button>
+        <button onclick="openCancelModal('${encodeData({pageId:data.pageId,orderId:data.orderId,status:data.status})}')"
+          class="flex-1 py-2.5 border border-red-200 rounded-xl text-sm text-red-400 hover:bg-red-50 transition">
+          ${data.status === "待處理" ? "❌ 取消訂單" : "📋 申請取消"}
+        </button>
+      </div>
     </div>` : ""}`;
 }
 
@@ -387,6 +407,25 @@ document.addEventListener("click", (e) => {
 });
 </script>
 
+<!-- 修改商品 Modal -->
+<div id="itemsModal" class="hidden fixed inset-0 z-50 bg-black bg-opacity-40 flex items-end sm:items-center justify-center">
+  <div class="bg-white w-full sm:max-w-lg sm:rounded-2xl rounded-t-2xl max-h-[85vh] flex flex-col">
+    <div class="flex justify-between items-center px-5 py-4 border-b shrink-0">
+      <h3 class="font-bold text-base">修改商品</h3>
+      <button onclick="closeItemsModal()" class="text-gray-400 hover:text-black text-xl">✕</button>
+    </div>
+    <div id="itemsEditor" class="flex-1 overflow-y-auto px-5 py-4 space-y-3"></div>
+    <div class="px-5 py-4 border-t shrink-0 space-y-2">
+      <div class="flex justify-between text-sm font-bold">
+        <span>新合計</span>
+        <span id="itemsNewTotal" class="text-red-500"></span>
+      </div>
+      <p id="itemsSaveStatus" class="text-xs text-center hidden"></p>
+      <button onclick="saveItems()" class="w-full py-3 bg-black text-white font-medium rounded-xl text-sm">儲存變更</button>
+    </div>
+  </div>
+</div>
+
 <!-- 修改收件資料 Modal -->
 <div id="editModal" class="hidden fixed inset-0 z-50 bg-black bg-opacity-40 flex items-end sm:items-center justify-center">
   <div class="bg-white w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl p-5">
@@ -432,7 +471,95 @@ document.addEventListener("click", (e) => {
 <script>
 const ORDERS_API_MOD   = "https://shoptest-chi.vercel.app/api/orders-manage";
 const CUSTOMER_API_MOD = "https://shoptest-chi.vercel.app/api/customer";
-let _editData = null, _cancelData = null;
+let _editData = null, _cancelData = null, _itemsData = null;
+
+// ── 修改商品 ─────────────────────────────────────────
+window.openItemsModal = (encoded) => {
+  _itemsData = JSON.parse(decodeURIComponent(encoded));
+  _itemsData._editItems = JSON.parse(JSON.stringify(_itemsData.items)); // 深拷貝
+  renderItemsEditor();
+  document.getElementById("itemsSaveStatus").classList.add("hidden");
+  document.getElementById("itemsModal").classList.remove("hidden");
+  document.body.style.overflow = "hidden";
+};
+
+function closeItemsModal() {
+  document.getElementById("itemsModal").classList.add("hidden");
+  document.body.style.overflow = "";
+}
+
+function renderItemsEditor() {
+  const items = _itemsData._editItems;
+  const FLAT = 200, FREE = 5000;
+  const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0);
+  const shipping  = subtotal >= FREE ? 0 : FLAT;
+  const total     = subtotal + shipping;
+
+  document.getElementById("itemsNewTotal").textContent =
+    "NT$" + Math.round(total).toLocaleString() +
+    (shipping === 0 ? "（免運）" : `（含運NT$${shipping}）`);
+
+  document.getElementById("itemsEditor").innerHTML = items.map((item, idx) => `
+    <div class="flex items-center gap-3 border rounded-xl p-3 ${item.qty === 0 ? "opacity-40" : ""}">
+      <div class="flex-1 min-w-0">
+        <div class="text-sm font-medium">${item.name}${item.variant ? ` <span class="text-xs text-gray-400">（${item.variant}）</span>` : ""}</div>
+        <div class="text-xs text-gray-400 mt-0.5">NT$${Math.round(item.price).toLocaleString()} / 件</div>
+      </div>
+      <div class="flex items-center gap-2 shrink-0">
+        <div class="flex items-center border rounded-lg overflow-hidden">
+          <button onclick="changeItemQty(${idx}, -1)"
+            class="w-8 h-8 flex items-center justify-center text-lg hover:bg-gray-100 transition">−</button>
+          <span class="w-8 text-center text-sm font-medium">${item.qty}</span>
+          <button onclick="changeItemQty(${idx}, 1)"
+            class="w-8 h-8 flex items-center justify-center text-lg hover:bg-gray-100 transition">＋</button>
+        </div>
+        <button onclick="removeItem2(${idx})"
+          class="text-gray-300 hover:text-red-400 text-xl transition">✕</button>
+      </div>
+    </div>`).join("");
+}
+
+window.changeItemQty = (idx, delta) => {
+  const item = _itemsData._editItems[idx];
+  item.qty = Math.max(0, item.qty + delta);
+  renderItemsEditor();
+};
+
+window.removeItem2 = (idx) => {
+  _itemsData._editItems.splice(idx, 1);
+  renderItemsEditor();
+};
+
+async function saveItems() {
+  const items = _itemsData._editItems.filter(i => i.qty > 0);
+  if (!items.length) { alert("至少保留一件商品"); return; }
+
+  const FLAT = 200, FREE = 5000;
+  const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0);
+  const total    = subtotal + (subtotal >= FREE ? 0 : FLAT);
+
+  const btn    = document.querySelector("#itemsModal button:last-child");
+  const status = document.getElementById("itemsSaveStatus");
+  btn.disabled = true; btn.textContent = "儲存中...";
+
+  try {
+    const res  = await fetch(ORDERS_API_MOD, {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pageId: _itemsData.pageId, items, total }),
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error);
+    status.textContent = "✅ 已更新！";
+    status.className   = "text-xs text-center text-green-600";
+    status.classList.remove("hidden");
+    setTimeout(closeItemsModal, 1000);
+  } catch (err) {
+    status.textContent = "❌ " + err.message;
+    status.className   = "text-xs text-center text-red-500";
+    status.classList.remove("hidden");
+    btn.disabled = false; btn.textContent = "儲存變更";
+  }
+}
 
 window.openEditModal = (encoded) => {
   _editData = JSON.parse(decodeURIComponent(encoded));
