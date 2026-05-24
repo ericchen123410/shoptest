@@ -82,7 +82,9 @@ function updateBundleTotal() {
   const selected = bundleOrders.filter(o => selectedBundleIds.has(o.pageId));
   // 取得當前購物車小計（全域 subtotal 在 renderCart scope 裡，用近似值）
   const cartSubtotal = window._cartSubtotal || 0;
+  console.log("cartSubtotal:", cartSubtotal, "selected:", JSON.stringify(selected.map(o=>({total:o.total,type:typeof o.total}))));
   const bundleSubtotal = selected.reduce((s, o) => s + (Number(o.total) || 0), 0);
+  console.log("bundleSubtotal:", bundleSubtotal, "combined:", cartSubtotal + bundleSubtotal);
   const combinedTotal = cartSubtotal + bundleSubtotal;
   const shipping = combinedTotal >= 5000 ? 0 : 200;
 
