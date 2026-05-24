@@ -1,7 +1,36 @@
 import { formatPrice } from "./utils.js";
 
+// ── 優惠碼設定 ────────────────────────────────────────
+const COUPONS = {
+  "hinamecute": { type: "jprice_rate", rate: 0.3, label: "特別優惠價" },
+};
+let appliedCoupon = null;
+
 
 const API_URL     = "https://shoptest-chi.vercel.app/api/products";
+
+function applyCoupon() {
+  const code   = document.getElementById("couponInput")?.value.trim().toLowerCase();
+  const status = document.getElementById("couponStatus");
+  if (!code) return;
+  const coupon = COUPONS[code];
+  if (!coupon) {
+    status.textContent = "❌ 優惠碼無效";
+    status.className   = "text-xs mb-3 text-red-500";
+    status.classList.remove("hidden");
+    appliedCoupon = null;
+    sessionStorage.removeItem("appliedCoupon");
+  } else {
+    appliedCoupon = coupon;
+    sessionStorage.setItem("appliedCoupon", code);
+    status.textContent = `✅ 已套用「${coupon.label}」`;
+    status.className   = "text-xs mb-3 text-green-600";
+    status.classList.remove("hidden");
+  }
+  init();
+}
+
+window.applyCoupon = applyCoupon;
 const el          = document.getElementById("cart");
 
 
@@ -31,7 +60,12 @@ async function init() {
     const p   = products.find(x => x.id === id);
     if (!p) return "";
 
-    const sub    = p.price * qty;
+    // 優惠碼：hinamecute → jprice * 0.3
+    let unitPrice = p.price;
+    if (appliedCoupon?.type === "jprice_rate" && p.jprice) {
+      unitPrice = Math.round(p.jprice * appliedCoupon.rate);
+    }
+    const sub    = unitPrice * qty;
     const weight = (p.weight || 0) * qty;
     subtotal    += sub;
     totalWeight += weight;
@@ -50,7 +84,7 @@ async function init() {
         <div class="flex-1 min-w-0">
           <div class="text-sm sm:text-base font-semibold leading-snug line-clamp-2 text-gray-800">${p.name}</div>
           ${variant ? `<div class="text-xs text-gray-500 mt-0.5">規格：${variant}</div>` : ""}
-          <div class="text-red-500 text-sm mt-1 font-medium">${formatPrice(p.price)}</div>
+          <div class="text-red-500 text-sm mt-1 font-medium">${formatPrice(unitPrice)}${appliedCoupon && p.jprice ? `<span class="text-xs text-gray-400 line-through ml-1">${formatPrice(p.price)}</span>` : ""}</div>
           ${weightNote}
 
           <div class="flex items-center mt-2 border rounded-lg overflow-hidden w-fit">
@@ -112,6 +146,18 @@ async function init() {
         <span class="text-gray-700 font-medium">總計</span>
         <span class="text-xl sm:text-2xl font-bold">${formatPrice(grandTotal)}</span>
       </div>
+
+      <!-- 優惠碼 -->
+      <div class="flex gap-2 mb-3">
+        <input id="couponInput" type="text" placeholder="輸入優惠碼"
+          class="flex-1 border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+          onkeydown="if(event.key==='Enter') applyCoupon()">
+        <button onclick="applyCoupon()"
+          class="px-4 py-2.5 border rounded-xl text-sm hover:bg-gray-50 transition shrink-0">
+          套用
+        </button>
+      </div>
+      <div id="couponStatus" class="text-xs mb-3 hidden"></div>
 
       <a href="checkout.html"
          class="block w-full py-3 bg-black text-white font-medium rounded-xl active:bg-gray-800 transition text-center">
