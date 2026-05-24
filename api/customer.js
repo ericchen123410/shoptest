@@ -46,6 +46,7 @@ export default async function handler(req, res) {
         const props = page.properties;
         return res.status(200).json({
           found:      true,
+          pageId:     page.id,
           customerId: getText(props.customerId),
           email:      props.email?.email || "",
           name:       getText(props.name),
