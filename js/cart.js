@@ -65,7 +65,7 @@ async function init() {
     if (appliedCoupon?.type === "jprice_rate" && p.jprice) {
       unitPrice = Math.round(p.jprice * appliedCoupon.rate);
     }
-    const sub    = unitPrice * qty;
+    const sub    = Math.round(unitPrice * qty);
     const weight = (p.weight || 0) * qty;
     subtotal    += sub;
     totalWeight += weight;
