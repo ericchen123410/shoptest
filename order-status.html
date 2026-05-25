@@ -783,7 +783,7 @@ window.editBundle = async (bundleId, evt) => {
   if (!customerId || !email) return;
 
   try {
-    const res  = await fetch(`${QUERY_API}&type=customer&customerId=${encodeURIComponent(customerId)}&email=${encodeURIComponent(email)}`);
+    const res  = await fetch(`${CUSTOMER_API_URL}&customerId=${encodeURIComponent(customerId)}&email=${encodeURIComponent(email)}`);
     const data = await res.json();
     if (!res.ok) return;
 
@@ -791,7 +791,7 @@ window.editBundle = async (bundleId, evt) => {
     renderEditBundleModal(bundleId, data);
     document.getElementById("editBundleModal").classList.remove("hidden");
     document.body.style.overflow = "hidden";
-  } catch {}
+  } catch (err) { console.error(err); }
 };
 
 function renderEditBundleModal(bundleId, data) {
