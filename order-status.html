@@ -190,43 +190,92 @@ window.queryByCustomer = async () => {
         <div class="text-xs text-gray-400 mt-0.5">${data.customer.address || "—"}</div>
       </div>
 
-      <!-- 訂單列表 -->
+      <!-- 訂單列表（集運群組化）-->
       <div class="space-y-3">
-        ${data.orders.map(o => {
-          const st   = STATUS_MAP[o.status] || STATUS_MAP["待處理"];
-          const date = new Date(o.createdAt);
-          const dateStr = (date.getMonth()+1) + "/" + date.getDate() + " " +
-            String(date.getHours()).padStart(2,"0") + ":" + String(date.getMinutes()).padStart(2,"0");
-          const firstItem = Array.isArray(o.items)
-            ? (o.items[0] ? `${o.items[0].name}${o.items.length > 1 ? ` 等 ${o.items.length} 件` : ""}` : "")
-            : (o.items?.split("\n")[0] || "");
-          const canBundle = o.status === "待處理" && !o.bundleId;
-          return `
-            <div class="bg-white rounded-xl border px-4 py-3 transition ${canBundle ? "hover:border-pink-300" : ""}">
-              <div class="flex items-start gap-3">
-                ${canBundle ? `
-                <input type="checkbox" value="${o.pageId}" data-total="${o.total}" data-discounted="${o.discounted}"
-                  onchange="toggleMergeOrder(this)"
-                  class="w-4 h-4 accent-black mt-1 shrink-0 cursor-pointer">` : `<div class="w-4 shrink-0"></div>`}
-                <div class="flex-1 min-w-0 cursor-pointer" onclick="showOrderDetail('${o.orderId}', ${JSON.stringify(data.customer).replace(/"/g,'&quot;')})">
-                  <div class="flex justify-between items-start">
-                    <div class="min-w-0">
-                      <div class="flex items-center gap-2 mb-1">
-                        <span class="font-bold text-sm">${o.orderId}</span>
-                        <span class="text-xs px-2 py-0.5 rounded-full ${st.color}">${o.status}</span>
-                        ${o.bundleId ? `<span class="text-xs text-blue-400">📦 已集運</span>` : ""}
+        ${(() => {
+          // 先把有 bundleId 的訂單群組化
+          const bundles = {};
+          const singles = [];
+          data.orders.forEach(o => {
+            if (o.bundleId) {
+              if (!bundles[o.bundleId]) bundles[o.bundleId] = [];
+              bundles[o.bundleId].push(o);
+            } else {
+              singles.push(o);
+            }
+          });
+
+          const renderOrder = (o, inBundle = false) => {
+            const st   = STATUS_MAP[o.status] || STATUS_MAP["待處理"];
+            const date = new Date(o.createdAt);
+            const dateStr = (date.getMonth()+1) + "/" + date.getDate() + " " +
+              String(date.getHours()).padStart(2,"0") + ":" + String(date.getMinutes()).padStart(2,"0");
+            const firstItem = Array.isArray(o.items)
+              ? (o.items[0] ? `${o.items[0].name}${o.items.length > 1 ? ` 等 ${o.items.length} 件` : ""}` : "")
+              : (o.items?.split("\n")[0] || "");
+            const canBundle = o.status === "待處理" && !o.bundleId;
+            return `
+              <div class="${inBundle ? "border-b last:border-0 px-4 py-3" : "bg-white rounded-xl border px-4 py-3"} transition ${canBundle && !inBundle ? "hover:border-pink-300" : ""}">
+                <div class="flex items-start gap-3">
+                  ${canBundle ? `
+                  <input type="checkbox" value="${o.pageId}" data-total="${o.total}" data-discounted="${o.discounted}"
+                    onchange="toggleMergeOrder(this)"
+                    class="w-4 h-4 accent-black mt-1 shrink-0 cursor-pointer">` : `<div class="w-4 shrink-0"></div>`}
+                  <div class="flex-1 min-w-0 cursor-pointer" onclick="showOrderDetail('${o.orderId}', ${JSON.stringify(data.customer).replace(/"/g,'&quot;')})">
+                    <div class="flex justify-between items-start">
+                      <div class="min-w-0">
+                        <div class="flex items-center gap-2 mb-1">
+                          <span class="font-bold text-sm">${o.orderId}</span>
+                          <span class="text-xs px-2 py-0.5 rounded-full ${st.color}">${o.status}</span>
+                        </div>
+                        <div class="text-xs text-gray-400 truncate max-w-[180px]">${firstItem}</div>
                       </div>
-                      <div class="text-xs text-gray-400 truncate max-w-[200px]">${firstItem}</div>
-                    </div>
-                    <div class="text-right shrink-0 ml-2">
-                      <div class="font-bold text-red-500 text-sm">NT$ ${Math.round(o.total||0).toLocaleString()}</div>
-                      <div class="text-xs text-gray-400">${dateStr}</div>
+                      <div class="text-right shrink-0 ml-2">
+                        <div class="font-bold text-red-500 text-sm">NT$ ${Math.round(o.total||0).toLocaleString()}</div>
+                        <div class="text-xs text-gray-400">${dateStr}</div>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>`;
-        }).join("")}
+              </div>`;
+          };
+
+          // 渲染集運群組
+          const bundleHtml = Object.entries(bundles).map(([bundleId, orders]) => {
+            const bundleTotal  = orders.reduce((s, o) => s + (o.total || 0), 0);
+            const DISCOUNT_MIN = 3000, DISCOUNT_AMT = 200, FREE_AMOUNT = 5000;
+            const hasDisc      = orders.some(o => o.discounted);
+            const discount     = (!hasDisc && bundleTotal >= DISCOUNT_MIN) ? DISCOUNT_AMT : 0;
+            const afterDisc    = bundleTotal - discount;
+            const shipping     = afterDisc >= FREE_AMOUNT ? 0 : 200;
+            const grandTotal   = afterDisc + shipping;
+            const shortId      = bundleId.replace("BUNDLE", "");
+            return `
+              <div class="bg-white rounded-xl border-2 border-blue-200 overflow-hidden">
+                <div class="bg-blue-50 px-4 py-2 flex justify-between items-center">
+                  <div class="flex items-center gap-2">
+                    <span class="text-sm">📦</span>
+                    <span class="text-xs font-bold text-blue-600">集運批次 #${shortId}</span>
+                    <span class="text-xs text-blue-400">${orders.length} 筆訂單</span>
+                  </div>
+                  <div class="text-right">
+                    <div class="text-xs font-bold text-blue-600">NT$ ${Math.floor(grandTotal).toLocaleString()}</div>
+                    <div class="text-xs text-blue-400">${shipping === 0 ? "免運 ✅" : "運費 NT$" + shipping}</div>
+                  </div>
+                </div>
+                ${orders.map(o => renderOrder(o, true)).join("")}
+                <div class="bg-blue-50 px-4 py-2 text-xs text-blue-400 flex justify-between">
+                  <span>小計 NT$ ${Math.floor(bundleTotal).toLocaleString()}${discount > 0 ? ` 折 NT$${discount}` : ""}</span>
+                  <span>${afterDisc >= FREE_AMOUNT ? "✅ 已達免運門檻" : `還差 NT$ ${Math.ceil(FREE_AMOUNT - afterDisc).toLocaleString()} 免運`}</span>
+                </div>
+              </div>`;
+          }).join("");
+
+          // 渲染單筆訂單
+          const singlesHtml = singles.map(o => renderOrder(o, false)).join("");
+
+          return bundleHtml + singlesHtml;
+        })()}
       </div>
 
       <!-- 集運合併區 -->
