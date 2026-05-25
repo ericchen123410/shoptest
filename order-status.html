@@ -669,9 +669,12 @@ async function saveItems() {
   const items = _itemsData._editItems.filter(i => i.qty > 0);
   if (!items.length) { alert("至少保留一件商品"); return; }
 
-  const FLAT = 200, FREE = 5000;
-  const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0);
-  const total    = subtotal + (subtotal >= FREE ? 0 : FLAT);
+  const FLAT = 200, FREE = 5000, DISCOUNT_MIN = 3000, DISCOUNT_AMT = 200;
+  const subtotal   = items.reduce((s, i) => s + i.price * i.qty, 0);
+  const discount   = subtotal >= DISCOUNT_MIN ? DISCOUNT_AMT : 0;
+  const afterDisc  = subtotal - discount;
+  const shipping   = afterDisc >= FREE ? 0 : FLAT;
+  const total      = afterDisc + shipping;
 
   const btn    = document.getElementById("itemsSaveBtn");
   const status = document.getElementById("itemsSaveStatus");
@@ -680,7 +683,7 @@ async function saveItems() {
   try {
     const res  = await fetch(ORDERS_API_MOD, {
       method: "PATCH", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ pageId: _itemsData.pageId, items, total }),
+      body: JSON.stringify({ pageId: _itemsData.pageId, items, total, shipping, discount }),
     });
     const data = await res.json();
     if (!data.success) throw new Error(data.error);

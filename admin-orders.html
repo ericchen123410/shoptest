@@ -51,6 +51,26 @@
 </div>
 
 <!-- 訂單詳情 Modal -->
+<!-- 後台修改商品 Modal -->
+<div id="adminItemsModal" class="hidden fixed inset-0 z-50 bg-black bg-opacity-40 flex items-end sm:items-center justify-center">
+  <div class="bg-white w-full sm:max-w-lg sm:rounded-2xl rounded-t-2xl max-h-[85vh] flex flex-col">
+    <div class="flex justify-between items-center px-5 py-4 border-b shrink-0">
+      <h3 class="font-bold text-base">修改商品</h3>
+      <button onclick="closeAdminItemsModal()" class="text-gray-400 hover:text-black text-xl">✕</button>
+    </div>
+    <div id="adminItemsEditor" class="flex-1 overflow-y-auto px-5 py-4 space-y-3"></div>
+    <div class="px-5 py-4 border-t shrink-0 space-y-2">
+      <div class="flex justify-between text-sm font-bold">
+        <span>新合計</span>
+        <span id="adminItemsNewTotal" class="text-red-500"></span>
+      </div>
+      <p id="adminItemsSaveStatus" class="text-xs text-center hidden"></p>
+      <button id="adminItemsSaveBtn" onclick="adminSaveItems()"
+        class="w-full py-3 bg-black text-white font-medium rounded-xl text-sm">儲存變更</button>
+    </div>
+  </div>
+</div>
+
 <!-- 後台編輯集運 Modal -->
 <div id="adminBundleModal" class="hidden fixed inset-0 z-50 bg-black bg-opacity-40 flex items-end sm:items-center justify-center">
   <div class="bg-white w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl max-h-[85vh] flex flex-col">
@@ -114,7 +134,13 @@
 
       <!-- 訂單明細 -->
       <div>
-        <div class="text-xs font-medium text-gray-500 mb-2">訂單明細</div>
+        <div class="flex justify-between items-center mb-2">
+          <div class="text-xs font-medium text-gray-500">訂單明細</div>
+          <button id="adminEditItemsBtn" onclick="openAdminItemsModal()"
+            class="text-xs px-2 py-1 border rounded-lg text-gray-500 hover:bg-gray-50 hidden">
+            ✏️ 修改商品
+          </button>
+        </div>
         <div id="modalItems" class="space-y-1.5"></div>
         <div id="modalDiscountRow" class="hidden flex justify-between items-center mt-2 text-sm text-green-600">
           <span>🎉 滿NT$3,000折扣</span>
@@ -318,6 +344,11 @@ function openModal(orderId) {
   document.getElementById("modalDate").textContent       = date;
   document.getElementById("modalCustomerId").textContent = o.customerId || "—";
   document.getElementById("modalTotal").textContent = `NT$ ${Math.round(o.total||0).toLocaleString()}`;
+  // 待處理才顯示修改商品按鈕
+  const editItemsBtn = document.getElementById("adminEditItemsBtn");
+  if (editItemsBtn) {
+    editItemsBtn.classList.toggle("hidden", o.status !== "待處理" || !Array.isArray(o.items));
+  }
   // 折扣
   const discEl = document.getElementById("modalDiscountRow");
   if (o.discount > 0) {
@@ -506,6 +537,102 @@ function formatDate(iso) {
 }
 
 init();
+
+// ── 後台修改商品 ─────────────────────────────────────
+let _adminEditItems = null;
+
+function openAdminItemsModal() {
+  if (!currentOrder || !Array.isArray(currentOrder.items)) return;
+  _adminEditItems = JSON.parse(JSON.stringify(currentOrder.items));
+  document.getElementById("adminItemsSaveStatus").classList.add("hidden");
+  const btn = document.getElementById("adminItemsSaveBtn");
+  btn.disabled = false; btn.textContent = "儲存變更";
+  renderAdminItemsEditor();
+  document.getElementById("adminItemsModal").classList.remove("hidden");
+  document.body.style.overflow = "hidden";
+}
+
+function closeAdminItemsModal() {
+  document.getElementById("adminItemsModal").classList.add("hidden");
+  document.body.style.overflow = "";
+}
+
+function renderAdminItemsEditor() {
+  const items = _adminEditItems;
+  const DISCOUNT_MIN = 3000, DISCOUNT_AMT = 200, FREE = 5000, FLAT = 200;
+  const subtotal  = items.reduce((s, i) => s + i.price * i.qty, 0);
+  const discount  = subtotal >= DISCOUNT_MIN ? DISCOUNT_AMT : 0;
+  const afterDisc = subtotal - discount;
+  const shipping  = afterDisc >= FREE ? 0 : FLAT;
+  const total     = afterDisc + shipping;
+
+  document.getElementById("adminItemsNewTotal").textContent =
+    `NT$${Math.floor(total).toLocaleString()}` +
+    (discount > 0 ? `（折NT$${discount}）` : "") +
+    (shipping === 0 ? "（免手續費）" : `（手續費NT$${shipping}）`);
+
+  document.getElementById("adminItemsEditor").innerHTML = items.map((item, idx) => `
+    <div class="flex items-center gap-3 border rounded-xl p-3 ${item.qty === 0 ? "opacity-40" : ""}">
+      <div class="flex-1 min-w-0">
+        <div class="text-sm font-medium">${item.name}${item.variant ? ` <span class="text-xs text-gray-400">（${item.variant}）</span>` : ""}</div>
+        <div class="text-xs text-gray-400 mt-0.5">單價 NT$${Math.floor(item.price).toLocaleString()}</div>
+      </div>
+      <div class="flex items-center gap-2 shrink-0">
+        <div class="flex items-center border rounded-lg overflow-hidden">
+          <button onclick="adminChangeItemQty(${idx}, -1)" class="w-8 h-8 flex items-center justify-center text-lg hover:bg-gray-100">−</button>
+          <span class="w-8 text-center text-sm font-medium">${item.qty}</span>
+          <button onclick="adminChangeItemQty(${idx}, 1)" class="w-8 h-8 flex items-center justify-center text-lg hover:bg-gray-100">＋</button>
+        </div>
+        <button onclick="adminRemoveItem(${idx})" class="text-gray-300 hover:text-red-400 text-xl transition">✕</button>
+      </div>
+    </div>`).join("");
+}
+
+window.adminChangeItemQty = (idx, delta) => {
+  _adminEditItems[idx].qty = Math.max(0, _adminEditItems[idx].qty + delta);
+  renderAdminItemsEditor();
+};
+
+window.adminRemoveItem = (idx) => {
+  _adminEditItems.splice(idx, 1);
+  renderAdminItemsEditor();
+};
+
+async function adminSaveItems() {
+  const items = _adminEditItems.filter(i => i.qty > 0);
+  if (!items.length) { alert("至少保留一件商品"); return; }
+
+  const FLAT = 200, FREE = 5000, DISCOUNT_MIN = 3000, DISCOUNT_AMT = 200;
+  const subtotal  = items.reduce((s, i) => s + i.price * i.qty, 0);
+  const discount  = subtotal >= DISCOUNT_MIN ? DISCOUNT_AMT : 0;
+  const afterDisc = subtotal - discount;
+  const shipping  = afterDisc >= FREE ? 0 : FLAT;
+  const total     = afterDisc + shipping;
+
+  const btn    = document.getElementById("adminItemsSaveBtn");
+  const status = document.getElementById("adminItemsSaveStatus");
+  btn.disabled = true; btn.textContent = "儲存中...";
+
+  try {
+    const res  = await fetch(ORDERS_API_ADMIN, {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pageId: currentOrder.pageId, items, total, shipping, discount }),
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error);
+    status.textContent = "✅ 已更新！";
+    status.className   = "text-xs text-center text-green-600";
+    status.classList.remove("hidden");
+    closeAdminItemsModal();
+    await init();
+    openModal(currentOrder.orderId);
+  } catch (err) {
+    status.textContent = "❌ " + err.message;
+    status.className   = "text-xs text-center text-red-500";
+    status.classList.remove("hidden");
+    btn.disabled = false; btn.textContent = "儲存變更";
+  }
+}
 
 // ── 後台集運功能 ─────────────────────────────────────
 const ORDERS_API_ADMIN = "https://shoptest-chi.vercel.app/api/orders-manage";
