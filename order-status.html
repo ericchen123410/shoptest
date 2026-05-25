@@ -274,7 +274,7 @@ window.queryByCustomer = async () => {
                 ${orders.map(o => renderOrder(o, true)).join("")}
                 <div class="bg-blue-50 px-4 py-2 text-xs text-blue-400 flex justify-between">
                   <span>小計 NT$ ${Math.floor(bundleTotal).toLocaleString()}${discount > 0 ? ` 折 NT$${discount}` : ""}</span>
-                  <span>${afterDisc >= FREE_AMOUNT ? "✅ 已達免運門檻" : `還差 NT$ ${Math.ceil(FREE_AMOUNT - afterDisc).toLocaleString()} 免運`}</span>
+                  <span>${afterDisc >= FREE_AMOUNT ? "✅ 已達免手續費門檻" : `還差 NT$ ${Math.ceil(FREE_AMOUNT - afterDisc).toLocaleString()} 免手續費`}</span>
                 </div>
               </div>`;
           }).join("");
@@ -401,7 +401,7 @@ function renderOrderDetail(data) {
       </div>` : data.shipping === 0 && data.total > 0 ? `
       <div class="flex justify-between items-center py-2 text-sm text-green-600">
         <span>出貨手續費</span>
-        <span>免運</span>
+        <span>免手續費</span>
       </div>` : ""}
       <div class="flex justify-between items-center pt-3 font-bold border-t">
         <span>合計</span>
@@ -615,7 +615,7 @@ function renderItemsEditor() {
 
   document.getElementById("itemsNewTotal").textContent =
     "NT$" + Math.round(total).toLocaleString() +
-    (shipping === 0 ? "（免運）" : `（含運NT$${shipping}）`);
+    (shipping === 0 ? "（免手續費）" : `（含運NT$${shipping}）`);
 
   document.getElementById("itemsEditor").innerHTML = items.map((item, idx) => `
     <div class="flex items-center gap-3 border rounded-xl p-3 ${item.qty === 0 ? "opacity-40" : ""}">
