@@ -48,6 +48,7 @@ export default async function handler(req, res) {
           total:      props.total?.number || 0,
           status:     props.status?.select?.name || "待處理",
           bundleId:   getText(props.bundleId) || "",
+          discounted: props.discounted?.checkbox || false,
           createdAt:  page.created_time,
         };
       });
@@ -158,6 +159,7 @@ export default async function handler(req, res) {
           total:      props.total?.number || 0,
           status:     props.status?.select?.name || "待處理",
           bundleId:   getText(props.bundleId) || "",
+          discounted: props.discounted?.checkbox || false,
           createdAt:  page.created_time,
         };
       });
@@ -196,7 +198,7 @@ export default async function handler(req, res) {
 
     // ── PATCH：更新訂單狀態 ───────────────────────────
     if (req.method === "PATCH") {
-      const { pageId, status, items, total, bundleId } = req.body;
+      const { pageId, status, items, total, bundleId, discounted } = req.body;
       if (!pageId) return res.status(400).json({ error: "缺少 pageId" });
       const properties = {};
       if (status) {
@@ -206,7 +208,8 @@ export default async function handler(req, res) {
       }
       if (items    !== undefined) properties.items    = { rich_text: [{ text: { content: JSON.stringify(items) } }] };
       if (total    !== undefined) properties.total    = { number: total };
-      if (bundleId !== undefined) properties.bundleId = { rich_text: [{ text: { content: bundleId || "" } }] };
+      if (bundleId    !== undefined) properties.bundleId    = { rich_text: [{ text: { content: bundleId || "" } }] };
+      if (discounted  !== undefined) properties.discounted  = { checkbox: !!discounted };
       const response = await fetch(`https://api.notion.com/v1/pages/${pageId}`, {
         method: "PATCH",
         headers: {
