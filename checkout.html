@@ -70,7 +70,7 @@
         <span>- NT$200</span>
       </div>
       <div class="flex justify-between items-center mt-1 text-sm" id="orderShippingRow">
-        <span>運費</span>
+        <span>出貨手續費</span>
         <span id="orderShipping"></span>
       </div>
       <div class="flex justify-between items-center mt-3 pt-2 border-t font-bold">
@@ -247,7 +247,7 @@ async function init() {
     const discEl = document.getElementById("orderDiscountRow");
     if (discEl) discEl.classList.remove("hidden");
   }
-  shippingEl.textContent = isFreeShipping ? "免運費" : "NT$200";
+  shippingEl.textContent = isFreeShipping ? "免出貨手續費" : "NT$200";
 
   document.getElementById("orderTotal").textContent = formatPrice(orderTotal);
 }
