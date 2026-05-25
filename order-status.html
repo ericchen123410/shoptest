@@ -173,6 +173,7 @@ window.queryByCustomer = async () => {
         </div>`;
       return;
     }
+    window._lastCustomerData = data; // 存起來供 editBundle 用
 
     if (!data.orders?.length) {
       el.innerHTML = `<div class="text-center text-gray-400 py-8 text-sm">目前沒有訂單紀錄</div>`;
@@ -772,26 +773,12 @@ let _editBundleData = null; // { bundleOrders, allOrders, customer }
 window.openEditBundleById = async (bundleId) => {
   _editBundleId = bundleId;
 
-  // 從頁面上找到所有訂單資料（queryByCustomer 剛查過）
-  const el = document.getElementById("result2");
-  if (!el) return;
-
-  // 重新查詢取得最新資料
-  const customerId = document.getElementById("customerInput").value.trim();
-  const email      = document.getElementById("emailInput").value.trim();
-  if (!customerId || !email) return;
-
-  try {
-    const apiUrl = "https://shoptest-chi.vercel.app/api/orders-manage?type=customer";
-    const res  = await fetch(`${apiUrl}&customerId=${encodeURIComponent(customerId)}&email=${encodeURIComponent(email)}`);
-    const data = await res.json();
-    if (!res.ok) return;
-
-    _editBundleData = data;
-    renderEditBundleModal(bundleId, data);
-    document.getElementById("editBundleModal").classList.remove("hidden");
-    document.body.style.overflow = "hidden";
-  } catch (err) { console.error(err); }
+  // 直接用剛查詢過的快取資料
+  if (!window._lastCustomerData) return;
+  _editBundleData = window._lastCustomerData;
+  renderEditBundleModal(bundleId, window._lastCustomerData);
+  document.getElementById("editBundleModal").classList.remove("hidden");
+  document.body.style.overflow = "hidden";
 };
 
 function renderEditBundleModal(bundleId, data) {
