@@ -114,7 +114,7 @@ function updateBundleTotal() {
   const shipping = combinedAfterDiscount >= 5000 ? 0 : 200;
   const combinedTotal = combinedAfterDiscount + shipping;
 
-  totalEl.textContent = `合併後小計 NT$${Math.floor(combinedSubtotal).toLocaleString()}${bundleDiscount > 0 ? " 折NT$200" : ""} → 運費 ${shipping === 0 ? "免運 🎉" : "NT$" + shipping} → 總計 NT$${Math.floor(combinedTotal).toLocaleString()}`;
+  totalEl.textContent = `合併後小計 NT$${Math.floor(combinedSubtotal).toLocaleString()}${bundleDiscount > 0 ? " 折NT$200" : ""} → 運費 ${shipping === 0 ? "免手續費 🎉" : "NT$" + shipping} → 總計 NT$${Math.floor(combinedTotal).toLocaleString()}`;
   totalEl.classList.remove("hidden");
 }
 
@@ -236,11 +236,11 @@ async function init() {
        </div>`
     : isFreeShipping
     ? `<div class="flex items-center gap-1.5 text-xs text-green-600 font-medium">
-         <span>✅</span><span>已達 NT$5,000，免運費！</span>
+         <span>✅</span><span>已達 NT$5,000，免出貨手續費！</span>
        </div>`
     : `<div class="flex items-center gap-1.5 text-xs text-gray-400">
          <span>🚚</span>
-         <span>再買 <span class="font-medium text-gray-600">NT$${Math.ceil(amountLeft).toLocaleString()}</span> 即可免運費</span>
+         <span>再買 <span class="font-medium text-gray-600">NT$${Math.ceil(amountLeft).toLocaleString()}</span> 即可免出貨手續費</span>
        </div>`;
 
   el.innerHTML = `
@@ -268,8 +268,8 @@ async function init() {
 
       <!-- 運費明細 -->
       <div class="flex justify-between items-center text-sm ${isFreeShipping ? 'text-green-600' : 'text-gray-500'}">
-        <span>運費</span>
-        <span>${isFreeShipping ? '免運' : formatPrice(shipping)}</span>
+        <span>出貨手續費</span>
+        <span>${isFreeShipping ? '免費' : formatPrice(shipping)}</span>
       </div>
 
       <!-- 總計 -->
@@ -285,7 +285,7 @@ async function init() {
             class="w-4 h-4 accent-black">
           <div>
             <div class="text-sm font-medium">集運合併</div>
-            <div class="text-xs text-gray-400">與其他待處理訂單合併計算運費</div>
+            <div class="text-xs text-gray-400">與其他待處理訂單合併計算出貨手續費</div>
           </div>
         </label>
         <div id="bundleHint" class="hidden text-xs text-orange-500 mt-2"></div>
