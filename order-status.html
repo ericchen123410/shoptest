@@ -306,6 +306,9 @@ window.queryByCustomer = async () => {
 
 // ── 點訂單顯示詳細 ────────────────────────────────────
 window.showOrderDetail = async (orderId, customer) => {
+  // 記錄供 refresh 用
+  window._currentDetailOrderId = orderId;
+  window._currentDetailCustomer = customer;
   const el = document.getElementById("result2");
   el.innerHTML = `<div class="text-center text-gray-400 py-8 text-sm">載入中...</div>`;
 
@@ -599,6 +602,8 @@ let _editData = null, _cancelData = null, _itemsData = null;
 window.openItemsModal = (encoded, itemsJson) => {
   _itemsData = JSON.parse(decodeURIComponent(encoded));
   const rawItems = typeof itemsJson === 'string' ? JSON.parse(itemsJson) : itemsJson;
+  // 記錄來源訂單的 orderId 供儲存後重新查詢用
+  window._lastOpenedOrderId = _itemsData._orderId || "";
   // 直接用訂單裡儲存的 price（下單當時計算好的，含優惠碼）
   _itemsData._editItems = JSON.parse(JSON.stringify(rawItems));
   document.getElementById("itemsSaveStatus").classList.add("hidden");
@@ -683,14 +688,7 @@ async function saveItems() {
     status.className   = "text-xs text-center text-green-600";
     status.classList.remove("hidden");
     closeItemsModal();
-    // 判斷是用訂單查詢還是客戶查詢進來的
-    const orderInput    = document.getElementById("orderInput").value.trim();
-    const customerInput = document.getElementById("customerInput").value.trim();
-    if (customerInput) {
-      window.queryByCustomer();
-    } else if (orderInput) {
-      window.queryByOrder();
-    }
+    await refreshCurrentOrder();
   } catch (err) {
     status.textContent = "❌ " + err.message;
     status.className   = "text-xs text-center text-red-500";
@@ -705,6 +703,10 @@ async function refreshCurrentOrder() {
   const customerInput = document.getElementById("customerInput")?.value.trim();
   if (customerInput) {
     await window.queryByCustomer();
+    // 如果是在訂單詳情頁，重新載入詳情
+    if (window._currentDetailOrderId && window._currentDetailCustomer) {
+      await window.showOrderDetail(window._currentDetailOrderId, window._currentDetailCustomer);
+    }
   } else if (orderInput) {
     await window.queryByOrder();
   }
