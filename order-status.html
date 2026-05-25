@@ -258,9 +258,16 @@ window.queryByCustomer = async () => {
                     <span class="text-xs font-bold text-blue-600">集運批次 #${shortId}</span>
                     <span class="text-xs text-blue-400">${orders.length} 筆訂單</span>
                   </div>
-                  <div class="text-right">
-                    <div class="text-xs font-bold text-blue-600">NT$ ${Math.floor(grandTotal).toLocaleString()}</div>
-                    <div class="text-xs text-blue-400">${shipping === 0 ? "免運 ✅" : "運費 NT$" + shipping}</div>
+                  <div class="flex items-center gap-2">
+                    <div class="text-right">
+                      <div class="text-xs font-bold text-blue-600">NT$ ${Math.floor(grandTotal).toLocaleString()}</div>
+                      <div class="text-xs text-blue-400">${shipping === 0 ? "免運 ✅" : "運費 NT$" + shipping}</div>
+                    </div>
+                    ${orders.every(o => o.status === "待處理") ? `
+                    <button onclick="editBundle('${bundleId}', event)"
+                      class="text-xs px-2 py-1 bg-white border border-blue-200 text-blue-500 rounded-lg hover:bg-blue-50 transition shrink-0">
+                      ✏️ 編輯
+                    </button>` : ""}
                   </div>
                 </div>
                 ${orders.map(o => renderOrder(o, true)).join("")}
@@ -474,6 +481,32 @@ document.addEventListener("click", (e) => {
   if (wrap && !wrap.contains(e.target)) closeSearch();
 });
 </script>
+
+<!-- 編輯集運批次 Modal -->
+<div id="editBundleModal" class="hidden fixed inset-0 z-50 bg-black bg-opacity-40 flex items-end sm:items-center justify-center">
+  <div class="bg-white w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl max-h-[85vh] flex flex-col">
+    <div class="flex justify-between items-center px-5 py-4 border-b shrink-0">
+      <h3 class="font-bold text-base" id="editBundleTitle">編輯集運批次</h3>
+      <button onclick="closeEditBundleModal()" class="text-gray-400 hover:text-black text-xl">✕</button>
+    </div>
+    <div class="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+      <div>
+        <div class="text-xs font-semibold text-blue-500 mb-2">📦 批次內的訂單</div>
+        <div id="editBundleIn" class="space-y-2"></div>
+      </div>
+      <div>
+        <div class="text-xs font-semibold text-gray-500 mb-2">➕ 可加入的待處理訂單</div>
+        <div id="editBundleOut" class="space-y-2"></div>
+      </div>
+    </div>
+    <div class="px-5 py-4 border-t shrink-0">
+      <button onclick="closeEditBundleModal()"
+        class="w-full py-3 border rounded-xl text-sm text-gray-500 hover:bg-gray-50">
+        關閉
+      </button>
+    </div>
+  </div>
+</div>
 
 <!-- 修改商品 Modal -->
 <div id="itemsModal" class="hidden fixed inset-0 z-50 bg-black bg-opacity-40 flex items-end sm:items-center justify-center">
@@ -730,6 +763,97 @@ async function submitCancel() {
     status.classList.remove("hidden");
     btn.disabled = false; btn.textContent = "確認";
   }
+}
+
+// ── 編輯集運批次 ─────────────────────────────────────
+let _editBundleId   = null;
+let _editBundleData = null; // { bundleOrders, allOrders, customer }
+
+window.editBundle = async (bundleId, evt) => {
+  evt.stopPropagation();
+  _editBundleId = bundleId;
+
+  // 從頁面上找到所有訂單資料（queryByCustomer 剛查過）
+  const el = document.getElementById("result2");
+  if (!el) return;
+
+  // 重新查詢取得最新資料
+  const customerId = document.getElementById("customerInput").value.trim();
+  const email      = document.getElementById("emailInput").value.trim();
+  if (!customerId || !email) return;
+
+  try {
+    const res  = await fetch(`${QUERY_API}&type=customer&customerId=${encodeURIComponent(customerId)}&email=${encodeURIComponent(email)}`);
+    const data = await res.json();
+    if (!res.ok) return;
+
+    _editBundleData = data;
+    renderEditBundleModal(bundleId, data);
+    document.getElementById("editBundleModal").classList.remove("hidden");
+    document.body.style.overflow = "hidden";
+  } catch {}
+};
+
+function renderEditBundleModal(bundleId, data) {
+  const modal = document.getElementById("editBundleModal");
+  const shortId = bundleId.replace("BUNDLE", "");
+  const bundleOrders  = data.orders.filter(o => o.bundleId === bundleId);
+  const freeOrders    = data.orders.filter(o => !o.bundleId && o.status === "待處理");
+
+  document.getElementById("editBundleTitle").textContent = `編輯集運批次 #${shortId}`;
+
+  // 批次內的訂單
+  document.getElementById("editBundleIn").innerHTML = bundleOrders.map(o => `
+    <div class="flex items-center justify-between border rounded-xl px-3 py-2.5 bg-blue-50">
+      <div class="min-w-0">
+        <div class="text-sm font-medium">${o.orderId}</div>
+        <div class="text-xs text-gray-400">NT$ ${Math.floor(o.total||0).toLocaleString()}</div>
+      </div>
+      <button onclick="removeFromBundle('${o.pageId}')"
+        class="text-xs px-2 py-1 border border-red-200 text-red-400 rounded-lg hover:bg-red-50 ml-2 shrink-0">
+        移除
+      </button>
+    </div>`).join("") || '<div class="text-xs text-gray-400 text-center py-2">批次已空</div>';
+
+  // 可加入的訂單
+  document.getElementById("editBundleOut").innerHTML = freeOrders.length ? freeOrders.map(o => `
+    <div class="flex items-center justify-between border rounded-xl px-3 py-2.5">
+      <div class="min-w-0">
+        <div class="text-sm font-medium">${o.orderId}</div>
+        <div class="text-xs text-gray-400">NT$ ${Math.floor(o.total||0).toLocaleString()}</div>
+      </div>
+      <button onclick="addToBundle('${o.pageId}')"
+        class="text-xs px-2 py-1 border border-blue-200 text-blue-500 rounded-lg hover:bg-blue-50 ml-2 shrink-0">
+        加入
+      </button>
+    </div>`).join("") : '<div class="text-xs text-gray-400 text-center py-2">沒有可加入的訂單</div>';
+}
+
+async function removeFromBundle(pageId) {
+  try {
+    await fetch(ORDERS_API_MOD, {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pageId, bundleId: "" }),
+    });
+    closeEditBundleModal();
+    window.queryByCustomer();
+  } catch (err) { alert("操作失敗：" + err.message); }
+}
+
+async function addToBundle(pageId) {
+  try {
+    await fetch(ORDERS_API_MOD, {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pageId, bundleId: _editBundleId }),
+    });
+    closeEditBundleModal();
+    window.queryByCustomer();
+  } catch (err) { alert("操作失敗：" + err.message); }
+}
+
+function closeEditBundleModal() {
+  document.getElementById("editBundleModal").classList.add("hidden");
+  document.body.style.overflow = "";
 }
 
 // ── 集運合併（訂單查詢頁）────────────────────────────
