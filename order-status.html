@@ -595,6 +595,7 @@ let _editData = null, _cancelData = null, _itemsData = null;
 // ── 修改商品 ─────────────────────────────────────────
 window.openItemsModal = (encoded, itemsJson) => {
   _itemsData = JSON.parse(decodeURIComponent(encoded));
+  console.log("openItemsModal pageId:", _itemsData.pageId);
   const rawItems = typeof itemsJson === 'string' ? JSON.parse(itemsJson) : itemsJson;
   // 直接用訂單裡儲存的 price（下單當時計算好的，含優惠碼）
   _itemsData._editItems = JSON.parse(JSON.stringify(rawItems));
