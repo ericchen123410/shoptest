@@ -77,6 +77,14 @@
       <div>
         <div class="text-xs font-medium text-gray-500 mb-2">訂單明細</div>
         <div id="modalItems" class="space-y-1.5"></div>
+        <div id="modalDiscountRow" class="hidden flex justify-between items-center mt-2 text-sm text-green-600">
+          <span>🎉 滿NT$3,000折扣</span>
+          <span id="modalDiscount"></span>
+        </div>
+        <div id="modalShippingRow" class="flex justify-between items-center mt-1 text-sm text-gray-500">
+          <span>出貨手續費</span>
+          <span id="modalShipping"></span>
+        </div>
         <div class="flex justify-between items-center mt-3 pt-3 border-t font-bold">
           <span>合計</span>
           <span class="text-red-500 text-lg" id="modalTotal"></span>
@@ -196,6 +204,8 @@ function renderOrders() {
           </div>
           <div class="text-right shrink-0 ml-3">
             <div class="font-bold text-red-500 text-sm">NT$ ${Math.round(o.total||0).toLocaleString()}</div>
+            ${o.discount > 0 ? `<div class="text-xs text-green-600">折 NT$${o.discount}</div>` : ""}
+            ${o.shipping > 0 ? `<div class="text-xs text-gray-400">手續費 NT$${o.shipping}</div>` : o.shipping === 0 && o.total > 0 ? `<div class="text-xs text-green-600">免手續費</div>` : ""}
             <div class="text-xs text-gray-400 mt-0.5">${date}</div>
           </div>
         </div>
@@ -244,7 +254,27 @@ function openModal(orderId) {
   }
   document.getElementById("modalDate").textContent       = date;
   document.getElementById("modalCustomerId").textContent = o.customerId || "—";
-  document.getElementById("modalTotal").textContent      = `NT$ ${Math.round(o.total||0).toLocaleString()}`;
+  document.getElementById("modalTotal").textContent = `NT$ ${Math.round(o.total||0).toLocaleString()}`;
+  // 折扣
+  const discEl = document.getElementById("modalDiscountRow");
+  if (o.discount > 0) {
+    document.getElementById("modalDiscount").textContent = `- NT$${o.discount}`;
+    discEl.classList.remove("hidden");
+  } else {
+    discEl.classList.add("hidden");
+  }
+  // 手續費
+  const shipEl  = document.getElementById("modalShipping");
+  const shipRow = document.getElementById("modalShippingRow");
+  if (o.shipping > 0) {
+    shipEl.textContent = `NT$${o.shipping}`;
+    shipRow.className  = "flex justify-between items-center mt-1 text-sm text-gray-500";
+  } else if (o.shipping === 0 && o.total > 0) {
+    shipEl.textContent = "免手續費";
+    shipRow.className  = "flex justify-between items-center mt-1 text-sm text-green-600";
+  } else {
+    shipRow.className  = "hidden";
+  }
 
   // ⭐ 用 customerId 的 email 查詢客戶資料
   const infoEl = document.getElementById("customerInfo");
