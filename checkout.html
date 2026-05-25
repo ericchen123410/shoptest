@@ -65,6 +65,10 @@
         <span>商品小計</span>
         <span id="orderSubtotal"></span>
       </div>
+      <div id="orderDiscountRow" class="hidden flex justify-between items-center mt-1 text-sm text-green-600">
+        <span>🎉 滿NT$3,000折扣</span>
+        <span>- NT$200</span>
+      </div>
       <div class="flex justify-between items-center mt-1 text-sm" id="orderShippingRow">
         <span>運費</span>
         <span id="orderShipping"></span>
@@ -214,9 +218,15 @@ async function init() {
   // ⭐ 運費計算
   const FLAT_SHIPPING  = 200;
   const FREE_AMOUNT    = 5000;
-  const isFreeShipping = activeCoupon ? true : orderSubtotal >= FREE_AMOUNT;
-  orderShipping        = isFreeShipping ? 0 : FLAT_SHIPPING;
-  orderTotal           = orderSubtotal + orderShipping;
+  const DISCOUNT_MIN   = 3000;
+  const DISCOUNT_AMT   = 200;
+
+  // 滿 3000 折 200（hinamecute 不適用）
+  const orderDiscount   = (!activeCoupon && orderSubtotal >= DISCOUNT_MIN) ? DISCOUNT_AMT : 0;
+  const afterDiscount   = orderSubtotal - orderDiscount;
+  const isFreeShipping  = activeCoupon ? true : afterDiscount >= FREE_AMOUNT;
+  orderShipping         = isFreeShipping ? 0 : FLAT_SHIPPING;
+  orderTotal            = afterDiscount + orderShipping;
 
   // 訂單明細
   document.getElementById("orderItems").innerHTML = orderItems.map(i => `
@@ -232,6 +242,10 @@ async function init() {
   const shippingRow = document.getElementById("orderShippingRow");
   shippingRow.className = "flex justify-between items-center mt-1 text-sm text-gray-500";
 
+  if (orderDiscount > 0) {
+    const discEl = document.getElementById("orderDiscountRow");
+    if (discEl) discEl.classList.remove("hidden");
+  }
   shippingEl.textContent = isFreeShipping ? "免運費" : "NT$200";
 
   document.getElementById("orderTotal").textContent = formatPrice(orderTotal);
@@ -306,6 +320,7 @@ window.submitOrder = async () => {
         orderId, customerId,
         items: orderItems,
         total: orderTotal,
+        discounted: orderDiscount > 0,
       }),
     });
 
@@ -313,6 +328,7 @@ window.submitOrder = async () => {
     if (!data.success) throw new Error(data.error || "送出失敗");
 
     localStorage.removeItem("cart");
+    sessionStorage.removeItem("appliedCoupon");
 
     // ⭐ 集運：更新所有選取訂單的 bundleId
     const bundleOrdersRaw = sessionStorage.getItem("bundleOrders");
