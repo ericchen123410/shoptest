@@ -770,6 +770,7 @@ let _editBundleId   = null;
 let _editBundleData = null; // { bundleOrders, allOrders, customer }
 
 window.openEditBundleById = async (bundleId) => {
+  console.log("openEditBundleById called:", bundleId);
   _editBundleId = bundleId;
 
   // 從頁面上找到所有訂單資料（queryByCustomer 剛查過）
