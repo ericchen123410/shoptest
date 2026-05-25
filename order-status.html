@@ -540,7 +540,7 @@ document.addEventListener("click", (e) => {
         <span id="itemsNewTotal" class="text-red-500"></span>
       </div>
       <p id="itemsSaveStatus" class="text-xs text-center hidden"></p>
-      <button onclick="saveItems()" class="w-full py-3 bg-black text-white font-medium rounded-xl text-sm">儲存變更</button>
+      <button id="itemsSaveBtn" onclick="saveItems()" class="w-full py-3 bg-black text-white font-medium rounded-xl text-sm">儲存變更</button>
     </div>
   </div>
 </div>
@@ -595,7 +595,6 @@ let _editData = null, _cancelData = null, _itemsData = null;
 // ── 修改商品 ─────────────────────────────────────────
 window.openItemsModal = (encoded, itemsJson) => {
   _itemsData = JSON.parse(decodeURIComponent(encoded));
-  console.log("openItemsModal pageId:", _itemsData.pageId);
   const rawItems = typeof itemsJson === 'string' ? JSON.parse(itemsJson) : itemsJson;
   // 直接用訂單裡儲存的 price（下單當時計算好的，含優惠碼）
   _itemsData._editItems = JSON.parse(JSON.stringify(rawItems));
@@ -608,6 +607,10 @@ window.openItemsModal = (encoded, itemsJson) => {
 function closeItemsModal() {
   document.getElementById("itemsModal").classList.add("hidden");
   document.body.style.overflow = "";
+  // 重置按鈕狀態
+  const btn = document.getElementById("itemsSaveBtn");
+  if (btn) { btn.disabled = false; btn.textContent = "儲存變更"; }
+  document.getElementById("itemsSaveStatus").classList.add("hidden");
 }
 
 function renderItemsEditor() {
@@ -662,7 +665,7 @@ async function saveItems() {
   const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0);
   const total    = subtotal + (subtotal >= FREE ? 0 : FLAT);
 
-  const btn    = document.querySelector("#itemsModal button:last-child");
+  const btn    = document.getElementById("itemsSaveBtn");
   const status = document.getElementById("itemsSaveStatus");
   btn.disabled = true; btn.textContent = "儲存中...";
 
@@ -676,7 +679,11 @@ async function saveItems() {
     status.textContent = "✅ 已更新！";
     status.className   = "text-xs text-center text-green-600";
     status.classList.remove("hidden");
-    setTimeout(() => { closeItemsModal(); refreshCurrentOrder(); }, 1000);
+    setTimeout(() => {
+      closeItemsModal();
+      // 清除 pageId 快取讓重查時取最新資料
+      window.queryByOrder();
+    }, 800);
   } catch (err) {
     status.textContent = "❌ " + err.message;
     status.className   = "text-xs text-center text-red-500";
