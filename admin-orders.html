@@ -228,6 +228,10 @@ function renderOrders() {
           <span class="text-xs font-bold text-blue-600">合計 NT$ ${Math.floor(grandTotal).toLocaleString()}</span>
         </div>
         ${orders.map(o => renderOrderCard(o, true)).join("")}
+        <div class="bg-blue-50 px-4 py-2 text-xs text-blue-400 flex justify-between">
+          <span>小計 NT$ ${Math.floor(grandTotal).toLocaleString()}</span>
+          <span>${grandTotal >= 5000 ? "✅ 已達免手續費門檻" : `還差 NT$ ${Math.ceil(5000 - grandTotal).toLocaleString()} 可免手續費`}</span>
+        </div>
       </div>`;
   }).join("");
 
