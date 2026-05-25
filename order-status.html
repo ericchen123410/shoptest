@@ -264,7 +264,7 @@ window.queryByCustomer = async () => {
                       <div class="text-xs text-blue-400">${shipping === 0 ? "免運 ✅" : "運費 NT$" + shipping}</div>
                     </div>
                     ${orders.every(o => o.status === "待處理") ? `
-                    <button onclick="editBundle('${bundleId}', event)"
+                    <button onclick="event.stopPropagation(); openEditBundleById('${bundleId}')"
                       class="text-xs px-2 py-1 bg-white border border-blue-200 text-blue-500 rounded-lg hover:bg-blue-50 transition shrink-0">
                       ✏️ 編輯
                     </button>` : ""}
@@ -769,8 +769,7 @@ async function submitCancel() {
 let _editBundleId   = null;
 let _editBundleData = null; // { bundleOrders, allOrders, customer }
 
-window.editBundle = async (bundleId, evt) => {
-  evt.stopPropagation();
+window.openEditBundleById = async (bundleId) => {
   _editBundleId = bundleId;
 
   // 從頁面上找到所有訂單資料（queryByCustomer 剛查過）
