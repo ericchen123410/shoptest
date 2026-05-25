@@ -219,9 +219,12 @@ window.queryByCustomer = async () => {
               <div class="${inBundle ? "border-b last:border-0 px-4 py-3" : "bg-white rounded-xl border px-4 py-3"} transition ${canBundle && !inBundle ? "hover:border-pink-300" : ""}">
                 <div class="flex items-start gap-3">
                   ${canBundle ? `
-                  <input type="checkbox" value="${o.pageId}" data-total="${o.total}" data-discount="${o.discount || 0}"
-                    onchange="toggleMergeOrder(this)"
-                    class="w-4 h-4 accent-black mt-1 shrink-0 cursor-pointer">` : `<div class="w-4 shrink-0"></div>`}
+                  <label class="flex flex-col items-center shrink-0 cursor-pointer gap-0.5 mt-0.5" title="勾選加入集運">
+                    <input type="checkbox" value="${o.pageId}" data-total="${o.total}" data-discount="${o.discount || 0}"
+                      onchange="toggleMergeOrder(this)"
+                      class="w-4 h-4 accent-black cursor-pointer">
+                    <span class="text-gray-400" style="font-size:9px">集運</span>
+                  </label>` : `<div class="w-5 shrink-0"></div>`}
                   <div class="flex-1 min-w-0 cursor-pointer" onclick="showOrderDetail('${o.orderId}', ${JSON.stringify(data.customer).replace(/"/g,'&quot;')})">
                     <div class="flex justify-between items-start">
                       <div class="min-w-0">
@@ -679,11 +682,15 @@ async function saveItems() {
     status.textContent = "✅ 已更新！";
     status.className   = "text-xs text-center text-green-600";
     status.classList.remove("hidden");
-    setTimeout(() => {
-      closeItemsModal();
-      // 清除 pageId 快取讓重查時取最新資料
+    closeItemsModal();
+    // 判斷是用訂單查詢還是客戶查詢進來的
+    const orderInput    = document.getElementById("orderInput").value.trim();
+    const customerInput = document.getElementById("customerInput").value.trim();
+    if (customerInput) {
+      window.queryByCustomer();
+    } else if (orderInput) {
       window.queryByOrder();
-    }, 800);
+    }
   } catch (err) {
     status.textContent = "❌ " + err.message;
     status.className   = "text-xs text-center text-red-500";
@@ -694,8 +701,11 @@ async function saveItems() {
 
 // ── 重新載入當前訂單 ─────────────────────────────────
 async function refreshCurrentOrder() {
-  const orderId = document.getElementById("orderInput")?.value.trim();
-  if (orderId) {
+  const orderInput    = document.getElementById("orderInput")?.value.trim();
+  const customerInput = document.getElementById("customerInput")?.value.trim();
+  if (customerInput) {
+    await window.queryByCustomer();
+  } else if (orderInput) {
     await window.queryByOrder();
   }
 }
