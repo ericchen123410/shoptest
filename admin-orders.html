@@ -290,16 +290,27 @@ function openModal(orderId) {
 
   // 商品明細
   let itemsArr;
+  let itemsHtml;
   if (Array.isArray(o.items)) {
-    itemsArr = o.items.map(i => `${i.name}${i.variant ? `（${i.variant}）` : ""} × ${i.qty}（NT$${Math.round(i.price * i.qty).toLocaleString()}）`);
+    itemsHtml = o.items.map(i => `
+      <div class="py-2 border-b border-gray-50 last:border-0">
+        <div class="flex justify-between items-start text-sm">
+          <span class="text-gray-700 flex-1 min-w-0 mr-2">${i.name}${i.variant ? ` <span class="text-gray-400">（${i.variant}）</span>` : ""}</span>
+          <span class="text-gray-500 shrink-0">× ${i.qty}</span>
+        </div>
+        <div class="flex justify-between text-xs text-gray-400 mt-0.5">
+          <span>單價 NT$${Math.floor(i.price).toLocaleString()}</span>
+          <span class="text-gray-600 font-medium">NT$${Math.floor(i.price * i.qty).toLocaleString()}</span>
+        </div>
+      </div>`).join("");
   } else {
-    itemsArr = (o.items || "").split("\n").filter(Boolean);
+    itemsHtml = (o.items || "").split("\n").filter(Boolean).map(line => `
+      <div class="flex justify-between text-sm py-1.5 border-b border-gray-50 last:border-0">
+        <span class="text-gray-700">${line.split("（")[0].trim()}</span>
+        <span class="text-gray-500 shrink-0 ml-2">${line.match(/（(.+)）/)?.[1] || ""}</span>
+      </div>`).join("");
   }
-  document.getElementById("modalItems").innerHTML = itemsArr.map(line => `
-    <div class="flex justify-between text-sm py-1.5 border-b border-gray-50 last:border-0">
-      <span class="text-gray-700">${line.split("（")[0].trim()}</span>
-      <span class="text-gray-500 shrink-0 ml-2">${line.match(/（(.+)）/)?.[1] || ""}</span>
-    </div>`).join("");
+  document.getElementById("modalItems").innerHTML = itemsHtml;
 
   // 狀態按鈕
   const statusEl = document.getElementById("statusBtns");

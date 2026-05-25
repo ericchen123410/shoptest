@@ -354,9 +354,12 @@ function renderOrderDetail(data) {
   let itemsHtml = "";
   if (Array.isArray(data.items) && data.items.length) {
     itemsHtml = data.items.map(i => `
-      <div class="flex justify-between py-2 text-sm border-b last:border-0">
-        <span class="text-gray-700">${i.name}${i.variant ? ` <span class="text-xs text-gray-400">（${i.variant}）</span>` : ""} × ${i.qty}</span>
-        <span class="text-gray-500">${formatPrice(i.price * i.qty)}</span>
+      <div class="py-2 border-b last:border-0">
+        <div class="flex justify-between items-start text-sm">
+          <span class="text-gray-700 flex-1 mr-2">${i.name}${i.variant ? ` <span class="text-xs text-gray-400">（${i.variant}）</span>` : ""} × ${i.qty}</span>
+          <span class="text-gray-600 font-medium shrink-0">${formatPrice(i.price * i.qty)}</span>
+        </div>
+        <div class="text-xs text-gray-400 mt-0.5">單價 ${formatPrice(i.price)}</div>
       </div>`).join("");
   } else {
     const text = typeof data.items === "string" ? data.items : "";
