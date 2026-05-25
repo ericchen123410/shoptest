@@ -216,7 +216,7 @@ async function init() {
 
   // ⭐ 運費計算邏輯
   const FLAT_SHIPPING = 200;   // 固定運費（台幣）
-  const FREE_AMOUNT   = 5000;  // 免運門檻（台幣）
+  const FREE_AMOUNT   = 5000;  // 免手續費門檻（台幣）
   const DISCOUNT_MIN  = 3000;  // 折扣門檻
   const DISCOUNT_AMT  = 200;   // 折扣金額
 
