@@ -87,6 +87,9 @@ export default async function handler(req, res) {
         customerId: getText(props.customerId),
         items:      parseItems(props.items),
         total:      props.total?.number || 0,
+        shipping:   props.shipping?.number || 0,
+        discount:   props.discount?.number || 0,
+        bundleId:   getText(props.bundleId) || "",
         status:     props.status?.select?.name || "待處理",
         createdAt:  page.created_time,
       });
