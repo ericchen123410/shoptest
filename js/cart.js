@@ -97,9 +97,9 @@ function updateBundleTotal() {
   const bundleSubtotal = selected.reduce((s, o) => s + (Number(o.total) || 0), 0);
 
   // 集運折扣：購物車未折扣（cartSubtotal < 3000），集運後若超過 3000 則折一次
-  // 已折扣過的集運訂單（o.discounted = true）不再折扣
+  // 已折扣過的集運訂單（discount > 0）不再折扣
   const cartAlreadyDiscounted = cartSubtotal >= 3000; // 購物車本身已有折扣
-  const undiscountedBundle    = selected.filter(o => !o.discounted).reduce((s, o) => s + (Number(o.total) || 0), 0);
+  const undiscountedBundle    = selected.filter(o => !(o.discount > 0)).reduce((s, o) => s + (Number(o.total) || 0), 0);
 
   // 計算集運後新增的折扣
   let bundleDiscount = 0;
