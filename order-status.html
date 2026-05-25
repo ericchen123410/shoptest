@@ -770,7 +770,6 @@ let _editBundleId   = null;
 let _editBundleData = null; // { bundleOrders, allOrders, customer }
 
 window.openEditBundleById = async (bundleId) => {
-  console.log("openEditBundleById called:", bundleId);
   _editBundleId = bundleId;
 
   // 從頁面上找到所有訂單資料（queryByCustomer 剛查過）
@@ -783,7 +782,8 @@ window.openEditBundleById = async (bundleId) => {
   if (!customerId || !email) return;
 
   try {
-    const res  = await fetch(`${CUSTOMER_API_URL}&customerId=${encodeURIComponent(customerId)}&email=${encodeURIComponent(email)}`);
+    const apiUrl = "https://shoptest-chi.vercel.app/api/orders-manage?type=customer";
+    const res  = await fetch(`${apiUrl}&customerId=${encodeURIComponent(customerId)}&email=${encodeURIComponent(email)}`);
     const data = await res.json();
     if (!res.ok) return;
 
