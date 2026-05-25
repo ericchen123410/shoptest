@@ -178,6 +178,7 @@ let orderItems    = [];
 let orderTotal    = 0;
 let orderSubtotal = 0;
 let orderShipping = 0;
+let orderDiscount = 0;
 
 // ── 初始化：讀購物車 + 抓商品資料 ──────────────────────
 async function init() {
@@ -222,7 +223,7 @@ async function init() {
   const DISCOUNT_AMT   = 200;
 
   // 滿 3000 折 200（hinamecute 不適用）
-  const orderDiscount   = (!activeCoupon && orderSubtotal >= DISCOUNT_MIN) ? DISCOUNT_AMT : 0;
+  orderDiscount         = (!activeCoupon && orderSubtotal >= DISCOUNT_MIN) ? DISCOUNT_AMT : 0;
   const afterDiscount   = orderSubtotal - orderDiscount;
   const isFreeShipping  = activeCoupon ? true : afterDiscount >= FREE_AMOUNT;
   orderShipping         = isFreeShipping ? 0 : FLAT_SHIPPING;
