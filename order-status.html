@@ -835,10 +835,22 @@ function renderEditBundleModal(bundleId, data) {
 
 async function removeFromBundle(pageId) {
   try {
+    // 移除這筆
     await fetch(ORDERS_API_MOD, {
       method: "PATCH", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ pageId, bundleId: "" }),
     });
+
+    // 如果批次只剩 1 筆，把最後一筆也移除（變回單獨訂單）
+    const remaining = (_editBundleData?.orders || [])
+      .filter(o => o.bundleId === _editBundleId && o.pageId !== pageId);
+    if (remaining.length === 1) {
+      await fetch(ORDERS_API_MOD, {
+        method: "PATCH", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pageId: remaining[0].pageId, bundleId: "" }),
+      });
+    }
+
     closeEditBundleModal();
     window.queryByCustomer();
   } catch (err) { alert("操作失敗：" + err.message); }
