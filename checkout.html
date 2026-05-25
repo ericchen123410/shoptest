@@ -321,7 +321,8 @@ window.submitOrder = async () => {
         orderId, customerId,
         items: orderItems,
         total: orderTotal,
-        discounted: orderDiscount > 0,
+        shipping: orderShipping,
+        discount: orderDiscount,
       }),
     });
 

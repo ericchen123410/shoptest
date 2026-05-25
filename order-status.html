@@ -219,7 +219,7 @@ window.queryByCustomer = async () => {
               <div class="${inBundle ? "border-b last:border-0 px-4 py-3" : "bg-white rounded-xl border px-4 py-3"} transition ${canBundle && !inBundle ? "hover:border-pink-300" : ""}">
                 <div class="flex items-start gap-3">
                   ${canBundle ? `
-                  <input type="checkbox" value="${o.pageId}" data-total="${o.total}" data-discounted="${o.discounted}"
+                  <input type="checkbox" value="${o.pageId}" data-total="${o.total}" data-discount="${o.discount || 0}"
                     onchange="toggleMergeOrder(this)"
                     class="w-4 h-4 accent-black mt-1 shrink-0 cursor-pointer">` : `<div class="w-4 shrink-0"></div>`}
                   <div class="flex-1 min-w-0 cursor-pointer" onclick="showOrderDetail('${o.orderId}', ${JSON.stringify(data.customer).replace(/"/g,'&quot;')})">
@@ -245,7 +245,7 @@ window.queryByCustomer = async () => {
           const bundleHtml = Object.entries(bundles).map(([bundleId, orders]) => {
             const bundleTotal  = orders.reduce((s, o) => s + (o.total || 0), 0);
             const DISCOUNT_MIN = 3000, DISCOUNT_AMT = 200, FREE_AMOUNT = 5000;
-            const hasDisc      = orders.some(o => o.discounted);
+            const hasDisc      = orders.some(o => o.discount > 0);
             const discount     = (!hasDisc && bundleTotal >= DISCOUNT_MIN) ? DISCOUNT_AMT : 0;
             const afterDisc    = bundleTotal - discount;
             const shipping     = afterDisc >= FREE_AMOUNT ? 0 : 200;
@@ -389,7 +389,21 @@ function renderOrderDetail(data) {
     <div class="bg-white rounded-xl border px-4 py-4 mb-3">
       <div class="text-xs font-semibold text-gray-500 mb-2">訂單明細</div>
       ${itemsHtml}
-      <div class="flex justify-between items-center pt-3 font-bold">
+      ${data.discount > 0 ? `
+      <div class="flex justify-between items-center py-2 text-sm text-green-600">
+        <span>🎉 滿NT$3,000折扣</span>
+        <span>- NT$200</span>
+      </div>` : ""}
+      ${data.shipping > 0 ? `
+      <div class="flex justify-between items-center py-2 text-sm text-gray-500">
+        <span>運費</span>
+        <span>NT$${data.shipping}</span>
+      </div>` : data.shipping === 0 && data.total > 0 ? `
+      <div class="flex justify-between items-center py-2 text-sm text-green-600">
+        <span>運費</span>
+        <span>免運</span>
+      </div>` : ""}
+      <div class="flex justify-between items-center pt-3 font-bold border-t">
         <span>合計</span>
         <span class="text-red-500">${formatPrice(data.total)}</span>
       </div>
@@ -868,7 +882,7 @@ function updateMergeArea() {
   let hasDiscounted = false;
   document.querySelectorAll("input[type=checkbox][data-total]:checked").forEach(cb => {
     total += Number(cb.dataset.total) || 0;
-    if (cb.dataset.discounted === "true") hasDiscounted = true;
+    if (Number(cb.dataset.discount) > 0) hasDiscounted = true;
   });
 
   const DISCOUNT_MIN = 3000, DISCOUNT_AMT = 200, FREE_AMOUNT = 5000;
