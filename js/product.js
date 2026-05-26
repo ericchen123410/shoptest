@@ -83,15 +83,29 @@ async function init() {
 
         <!-- 圖片區 -->
         <div>
-          <img id="mainImg" src="${mainImg}"
-               class="w-full aspect-square object-cover rounded-xl sm:rounded-2xl">
+          <div class="relative">
+            <img id="mainImg" src="${mainImg}"
+                 class="w-full aspect-square object-cover rounded-xl sm:rounded-2xl">
+            ${imagesArr.length > 1 ? `
+            <button id="prevBtn"
+              class="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 bg-white bg-opacity-80 rounded-full shadow flex items-center justify-center text-lg hover:bg-opacity-100 transition active:scale-95">
+              ‹
+            </button>
+            <button id="nextBtn"
+              class="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 bg-white bg-opacity-80 rounded-full shadow flex items-center justify-center text-lg hover:bg-opacity-100 transition active:scale-95">
+              ›
+            </button>
+            <div class="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5" id="dotNav">
+              ${imagesArr.map((_, i) => `<div class="dot w-1.5 h-1.5 rounded-full transition ${i === 0 ? "bg-black" : "bg-white bg-opacity-60"}"></div>`).join("")}
+            </div>` : ""}
+          </div>
 
-          ${imagesArr.length > 0 ? `
+          ${imagesArr.length > 1 ? `
           <div class="flex gap-2 mt-3 overflow-x-auto pb-1">
-            ${imagesArr.map(img => `
-              <img src="${img}"
+            ${imagesArr.map((img, i) => `
+              <img src="${img}" data-index="${i}"
                    class="w-16 h-16 sm:w-20 sm:h-20 shrink-0 object-cover rounded-lg cursor-pointer thumb
-                          border-2 border-transparent hover:border-black transition">
+                          border-2 ${i === 0 ? "border-black" : "border-transparent"} hover:border-black transition">
             `).join("")}
           </div>` : ""}
         </div>
@@ -199,14 +213,31 @@ async function init() {
       <div class="border-t mt-10">${navBar}</div>
     `;
 
-    // 縮圖切換
-    document.querySelectorAll(".thumb").forEach(img => {
-      img.onclick = () => {
-        document.getElementById("mainImg").src = img.src;
-        document.querySelectorAll(".thumb").forEach(t => t.classList.remove("border-black"));
-        img.classList.add("border-black");
-      };
+    // 圖片導覽
+    let currentIdx = 0;
+    const thumbs    = document.querySelectorAll(".thumb");
+    const dots      = document.querySelectorAll(".dot");
+    const mainImgEl = document.getElementById("mainImg");
+
+    function goToImg(idx) {
+      currentIdx = (idx + imagesArr.length) % imagesArr.length;
+      if (mainImgEl) mainImgEl.src = imagesArr[currentIdx];
+      thumbs.forEach((t, i) => {
+        t.classList.toggle("border-black",       i === currentIdx);
+        t.classList.toggle("border-transparent", i !== currentIdx);
+      });
+      dots.forEach((d, i) => {
+        d.className = `dot w-1.5 h-1.5 rounded-full transition ${i === currentIdx ? "bg-black" : "bg-white bg-opacity-60"}`;
+      });
+      thumbs[currentIdx]?.scrollIntoView({ block: "nearest", inline: "center", behavior: "smooth" });
+    }
+
+    thumbs.forEach((_, i) => {
+      thumbs[i].onclick = () => goToImg(i);
     });
+
+    document.getElementById("prevBtn")?.addEventListener("click", () => goToImg(currentIdx - 1));
+    document.getElementById("nextBtn")?.addEventListener("click", () => goToImg(currentIdx + 1));
 
     // 規格選擇
     let selectedVariant = "";
