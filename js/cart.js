@@ -7,11 +7,11 @@ const COUPONS = {
 let appliedCoupon = null;
 
 
-const API_URL     = "https://shoptest-chi.vercel.app/api/products";
+const API_URL     = "https://shop-project-azure.vercel.app/api/products";
 
 // ── 集運功能 ─────────────────────────────────────────
-const ORDERS_API_CART = "https://shoptest-chi.vercel.app/api/orders-manage";
-const CUSTOMER_API_CART = "https://shoptest-chi.vercel.app/api/customer";
+const ORDERS_API_CART = "https://shop-project-azure.vercel.app/api/orders-manage";
+const CUSTOMER_API_CART = "https://shop-project-azure.vercel.app/api/customer";
 let bundleOrders = []; // 選取的集運訂單
 let selectedBundleIds = new Set();
 
