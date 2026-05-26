@@ -64,6 +64,7 @@
         <span>新合計</span>
         <span id="adminItemsNewTotal" class="text-red-500"></span>
       </div>
+      <div id="adminItemsDetail" class="text-xs text-gray-400"></div>
       <p id="adminItemsSaveStatus" class="text-xs text-center hidden"></p>
       <button id="adminItemsSaveBtn" onclick="adminSaveItems()"
         class="w-full py-3 bg-black text-white font-medium rounded-xl text-sm">儲存變更</button>
@@ -566,10 +567,12 @@ function renderAdminItemsEditor() {
   const shipping  = afterDisc >= FREE ? 0 : FLAT;
   const total     = afterDisc + shipping;
 
-  document.getElementById("adminItemsNewTotal").textContent =
-    `NT$${Math.floor(total).toLocaleString()}` +
-    (discount > 0 ? `（折NT$${discount}）` : "") +
-    (shipping === 0 ? "（免出貨手續費）" : `（出貨手續費NT$${shipping}）`);
+  document.getElementById("adminItemsNewTotal").textContent = `NT$${Math.floor(total).toLocaleString()}`;
+  const detailParts = [`小計 NT$${Math.floor(subtotal).toLocaleString()}`];
+  if (discount > 0) detailParts.push(`折扣 -NT$${discount}`);
+  detailParts.push(shipping === 0 ? "免出貨手續費" : `出貨手續費 NT$${shipping}`);
+  const detailEl = document.getElementById("adminItemsDetail");
+  if (detailEl) detailEl.textContent = detailParts.join(" → ");
 
   document.getElementById("adminItemsEditor").innerHTML = items.map((item, idx) => `
     <div class="flex items-center gap-3 border rounded-xl p-3 ${item.qty === 0 ? "opacity-40" : ""}">
@@ -623,8 +626,10 @@ async function adminSaveItems() {
     status.textContent = "✅ 已更新！";
     status.className   = "text-xs text-center text-green-600";
     status.classList.remove("hidden");
+    console.log("adminSaveItems success, orderId:", currentOrder.orderId);
     closeAdminItemsModal();
     await init();
+    console.log("init done, allOrders count:", allOrders.length);
     openModal(currentOrder.orderId);
   } catch (err) {
     status.textContent = "❌ " + err.message;

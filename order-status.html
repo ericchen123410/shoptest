@@ -545,6 +545,7 @@ document.addEventListener("click", (e) => {
         <span>新合計</span>
         <span id="itemsNewTotal" class="text-red-500"></span>
       </div>
+      <div id="itemsDetail" class="text-xs text-gray-400"></div>
       <p id="itemsSaveStatus" class="text-xs text-center hidden"></p>
       <button id="itemsSaveBtn" onclick="saveItems()" class="w-full py-3 bg-black text-white font-medium rounded-xl text-sm">儲存變更</button>
     </div>
@@ -623,14 +624,19 @@ function closeItemsModal() {
 
 function renderItemsEditor() {
   const items = _itemsData._editItems;
-  const FLAT = 200, FREE = 5000;
-  const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0);
-  const shipping  = subtotal >= FREE ? 0 : FLAT;
-  const total     = subtotal + shipping;
+  const FLAT = 200, FREE = 5000, DISCOUNT_MIN = 3000, DISCOUNT_AMT = 200;
+  const subtotal  = items.reduce((s, i) => s + i.price * i.qty, 0);
+  const discount  = subtotal >= DISCOUNT_MIN ? DISCOUNT_AMT : 0;
+  const afterDisc = subtotal - discount;
+  const shipping  = afterDisc >= FREE ? 0 : FLAT;
+  const total     = afterDisc + shipping;
 
-  document.getElementById("itemsNewTotal").textContent =
-    "NT$" + Math.round(total).toLocaleString() +
-    (shipping === 0 ? "（免出貨手續費）" : `（含出貨手續費NT$${shipping}）`);
+  document.getElementById("itemsNewTotal").textContent = "NT$" + Math.floor(total).toLocaleString();
+  const detailParts = [`小計 NT$${Math.floor(subtotal).toLocaleString()}`];
+  if (discount > 0) detailParts.push(`折扣 -NT$${discount}`);
+  detailParts.push(shipping === 0 ? "免出貨手續費" : `出貨手續費 NT$${shipping}`);
+  const detailEl = document.getElementById("itemsDetail");
+  if (detailEl) detailEl.textContent = detailParts.join(" → ");
 
   document.getElementById("itemsEditor").innerHTML = items.map((item, idx) => `
     <div class="flex items-center gap-3 border rounded-xl p-3 ${item.qty === 0 ? "opacity-40" : ""}">
@@ -690,8 +696,10 @@ async function saveItems() {
     status.textContent = "✅ 已更新！";
     status.className   = "text-xs text-center text-green-600";
     status.classList.remove("hidden");
+    console.log("saveItems success, refreshing...");
     closeItemsModal();
     await refreshCurrentOrder();
+    console.log("refresh done");
   } catch (err) {
     status.textContent = "❌ " + err.message;
     status.className   = "text-xs text-center text-red-500";
@@ -712,6 +720,7 @@ async function refreshCurrentOrder() {
     }
   } else if (orderInput) {
     await window.queryByOrder();
+    // queryByOrder 已自動更新 result1 的訂單詳情
   }
 }
 
