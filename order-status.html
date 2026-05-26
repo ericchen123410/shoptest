@@ -630,7 +630,7 @@ function renderItemsEditor() {
 
   document.getElementById("itemsNewTotal").textContent =
     "NT$" + Math.round(total).toLocaleString() +
-    (shipping === 0 ? "（免出貨手續費）" : `（含運NT$${shipping}）`);
+    (shipping === 0 ? "（免出貨手續費）" : `（含出貨手續費NT$${shipping}）`);
 
   document.getElementById("itemsEditor").innerHTML = items.map((item, idx) => `
     <div class="flex items-center gap-3 border rounded-xl p-3 ${item.qty === 0 ? "opacity-40" : ""}">
