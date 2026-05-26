@@ -162,9 +162,9 @@
 </div>
 
 <script>
-const ORDERS_API  = "https://shop-project-azure.vercel.app/api/orders-manage?type=list";
-const UPDATE_API  = "https://shop-project-azure.vercel.app/api/orders-manage";
-const CUSTOMER_API = "https://shop-project-azure.vercel.app/api/customer";
+const ORDERS_API  = "https://shoptest-chi.vercel.app/api/orders-manage?type=list";
+const UPDATE_API  = "https://shoptest-chi.vercel.app/api/orders-manage";
+const CUSTOMER_API = "https://shoptest-chi.vercel.app/api/customer";
 
 const STATUS_LIST = ["全部", "待處理", "處理中", "已出貨", "已完成", "已取消"];
 const STATUS_STYLE = {
@@ -640,7 +640,7 @@ async function adminSaveItems() {
 }
 
 // ── 後台集運功能 ─────────────────────────────────────
-const ORDERS_API_ADMIN = "https://shop-project-azure.vercel.app/api/orders-manage";
+const ORDERS_API_ADMIN = "https://shoptest-chi.vercel.app/api/orders-manage";
 let _adminMergeSelected = new Set();
 
 window.adminToggleMerge = (checkbox) => {

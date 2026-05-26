@@ -190,9 +190,9 @@
 <script>
 const CLOUD_NAME    = "doue38blc";
 const UPLOAD_PRESET = "shop_upload";
-const ADD_API       = "https://shop-project-azure.vercel.app/api/add-product";
-const PRODUCTS_API  = "https://shop-project-azure.vercel.app/api/products";
-const CHECK_ID_API  = "https://shop-project-azure.vercel.app/api/check-idnumber";
+const ADD_API       = "https://shoptest-chi.vercel.app/api/add-product";
+const PRODUCTS_API  = "https://shoptest-chi.vercel.app/api/products";
+const CHECK_ID_API  = "https://shoptest-chi.vercel.app/api/check-idnumber";
 
 let mainImgUrl = "", detailUrls = [], allProductData = [];
 
@@ -340,7 +340,7 @@ async function submitProduct() {
 }
 
 // ── AI 一鍵生成 ──────────────────────────────────────
-const GENERATE_API = "https://shop-project-azure.vercel.app/api/generate-description";
+const GENERATE_API = "https://shoptest-chi.vercel.app/api/generate-description";
 
 async function generateDescription() {
   const name   = document.getElementById("aiProductName").value.trim();
