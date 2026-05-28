@@ -82,10 +82,13 @@ function renderMainTabs() {
 
 // ── 小分類 Tab ────────────────────────────────────────
 function renderSubTabs() {
-  const pool = activeMain === "全部"
-    ? allData
-    : allData.filter(p => p.mainCategory === activeMain);
+  // 未選大分類時隱藏小分類
+  if (activeMain === "全部") {
+    subWrap.classList.add("hidden");
+    return;
+  }
 
+  const pool = allData.filter(p => p.mainCategory === activeMain);
   const subs = ["全部", ...new Set(
     pool.map(p => p.category).filter(Boolean)
   )];
