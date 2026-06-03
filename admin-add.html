@@ -327,6 +327,20 @@ async function uploadToCloudinary(file) {
 async function submitProduct() {
   const tname = document.getElementById("tname").value.trim(), tprice = document.getElementById("tprice").value.trim();
   if (!tname) { alert("請填寫商品名稱"); return; } if (!tprice) { alert("請填寫原價"); return; }
+
+  // 送出前確認商品編號沒有重複
+  const idnumberVal = document.getElementById("idnumber").value.trim();
+  if (idnumberVal) {
+    try {
+      const checkRes = await fetch(`${CHECK_ID_API}?idnumber=${encodeURIComponent(idnumberVal)}`);
+      const checkData = await checkRes.json();
+      if (checkData.exists) {
+        alert(`商品編號「${idnumberVal}」已存在，請更換編號！`);
+        return;
+      }
+    } catch {}
+  }
+
   const btn = document.getElementById("submitBtn"); btn.disabled = true; btn.textContent = "送出中...";
   try {
     const validDetails = detailUrls.filter(Boolean);
