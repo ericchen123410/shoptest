@@ -420,6 +420,14 @@ function resetForm() {
   mainImgUrl = ""; document.getElementById("mainImgPreview").classList.add("hidden"); document.getElementById("mainImgRemove").classList.add("hidden"); document.getElementById("mainImgPlaceholder").classList.remove("hidden");
   detailUrls = []; document.getElementById("detailSlots").innerHTML = ""; addDetailSlot();
   document.getElementById("submitBtn").disabled = false; document.getElementById("submitBtn").textContent = "＋ 新增商品";
+  // 清除 AI 生成區
+  const aiPreview = document.getElementById("aiPreview");
+  aiPreview.textContent = "";
+  aiPreview.classList.add("hidden");
+  const aiStatus = document.getElementById("aiStatus");
+  if (aiStatus) { aiStatus.textContent = ""; aiStatus.className = ""; }
+  const aiInput = document.getElementById("aiInput");
+  if (aiInput) aiInput.value = "";
 }
 </script>
 </body>
