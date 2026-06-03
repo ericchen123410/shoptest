@@ -12,7 +12,7 @@
 
   <!-- 搜尋 + 篩選 -->
   <div class="flex gap-2 mb-4">
-    <input id="searchInput" type="text" placeholder="搜尋商品名稱…"
+    <input id="searchInput" type="text" placeholder="搜尋商品名稱、商品編號…"
       class="flex-1 border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black">
     <select id="filterStatus"
       class="border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black bg-white">
@@ -234,7 +234,10 @@ function renderList() {
   const status = document.getElementById("filterStatus").value;
 
   let list = allProducts;
-  if (kw)             list = list.filter(p => (p.name||"").toLowerCase().includes(kw));
+  if (kw)             list = list.filter(p =>
+    (p.name||"").toLowerCase().includes(kw) ||
+    (p.idnumber||"").toLowerCase().includes(kw)
+  );
   if (status==="on")  list = list.filter(p => p.isView);
   if (status==="off") list = list.filter(p => !p.isView);
   if (activeMain)     list = list.filter(p => p.mainCategory === activeMain);

@@ -696,10 +696,8 @@ async function saveItems() {
     status.textContent = "✅ 已更新！";
     status.className   = "text-xs text-center text-green-600";
     status.classList.remove("hidden");
-    console.log("saveItems success, refreshing...");
     closeItemsModal();
     await refreshCurrentOrder();
-    console.log("refresh done");
   } catch (err) {
     status.textContent = "❌ " + err.message;
     status.className   = "text-xs text-center text-red-500";

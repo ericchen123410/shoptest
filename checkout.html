@@ -332,6 +332,15 @@ window.submitOrder = async () => {
     localStorage.removeItem("cart");
     sessionStorage.removeItem("appliedCoupon");
 
+    // ⭐ 寄送訂單通知
+    try {
+      fetch("https://shoptest-chi.vercel.app/api/send-notify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId, customerId, total: orderTotal, items: orderItems }),
+      });
+    } catch {}
+
     // ⭐ 集運：更新所有選取訂單的 bundleId
     const bundleOrdersRaw = sessionStorage.getItem("bundleOrders");
     if (bundleOrdersRaw) {

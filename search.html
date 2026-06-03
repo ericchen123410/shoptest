@@ -19,7 +19,7 @@
     <div class="flex items-center gap-1">
       <div id="searchWrap" class="flex items-center">
         <div id="searchBox" class="flex items-center gap-1 bg-gray-50 border rounded-xl px-2 py-1 mr-1">
-          <input id="navSearchInput" type="text" placeholder="搜尋商品…"
+          <input id="navSearchInput" type="text" placeholder="搜尋商品名稱、商品編號…"
             class="bg-transparent text-sm outline-none w-36 sm:w-56"
             onkeydown="if(event.key==='Escape') clearSearch()">
           <button onclick="clearSearch()" class="text-gray-400 hover:text-black text-sm leading-none">✕</button>
@@ -90,6 +90,7 @@ function doSearch(kw) {
 
   const results = allData.filter(p =>
     (p.name        || "").toLowerCase().includes(keyword) ||
+    (p.idnumber    || "").toLowerCase().includes(keyword) ||
     (p.mainCategory|| "").toLowerCase().includes(keyword) ||
     (p.category    || "").toLowerCase().includes(keyword) ||
     (p.description || "").toLowerCase().includes(keyword)
