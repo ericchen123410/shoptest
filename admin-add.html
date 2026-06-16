@@ -228,9 +228,8 @@ if (sessionStorage.getItem("adminAuth") !== "1") location.href = "admin.html";
             <span class="text-xs">點擊上傳主圖</span>
           </div>
           <img id="mainImgPreview" style="display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:cover">
-          <div id="mainImgLoading" class="hidden absolute inset-0 bg-gray-50 flex items-center justify-center text-sm text-gray-400">⏳ 上傳中...</div>
-          <button id="mainImgRemove" onclick="removeMainImg(event)"
-            class="hidden absolute top-2 right-2 bg-black bg-opacity-60 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs z-10">✕</button>
+          <div id="mainImgLoading" style="display:none;position:absolute;inset:0;background:#f9f9f9;align-items:center;justify-content:center;font-size:14px;color:#aaa">⏳ 上傳中...</div>
+          <button id="mainImgRemove" onclick="removeMainImg(event)" style="display:none;position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.6);color:#fff;border:none;border-radius:50%;width:28px;height:28px;font-size:14px;cursor:pointer;z-index:10;align-items:center;justify-content:center">✕</button>
         </div>
         <input id="mainImgInput" type="file" accept="image/*" class="hidden">
       </div>
@@ -468,7 +467,15 @@ function addDetailSlot() {
   const slot = document.createElement("div");
   slot.id = `slot-${idx}`;
   slot.style.cssText = "position:relative;width:80px;height:80px;border-radius:8px;overflow:hidden;background:#f9f9f9;border:2px dashed #e5e5e5;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0";
-  slot.innerHTML = `<div class="slot-ph flex flex-col items-center text-gray-400 pointer-events-none"><span class="text-xl">📷</span><span class="text-xs mt-0.5">圖${idx+1}</span></div><img class="slot-img hidden absolute inset-0 w-full h-full object-cover"><div class="slot-load hidden absolute inset-0 bg-gray-50 flex items-center justify-center text-xs text-gray-400">⏳</div><button class="slot-del hidden absolute top-1 right-1 bg-black bg-opacity-60 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs z-10">✕</button>`;
+  slot.innerHTML = `
+    <div class="slot-ph" style="display:flex;flex-direction:column;align-items:center;color:#aaa;pointer-events:none">
+      <span style="font-size:20px">📷</span>
+      <span style="font-size:11px;margin-top:2px">圖${idx+1}</span>
+    </div>
+    <img class="slot-img" style="display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:cover">
+    <div class="slot-load" style="display:none;position:absolute;inset:0;background:#f9f9f9;align-items:center;justify-content:center;font-size:12px;color:#aaa">⏳</div>
+    <button class="slot-del" style="display:none;position:absolute;top:4px;right:4px;background:rgba(0,0,0,0.6);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:12px;cursor:pointer;z-index:10;align-items:center;justify-content:center">✕</button>
+  `;
   slot.querySelector(".slot-del").onclick = (e) => { e.stopPropagation(); clearSlot(idx, slot); };
   slot.onclick = () => pickFile(idx, slot);
   container.appendChild(slot);
@@ -481,7 +488,7 @@ function pickFile(idx, slot) {
     slot.querySelector(".slot-ph").style.display="none"; slot.querySelector(".slot-load").style.display="flex";
     try {
       const url = await uploadToCloudinary(file); detailUrls[idx] = url;
-      slot.querySelector(".slot-img").src = url; slot.querySelector(".slot-img").style.display="flex"; slot.querySelector(".slot-del").style.display="flex"; slot.onclick = null; slot.classList.remove("cursor-pointer","hover:border-gray-400");
+      slot.querySelector(".slot-img").src = url; slot.querySelector(".slot-img").style.display="block"; const delB=slot.querySelector(".slot-del"); delB.style.display="flex"; delB.style.alignItems="center"; delB.style.justifyContent="center"; slot.onclick = null; slot.style.cursor="default";
     } catch { alert(`圖${idx+1}上傳失敗`); slot.querySelector(".slot-ph").style.display="flex"; }
     finally { slot.querySelector(".slot-load").style.display="none"; }
   }; input.click();
