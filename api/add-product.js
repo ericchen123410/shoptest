@@ -11,7 +11,7 @@ export default async function handler(req, res) {
       description,
       image, images,
       weight,
-      isView, isHot, isSale, isNew,
+      isView, isHot, isSale, isNew, saleEnd,
     } = req.body;
 
     if (!tname) {
@@ -61,6 +61,7 @@ export default async function handler(req, res) {
           isHot:   { checkbox: !!isHot  },
           isSale:  { checkbox: !!isSale },
           isNew:   { checkbox: !!isNew  },
+          ...(saleEnd ? { saleEnd: { date: { start: saleEnd } } } : {}),
           update: {
             date: { start: new Date().toISOString().split("T")[0] },
           },
