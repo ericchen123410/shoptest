@@ -304,7 +304,7 @@ if (sessionStorage.getItem("adminAuth") !== "1") location.href = "admin.html";
       <!-- 狀態更新 -->
       <div>
         <div class="text-xs text-gray-500 mb-2 font-medium">訂單狀態</div>
-        <div id="statusBtns" class="flex flex-wrap gap-2"></div>
+        <div id="statusBtns" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:8px;margin-bottom:12px"></div>
       </div>
 
       <!-- 客戶資料 -->
@@ -364,8 +364,10 @@ let allOrders    = [];
 let activeFilter = "全部";
 let currentOrder = null;
 
-const BTN_NORMAL = "shrink-0 px-3 py-1.5 rounded-full text-xs border transition bg-white text-gray-600 border-gray-300 hover:border-black";
-const BTN_ACTIVE = "shrink-0 px-3 py-1.5 rounded-full text-xs border transition bg-black text-white border-black";
+const BTN_NORMAL = "";
+const BTN_ACTIVE = "";
+const BTN_NORMAL_STYLE = "padding:12px 8px;border-radius:8px;font-size:14px;font-weight:600;text-align:center;border:1.5px solid #e5e5e5;background:#fff;color:#111;cursor:pointer";
+const BTN_ACTIVE_STYLE = "padding:12px 8px;border-radius:8px;font-size:14px;font-weight:600;text-align:center;border:1.5px solid #111;background:#111;color:#fff;cursor:pointer";
 
 // ── 初始化 ───────────────────────────────────────────
 async function init() {
@@ -391,7 +393,7 @@ function renderFilterBtns() {
     const count = s === "全部" ? allOrders.length
       : allOrders.filter(o => o.status === s).length;
     const btn = document.createElement("button");
-    btn.className = s === activeFilter ? BTN_ACTIVE : BTN_NORMAL;
+    btn.style.cssText = s === activeFilter ? BTN_ACTIVE_STYLE : BTN_NORMAL_STYLE;
     btn.innerHTML = `${s} <span class="opacity-60">${count}</span>`;
     btn.onclick = () => {
       activeFilter = s;

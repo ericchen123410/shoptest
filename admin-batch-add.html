@@ -415,8 +415,10 @@ function removeRow(id) {
   if (el) el.remove();
 }
 
-const BTN_NORMAL = "px-2 py-0.5 rounded-full border text-xs transition bg-white text-gray-600 border-gray-300 hover:border-black";
-const BTN_ACTIVE = "px-2 py-0.5 rounded-full border text-xs transition bg-black text-white border-black";
+const BTN_NORMAL = "";
+const BTN_ACTIVE = "";
+const BTN_NORMAL_STYLE = "padding:12px 8px;border-radius:8px;font-size:14px;font-weight:600;text-align:center;border:1.5px solid #e5e5e5;background:#fff;color:#111;cursor:pointer";
+const BTN_ACTIVE_STYLE = "padding:12px 8px;border-radius:8px;font-size:14px;font-weight:600;text-align:center;border:1.5px solid #111;background:#111;color:#fff;cursor:pointer";
 
 function selectMain(id, value) {
   document.getElementById(`main-${id}`).value = value;
@@ -433,7 +435,7 @@ function onMainInput(id) {
   const val = document.getElementById(`main-${id}`).value.trim();
   // 取消所有大分類按鈕選中
   document.querySelectorAll(`.main-btn-${id}`).forEach(btn => {
-    btn.className = BTN_NORMAL;
+    btn.style.cssText = BTN_NORMAL_STYLE;
   });
   renderSubBtns(id, val);
 }

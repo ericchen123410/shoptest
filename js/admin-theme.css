@@ -148,10 +148,10 @@ label{font-size:13px;font-weight:600;color:var(--gray-800);margin-bottom:5px;dis
   }
   .admin-bnav-item {
     display: flex; flex-direction: column; align-items: center;
-    gap: 3px; padding: 8px 4px; font-size: 10px; color: #aaa;
+    gap: 4px; padding: 12px 4px; font-size: 13px; color: #aaa;
     text-decoration: none; cursor: pointer; background: none; border: none;
   }
-  .admin-bnav-item i { font-size: 22px; }
+  .admin-bnav-item i { font-size: 28px; }
   .admin-bnav-item.active { color: var(--white); }
 
   /* 隱藏桌機側邊欄 topbar 的 logo */
