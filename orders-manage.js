@@ -1,117 +1,63 @@
-// POST   → 新增 banner
-// PATCH  → 更新 order / isActive
-// DELETE → 刪除（archive）
-
 export default async function handler(req, res) {
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
+
   try {
-    const { NOTION_TOKEN, BANNER_DATABASE_ID } = process.env;
+    const { ANTHROPIC_API_KEY } = process.env;
+    if (!ANTHROPIC_API_KEY) return res.status(500).json({ error: "API Key 未設定" });
 
-    // ── GET：取得所有 banner ──────────────────────────
-    if (req.method === "GET") {
-      const response = await fetch(
-        `https://api.notion.com/v1/databases/${BANNER_DATABASE_ID}/query`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${NOTION_TOKEN}`,
-            "Notion-Version": "2022-06-28",
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            ...(req.query.all !== "1" ? {
-              filter: { property: "isActive", checkbox: { equals: true } },
-            } : {}),
-            sorts: [{ property: "order", direction: "ascending" }],
-          }),
-        }
-      );
-      const data = await response.json();
-      const getText = (prop) => {
-        if (!prop) return "";
-        if (prop.title)     return prop.title.map(t => t.plain_text).join("");
-        if (prop.rich_text) return prop.rich_text.map(t => t.plain_text).join("");
-        return "";
-      };
-      const banners = data.results.map(page => ({
-        pageId:   page.id,
-        title:    getText(page.properties.title),
-        image:    getText(page.properties.image),
-        order:    page.properties.order?.number ?? 99,
-        isActive: page.properties.isActive?.checkbox ?? false,
-      }));
-      return res.status(200).json(banners);
-    }
+    const { productName, jname, idnumber } = req.body;
 
-    // ── POST：新增 banner ─────────────────────────────
-    if (req.method === "POST") {
-      const { title, image, order } = req.body;
-      if (!image) return res.status(400).json({ error: "圖片網址為必填" });
-      const response = await fetch("https://api.notion.com/v1/pages", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${NOTION_TOKEN}`,
-          "Notion-Version": "2022-06-28",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          parent: { database_id: BANNER_DATABASE_ID },
-          properties: {
-            title:    { title:     [{ text: { content: title || "Banner" } }] },
-            image:    { rich_text: [{ text: { content: image } }] },
-            order:    { number: Number(order) || 99 },
-            isActive: { checkbox: true },
-          },
-        }),
-      });
-      const data = await response.json();
-      if (!response.ok) return res.status(500).json({ error: data.message || "新增失敗" });
-      return res.status(200).json({ success: true, pageId: data.id });
-    }
+    // 組合搜尋關鍵字
+    const searchQuery = [jname, idnumber].filter(Boolean).join(" ") || productName;
+    if (!searchQuery) return res.status(400).json({ error: "請提供商品資訊" });
 
-    // ── PATCH：更新 order / isActive ──────────────────
-    if (req.method === "PATCH") {
-      const { pageId, order, isActive } = req.body;
-      if (!pageId) return res.status(400).json({ error: "缺少 pageId" });
-      const properties = {};
-      if (order    !== undefined) properties.order    = { number: Number(order) };
-      if (isActive !== undefined) properties.isActive = { checkbox: !!isActive };
-      const response = await fetch(`https://api.notion.com/v1/pages/${pageId}`, {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${NOTION_TOKEN}`,
-          "Notion-Version": "2022-06-28",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ properties }),
-      });
-      if (!response.ok) {
-        const err = await response.json();
-        return res.status(500).json({ error: err.message || "更新失敗" });
-      }
-      return res.status(200).json({ success: true });
-    }
+    const prompt = `搜尋 costco.co.jp 商品「${searchQuery}」，整理商品詳細資訊。
 
-    // ── DELETE：刪除（archive）────────────────────────
-    if (req.method === "DELETE") {
-      const { pageId } = req.body;
-      if (!pageId) return res.status(400).json({ error: "缺少 pageId" });
-      const response = await fetch(`https://api.notion.com/v1/pages/${pageId}`, {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${NOTION_TOKEN}`,
-          "Notion-Version": "2022-06-28",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ archived: true }),
-      });
-      if (!response.ok) {
-        const err = await response.json();
-        return res.status(500).json({ error: err.message || "刪除失敗" });
-      }
-      return res.status(200).json({ success: true });
-    }
+格式輸出（不加說明和markdown）：
 
-    res.status(405).json({ error: "Method not allowed" });
+商品名稱：[繁體中文名稱]
+日文名稱：[日文名稱]
+商品編號：[編號]
+
+商品內容跟特點
+• [特點一]
+• [特點二]
+• [特點三]
+• [特點四]
+• [特點五]`;
+
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type":      "application/json",
+        "x-api-key":         ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model:      "claude-sonnet-4-5",
+        max_tokens: 800,
+        tools: [{
+          type: "web_search_20250305",
+          name: "web_search",
+        }],
+        messages: [{ role: "user", content: prompt }],
+      }),
+    });
+
+    const data = await response.json();
+    if (!response.ok) return res.status(500).json({ error: data.error?.message || "生成失敗" });
+
+    // 組合所有 text 內容
+    const text = (data.content || [])
+      .filter(b => b.type === "text")
+      .map(b => b.text)
+      .join("\n")
+      .trim();
+
+
+    res.status(200).json({ text });
 
   } catch (err) {
     res.status(500).json({ error: err.message });

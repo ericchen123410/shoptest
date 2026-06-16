@@ -3,25 +3,67 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>特價商品 | W-82</title>
+  <title>搜尋 | W-82</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
   <link rel="stylesheet" href="js/theme.css">
 </head>
 <body>
 <nav class="top-nav">
   <button class="nav-icon-btn" onclick="history.back()"><i class="ti ti-arrow-left"></i></button>
-  <span style="font-size:16px;font-weight:600">特價商品</span>
+  <div style="flex:1;margin:0 8px;background:var(--gray-100);border-radius:var(--radius);padding:8px 14px;display:flex;align-items:center;gap:8px">
+    <i class="ti ti-search" style="color:var(--gray-400);font-size:18px"></i>
+    <input id="searchInput" type="text" placeholder="搜尋商品名稱、商品編號…"
+      style="border:none;background:transparent;flex:1;font-size:16px;outline:none;padding:0"
+      oninput="doSearch(this.value)"
+      onkeydown="if(event.key==='Escape') history.back()">
+  </div>
   <a href="cart.html" class="nav-icon-btn"><i class="ti ti-shopping-cart"></i><span id="cartCount" class="cart-badge" style="display:none">0</span></a>
 </nav>
-<div class="page-wrap" id="list"></div>
+
+<div class="page-wrap">
+  <div id="searchResult" style="padding:20px 16px;font-size:15px;color:var(--gray-400)">輸入關鍵字搜尋</div>
+</div>
+
 <nav class="bottom-nav">
   <a href="index.html"        class="bnav-item"><i class="ti ti-home"></i>首頁</a>
   <a href="hot.html"          class="bnav-item"><i class="ti ti-flame"></i>熱賣</a>
-  <a href="search.html"       class="bnav-item"><i class="ti ti-search"></i>搜尋</a>
+  <button                     class="bnav-item active"><i class="ti ti-search"></i>搜尋</button>
   <a href="order-status.html" class="bnav-item"><i class="ti ti-clipboard-list"></i>訂單</a>
   <a href="about.html"        class="bnav-item"><i class="ti ti-info-circle"></i>關於</a>
 </nav>
-<script type="module" src="./js/sale.js"></script>
-<script src="./js/cartCount.js"></script>
+
+<script type="module" src="js/cartCount.js"></script>
+<script type="module">
+import { renderCard } from "./js/cardUtils.js";
+const API = "https://shoptest-chi.vercel.app/api/products";
+let products = [];
+
+(async () => {
+  const res = await fetch(API);
+  products = await res.json();
+  const q = new URLSearchParams(location.search).get("q") || "";
+  if (q) { document.getElementById("searchInput").value = q; doSearch(q); }
+})();
+
+window.doSearch = (kw) => {
+  const keyword = kw.trim().toLowerCase();
+  const el = document.getElementById("searchResult");
+  if (!keyword) { el.innerHTML = '<div style="padding:20px 16px;font-size:15px;color:var(--gray-400)">輸入關鍵字搜尋</div>'; return; }
+  const results = products.filter(p =>
+    (p.name||"").toLowerCase().includes(keyword) ||
+    (p.idnumber||"").toLowerCase().includes(keyword) ||
+    (p.mainCategory||"").toLowerCase().includes(keyword) ||
+    (p.category||"").toLowerCase().includes(keyword) ||
+    (p.description||"").toLowerCase().includes(keyword)
+  );
+  if (!results.length) {
+    el.innerHTML = `<div style="padding:60px 0;text-align:center;color:var(--gray-400);font-size:16px">找不到「${kw}」相關商品</div>`;
+    return;
+  }
+  el.innerHTML = `
+    <div style="padding:12px 16px;font-size:13px;color:var(--gray-400)">找到 ${results.length} 件商品</div>
+    <div class="product-grid">${results.map(renderCard).join("")}</div>`;
+};
+</script>
 </body>
 </html>

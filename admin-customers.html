@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI批次生成 | W-82 後台</title>
+  <title>客戶管理 | W-82 後台</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
   <link rel="stylesheet" href="js/admin-theme.css">
 
@@ -78,6 +78,67 @@ button{cursor:pointer}
 .bg-orange-100{background:#ffedd5!important}
 .text-orange-500{color:#c2410c!important}
 </style>
+
+<style id="tw-override-extra">
+/* 主容器 */
+.px-4.py-4.max-w-4xl.mx-auto,.px-4.py-5.max-w-2xl.mx-auto,.px-4.py-5.max-w-3xl.mx-auto,.px-4.py-5.max-w-5xl.mx-auto{padding:0!important;max-width:none!important}
+
+/* flex layouts */
+.flex.items-center.justify-between{display:flex;align-items:center;justify-content:space-between}
+.flex.items-center.gap-2{display:flex;align-items:center;gap:8px}
+.flex.gap-2{display:flex;gap:8px}
+.flex.gap-2.mb-4{display:flex;gap:8px;margin-bottom:16px}
+.flex.flex-wrap.gap-1\.5{display:flex;flex-wrap:wrap;gap:6px}
+.flex.flex-col.items-center{display:flex;flex-direction:column;align-items:center}
+
+/* 輸入框 */
+.flex-1.border.rounded-xl,.w-full.border.rounded-xl{border:1px solid var(--gray-200)!important;border-radius:var(--radius)!important;font-size:14px!important}
+.focus\:outline-none{outline:none!important}
+.focus\:ring-2{box-shadow:none!important}
+.pr-10{padding-right:10px!important}
+
+/* 卡片 */
+.bg-white.rounded-2xl,.bg-white.rounded-2xl.p-4,.bg-white.rounded-xl{background:var(--white)!important;border-radius:var(--radius-lg)!important}
+.shadow-sm{box-shadow:none!important;border:1px solid var(--gray-200)!important}
+
+/* Modal overlay */
+.hidden.fixed.inset-0.z-50,.hidden.fixed.inset-0{display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.5);align-items:flex-end;justify-content:center}
+.bg-black.bg-opacity-40{background:rgba(0,0,0,0.5)!important}
+.bg-white.w-full.sm\:max-w-lg,.bg-white.w-full.sm\:max-w-md{background:var(--white)!important;width:100%!important;max-width:520px!important;border-radius:16px 16px 0 0!important;max-height:88vh!important;overflow-y:auto!important}
+.sm\:rounded-2xl.rounded-t-2xl{border-radius:16px 16px 0 0!important}
+
+/* overflow */
+.overflow-x-auto{overflow-x:auto}
+.overflow-y-auto{overflow-y:auto}
+.-mx-4.px-4{margin-left:0!important;padding-left:0!important}
+
+/* 狀態文字 */
+.text-sm.text-gray-600{font-size:14px;color:var(--gray-600)}
+.text-xs.text-gray-500{font-size:12px;color:var(--gray-400)}
+.font-semibold.text-sm{font-size:14px;font-weight:600}
+.font-bold.text-base{font-size:16px;font-weight:700}
+
+/* 按鈕 */
+.px-3.py-1\.5.border.rounded-xl,.px-4.py-1\.5.border.rounded-xl{padding:6px 12px!important;border:1px solid var(--gray-200)!important;border-radius:var(--radius)!important;font-size:13px!important;background:var(--white)!important;color:var(--black)!important}
+.px-4.py-1\.5.bg-black.text-white{padding:6px 14px!important;background:var(--black)!important;color:var(--white)!important;border:none!important;border-radius:var(--radius)!important;font-size:13px!important}
+.px-4.py-2\.5.bg-purple-600,.px-4.py-2\.5.bg-black{padding:9px 16px!important;background:var(--black)!important;color:var(--white)!important;border:none!important;border-radius:var(--radius)!important;font-size:14px!important}
+.hover\:bg-gray-800:hover,.hover\:bg-gray-50:hover,.hover\:bg-purple-700:hover{opacity:0.85!important}
+.text-gray-400.hover\:text-black{background:none;border:none;cursor:pointer;color:var(--gray-400);font-size:22px}
+
+/* 集運/狀態區 */
+.hidden.sticky.bottom-0.bg-white{display:none;position:sticky;bottom:0;background:var(--white);border-radius:var(--radius-lg);border:1px solid var(--gray-200);padding:16px;margin-top:12px}
+
+/* 上傳區 */
+.border-2.border-dashed.border-gray-200.rounded-xl{border:2px dashed var(--gray-200)!important;border-radius:var(--radius-lg)!important}
+.border-2.border-dashed:hover{border-color:#999!important}
+.relative.overflow-hidden.rounded-xl{border-radius:var(--radius-lg)!important}
+
+/* AI 生成區 */
+.font-semibold.text-sm.text-purple-800{font-size:14px;font-weight:600;color:var(--black)}
+.hidden.bg-white.rounded-xl.border.border-purple-100{display:none;background:var(--gray-50)!important;border:1px solid var(--gray-200)!important;border-radius:var(--radius)!important;padding:12px!important;font-size:14px!important}
+.hidden.bg-white.rounded-2xl{display:none;background:var(--white)!important;border-radius:var(--radius-lg)!important}
+.px-4.py-2\.5.bg-purple-600.text-white{padding:9px 16px!important;background:var(--black)!important;color:var(--white)!important;border:none!important;border-radius:var(--radius)!important;font-size:14px!important}
+</style>
 <style>
 @media (max-width: 768px) {
   .admin-sidebar { display: none !important; }
@@ -105,10 +166,10 @@ if (sessionStorage.getItem("adminAuth") !== "1") location.href = "admin.html";
       <a href="admin-orders.html"         class="sidebar-item"><i class="ti ti-clipboard-list"></i>訂單管理</a>
       <a href="admin-products.html"       class="sidebar-item"><i class="ti ti-package"></i>商品管理</a>
       <a href="admin-add.html"            class="sidebar-item"><i class="ti ti-plus"></i>新增商品</a>
-      <a href="admin-customers.html"      class="sidebar-item"><i class="ti ti-users"></i>客戶管理</a>
+      <a href="admin-customers.html"      class="sidebar-item active"><i class="ti ti-users"></i>客戶管理</a>
       <a href="admin-banners.html"        class="sidebar-item"><i class="ti ti-photo"></i>輪播管理</a>
       <a href="admin-batch-add.html"      class="sidebar-item"><i class="ti ti-list-check"></i>批次上架</a>
-      <a href="admin-batch-generate.html" class="sidebar-item active"><i class="ti ti-sparkles"></i>AI批次生成</a>
+      <a href="admin-batch-generate.html" class="sidebar-item"><i class="ti ti-sparkles"></i>AI批次生成</a>
     </nav>
     <div class="sidebar-footer">
       <a href="index.html" target="_blank" class="sidebar-item"><i class="ti ti-external-link"></i>前往商店</a>
@@ -116,239 +177,290 @@ if (sessionStorage.getItem("adminAuth") !== "1") location.href = "admin.html";
     </div>
   </aside>
   <main class="admin-main">
-    <div class="admin-topbar"><span class="topbar-title">AI批次生成</span></div>
-    <div class="admin-content">
 
 
-<div class="px-4 py-5 max-w-3xl mx-auto space-y-4">
+<div style="padding:0">
 
-  <div class="bg-white rounded-2xl p-4 shadow-sm">
-    <div class="flex items-center gap-2 mb-1">
-      <span class="text-xl">🤖</span>
-      <h1 class="font-bold text-base">批次 AI 生成商品描述</h1>
-    </div>
-    <p class="text-xs text-gray-400 mb-4">依照商品的 jname（日文名稱）自動生成並覆蓋描述，每筆間隔 2 秒避免 API 過載</p>
-
-    <!-- 控制列 -->
-    <div class="flex gap-2 mb-4">
-      <button onclick="loadProducts()"
-        class="px-4 py-2 border rounded-xl text-sm hover:bg-gray-50 transition">
-        📋 載入商品
-      </button>
-      <button id="startBtn" onclick="startBatch()" disabled
-        class="px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-xl hover:bg-purple-700 disabled:opacity-40 disabled:cursor-not-allowed transition">
-        ✨ 開始批次生成
-      </button>
-      <button id="stopBtn" onclick="stopBatch()" disabled
-        class="px-4 py-2 bg-red-500 text-white text-sm font-medium rounded-xl hover:bg-red-600 disabled:opacity-40 disabled:cursor-not-allowed transition">
-        ⏹ 停止
-      </button>
-    </div>
-
-    <!-- 進度 -->
-    <div id="progressWrap" class="hidden mb-4">
-      <div class="flex justify-between text-xs text-gray-500 mb-1">
-        <span id="progressText">0 / 0</span>
-        <span id="progressPct">0%</span>
-      </div>
-      <div class="w-full bg-gray-100 rounded-full h-2">
-        <div id="progressBar" class="bg-purple-500 h-2 rounded-full transition-all" style="width:0%"></div>
-      </div>
-    </div>
-
-    <!-- 統計 -->
-    <div id="statsWrap" class="hidden flex gap-4 text-xs mb-4">
-      <span class="text-green-600">✅ 成功：<span id="statSuccess">0</span></span>
-      <span class="text-red-500">❌ 失敗：<span id="statFail">0</span></span>
-      <span class="text-gray-400">⏭ 跳過：<span id="statSkip">0</span></span>
-    </div>
+  <!-- 搜尋 -->
+  <div class="relative mb-4">
+    <input id="searchInput" type="text" placeholder="搜尋客戶編號、姓名、Email…"
+      class="w-full border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black pr-10">
+    <span class="absolute right-3 top-2.5 text-gray-400">🔍</span>
   </div>
 
-  <!-- 商品列表 -->
-  <div id="productList" class="space-y-2"></div>
+  <div id="customerCount" class="text-xs text-gray-400 mb-3"></div>
+  <div id="customerList" class="space-y-2"></div>
+</div>
 
+<!-- 客戶詳情 Modal -->
+<div id="modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.5);align-items:flex-end;justify-content:center">
+  <div class="bg-white w-full sm:max-w-lg sm:rounded-2xl rounded-t-2xl max-h-[90vh] overflow-y-auto">
+
+    <div class="admin-topbar">
+      <span class="topbar-title">客戶管理</span>
+      <div class="topbar-actions" id="topbarActions"></div>
+    </div>
+    <div class="admin-content">
+      <div class="flex items-center gap-2">
+        <button onclick="openEdit()"
+          class="text-xs px-3 py-1.5 border rounded-lg hover:bg-gray-50 font-medium">編輯</button>
+        <button onclick="closeModal()" class="text-gray-400 hover:text-black text-xl w-8 h-8 flex items-center justify-center">✕</button>
+      </div>
+    </div>
+
+    <div class="px-4 py-4 space-y-4">
+
+      <!-- 客戶資料 -->
+      <div id="customerDetail" class="bg-gray-50 rounded-xl p-3 space-y-2"></div>
+
+      <!-- 訂單列表 -->
+      <div>
+        <div class="text-xs font-semibold text-gray-500 mb-2">訂單紀錄</div>
+        <div id="orderList" class="space-y-2">
+          <div class="text-xs text-gray-400 text-center py-3">載入中...</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- 編輯 Modal -->
+<div id="editModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.5);align-items:flex-end;justify-content:center">
+  <div class="bg-white w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl">
+    <div class="sticky top-0 bg-white flex justify-between items-center px-4 py-3 border-b rounded-t-2xl">
+      <h2 class="font-bold text-sm">編輯客戶資料</h2>
+      <div class="flex items-center gap-2">
+        <button onclick="saveCustomer()"
+          class="px-3 py-1.5 bg-black text-white text-xs font-medium rounded-lg active:bg-gray-800">
+          儲存
+        </button>
+        <button onclick="closeEdit()" class="text-gray-400 hover:text-black text-xl w-8 h-8 flex items-center justify-center">✕</button>
+      </div>
+    </div>
+    <div class="px-4 py-4 space-y-3">
+      <div>
+        <label class="text-xs text-gray-500 mb-1 block">姓名</label>
+        <input id="editName" type="text"
+          class="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black">
+      </div>
+      <div>
+        <label class="text-xs text-gray-500 mb-1 block">電話</label>
+        <input id="editPhone" type="tel"
+          class="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black">
+      </div>
+      <div>
+        <label class="text-xs text-gray-500 mb-1 block">地址</label>
+        <input id="editAddress" type="text"
+          class="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black">
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
-const PRODUCTS_API  = "https://shoptest-chi.vercel.app/api/products";
-const GENERATE_API  = "https://shoptest-chi.vercel.app/api/generate-description";
-const UPDATE_API    = "https://shoptest-chi.vercel.app/api/product-update";
+const CUSTOMER_API = "https://shoptest-chi.vercel.app/api/customer";
+const ORDERS_API   = "https://shoptest-chi.vercel.app/api/orders-manage?type=list";
 
-let products  = [];
-let isRunning = false;
-let stopFlag  = false;
-let stats     = { success: 0, fail: 0, skip: 0 };
+const STATUS_STYLE = {
+  "待處理": "bg-yellow-100 text-yellow-700",
+  "處理中": "bg-blue-100 text-blue-600",
+  "已出貨": "bg-purple-100 text-purple-600",
+  "已完成": "bg-green-100 text-green-600",
+  "已取消": "bg-gray-100 text-gray-500",
+};
 
-// ── 載入商品 ─────────────────────────────────────────
-async function loadProducts() {
-  document.getElementById("productList").innerHTML =
-    `<div class="text-center text-gray-400 py-6 text-sm">載入中...</div>`;
+let allCustomers   = [];
+let currentCustomer = null;
 
+// ── 初始化 ───────────────────────────────────────────
+async function init() {
+  document.getElementById("customerList").innerHTML =
+    `<div class="text-center text-gray-400 py-10 text-sm">載入中...</div>`;
   try {
-    const res  = await fetch(PRODUCTS_API + "?showAll=1", { cache: "no-store" });
-    products   = await res.json();
-
-    // 只保留有 jname 或 idnumber 的商品
+    const res  = await fetch(CUSTOMER_API + "?type=list");
+    allCustomers = await res.json();
     renderList();
-    document.getElementById("startBtn").disabled = false;
   } catch (err) {
-    document.getElementById("productList").innerHTML =
-      `<div class="text-center text-red-400 py-6 text-sm">載入失敗：${err.message}</div>`;
+    document.getElementById("customerList").innerHTML =
+      `<div class="text-center text-red-400 py-6 text-sm">載入失敗</div>`;
   }
 }
 
-// ── 商品列表 ─────────────────────────────────────────
+// ── 客戶列表 ─────────────────────────────────────────
 function renderList() {
-  const el = document.getElementById("productList");
-  if (!products.length) {
-    el.innerHTML = `<div class="text-center text-gray-400 py-6 text-sm">沒有商品</div>`;
+  const kw = document.getElementById("searchInput").value.trim().toLowerCase();
+  let list = allCustomers;
+  if (kw) list = list.filter(c =>
+    (c.customerId || "").toLowerCase().includes(kw) ||
+    (c.name       || "").toLowerCase().includes(kw) ||
+    (c.email      || "").toLowerCase().includes(kw) ||
+    (c.phone      || "").includes(kw)
+  );
+
+  document.getElementById("customerCount").textContent = `共 ${allCustomers.length} 位客戶`;
+
+  if (!list.length) {
+    document.getElementById("customerList").innerHTML =
+      `<div class="text-center text-gray-400 py-10 text-sm">沒有符合的客戶</div>`;
     return;
   }
 
-  el.innerHTML = products.map((p, i) => {
-    const keyword = p.jname || (p.idnumber ? `商品編號 ${p.idnumber}` : "");
+  document.getElementById("customerList").innerHTML = list.map(c => {
+    const date = new Date(c.createdAt);
+    const dateStr = `${date.getFullYear()}/${date.getMonth()+1}/${date.getDate()}`;
     return `
-      <div id="row-${p.id}" class="bg-white rounded-xl border px-4 py-3 flex items-center gap-3">
-        <input type="checkbox" id="chk-${p.id}" checked
-          class="w-4 h-4 accent-purple-600 shrink-0">
-        <div class="flex-1 min-w-0">
-          <div class="text-sm font-medium truncate">${p.name || "未命名"}</div>
-          <div class="text-xs text-gray-400 mt-0.5">
-            ${p.jname ? `🇯🇵 ${p.jname}` : ""}
-            ${p.idnumber ? ` · #${p.idnumber}` : ""}
-            ${!keyword ? '<span class="text-orange-400">⚠️ 無日文名稱和編號</span>' : ""}
+      <div onclick="openModal('${c.pageId}')"
+        class="bg-white rounded-xl border px-4 py-3 cursor-pointer hover:shadow-md active:bg-gray-50 transition">
+        <div class="flex items-center justify-between">
+          <div class="min-w-0">
+            <div class="flex items-center gap-2 mb-0.5">
+              <span class="text-xs font-bold text-blue-500">${c.customerId}</span>
+              <span class="text-sm font-medium text-gray-800">${c.name || "—"}</span>
+            </div>
+            <div class="text-xs text-gray-400">${c.email}</div>
+            ${c.phone ? `<div class="text-xs text-gray-400">${c.phone}</div>` : ""}
           </div>
+          <div class="text-xs text-gray-300 shrink-0 ml-2">${dateStr}</div>
         </div>
-        <div id="status-${p.id}" class="text-xs text-gray-300 shrink-0">待處理</div>
       </div>`;
   }).join("");
-
-  document.getElementById("statsWrap").style.display="flex";
-  document.getElementById("progressWrap").style.display="flex";
 }
 
-// ── 批次生成 ─────────────────────────────────────────
-async function startBatch() {
-  if (isRunning) return;
-  isRunning = true;
-  stopFlag  = false;
-  stats     = { success: 0, fail: 0, skip: 0 };
+// ── 客戶詳情 Modal ────────────────────────────────────
+async function openModal(pageId) {
+  currentCustomer = allCustomers.find(c => c.pageId === pageId);
+  if (!currentCustomer) return;
 
-  document.getElementById("startBtn").disabled = true;
-  document.getElementById("stopBtn").disabled  = false;
-  updateStats();
+  const c = currentCustomer;
+  document.getElementById("modalCustomerId").textContent = c.customerId;
+  document.getElementById("modalEmail").textContent      = c.email;
 
-  const selected = products.filter(p =>
-    document.getElementById(`chk-${p.id}`)?.checked
-  );
+  document.getElementById("customerDetail").innerHTML = `
+    <div class="space-y-2 text-sm">
+      <div class="flex justify-between">
+        <span class="text-gray-500">姓名</span>
+        <span class="font-medium">${c.name || "—"}</span>
+      </div>
+      <div class="flex justify-between">
+        <span class="text-gray-500">電話</span>
+        <a href="tel:${c.phone}" class="font-medium text-blue-500">${c.phone || "—"}</a>
+      </div>
+      <div class="flex justify-between">
+        <span class="text-gray-500">Email</span>
+        <a href="mailto:${c.email}" class="font-medium text-blue-500 text-xs">${c.email}</a>
+      </div>
+      <div class="text-sm">
+        <span class="text-gray-500">地址　</span>
+        <span class="font-medium">${c.address || "—"}</span>
+      </div>
+    </div>`;
 
-  for (let i = 0; i < selected.length; i++) {
-    if (stopFlag) break;
+  document.getElementById("modal").style.display="flex";
+  document.body.style.overflow = "hidden";
 
-    const p       = selected[i];
-    const keyword = p.jname || (p.idnumber ? `商品編號 ${p.idnumber}` : "");
-    const statusEl = document.getElementById(`status-${p.id}`);
-    const rowEl    = document.getElementById(`row-${p.id}`);
+  // 載入該客戶訂單
+  loadCustomerOrders(c.customerId, c.email);
+}
 
-    // 更新進度
-    updateProgress(i, selected.length);
+async function loadCustomerOrders(customerId, email) {
+  const el = document.getElementById("orderList");
+  try {
+    const res  = await fetch(ORDERS_API);
+    const allOrders = await res.json();
+    const orders = allOrders.filter(o => o.customerId === customerId);
 
-    if (!keyword) {
-      statusEl.textContent = "⏭ 跳過";
-      statusEl.className   = "text-xs text-gray-400 shrink-0";
-      stats.skip++;
-      updateStats();
-      continue;
+    if (!orders.length) {
+      el.innerHTML = `<div class="text-xs text-gray-400 text-center py-3">尚無訂單紀錄</div>`;
+      return;
     }
 
-    // 生成中
-    statusEl.textContent = "⏳ 生成中...";
-    statusEl.className   = "text-xs text-purple-500 shrink-0";
-    rowEl.classList.add("bg-purple-50");
-
-    try {
-      // 1. 生成描述
-      const genRes  = await fetch(GENERATE_API, {
-        method:  "POST",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({
-          jname:    p.jname    || "",
-          idnumber: p.idnumber || "",
-        }),
-      });
-      const genData = await genRes.json();
-      if (!genRes.ok) throw new Error(genData.error || "生成失敗");
-
-      const text = genData.text || "";
-
-      // 解析
-      const nameMatch = text.match(/商品名稱[：:]\s*(.+)/);
-      const descMatch = text.match(/商品內容跟特點[\s\S]*/);
-
-      // 2. 寫回 Notion
-      const updatePayload = {
-        pageId:      p.id,
-        description: descMatch ? descMatch[0].trim() : text,
-        update:      true,
-      };
-      if (nameMatch && nameMatch[1].trim()) {
-        updatePayload.tname = nameMatch[1].trim();
-      }
-
-      const updRes  = await fetch(UPDATE_API, {
-        method:  "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify(updatePayload),
-      });
-      const updData = await updRes.json();
-      if (!updData.success) throw new Error(updData.error || "寫入失敗");
-
-      statusEl.textContent = "✅ 完成";
-      statusEl.className   = "text-xs text-green-600 shrink-0";
-      rowEl.classList.remove("bg-purple-50");
-      rowEl.classList.add("bg-green-50");
-      stats.success++;
-
-    } catch (err) {
-      statusEl.textContent = `❌ ${err.message}`;
-      statusEl.className   = "text-xs text-red-500 shrink-0";
-      rowEl.classList.remove("bg-purple-50");
-      rowEl.classList.add("bg-red-50");
-      stats.fail++;
-    }
-
-    updateStats();
-
-    // 間隔 2 秒
-    if (i < selected.length - 1 && !stopFlag) {
-      await new Promise(r => setTimeout(r, 2000));
-    }
+    el.innerHTML = orders.map(o => {
+      const style   = STATUS_STYLE[o.status] || "bg-gray-100 text-gray-500";
+      const date    = new Date(o.createdAt);
+      const dateStr = `${date.getMonth()+1}/${date.getDate()} ${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}`;
+      const firstItem = o.items?.split("\n")[0] || "";
+      return `
+        <div class="flex items-center justify-between border rounded-xl px-3 py-2.5 bg-gray-50">
+          <div class="min-w-0">
+            <div class="flex items-center gap-2 mb-0.5">
+              <span class="text-xs font-bold">${o.orderId}</span>
+              <span class="text-xs px-1.5 py-0.5 rounded-full ${style}">${o.status}</span>
+            </div>
+            <div class="text-xs text-gray-400 truncate max-w-[180px]">${firstItem}</div>
+          </div>
+          <div class="text-right shrink-0 ml-2">
+            <div class="text-sm font-bold text-red-500">NT$ ${Math.round(o.total||0).toLocaleString()}</div>
+            <div class="text-xs text-gray-400">${dateStr}</div>
+          </div>
+        </div>`;
+    }).join("");
+  } catch {
+    el.innerHTML = `<div class="text-xs text-red-400 text-center py-3">訂單載入失敗</div>`;
   }
-
-  updateProgress(selected.length, selected.length);
-  isRunning = false;
-  stopFlag  = false;
-  document.getElementById("startBtn").disabled = false;
-  document.getElementById("stopBtn").disabled  = true;
 }
 
-function stopBatch() {
-  stopFlag = true;
-  document.getElementById("stopBtn").disabled = true;
+function closeModal() {
+  document.getElementById("modal").style.display="none";
+  document.body.style.overflow = "";
+  currentCustomer = null;
 }
 
-function updateProgress(current, total) {
-  const pct = total ? Math.round(current / total * 100) : 0;
-  document.getElementById("progressText").textContent = `${current} / ${total}`;
-  document.getElementById("progressPct").textContent  = `${pct}%`;
-  document.getElementById("progressBar").style.width  = `${pct}%`;
+document.getElementById("modal").addEventListener("click", (e) => {
+  if (e.target === document.getElementById("modal")) closeModal();
+});
+
+// ── 編輯客戶資料 ─────────────────────────────────────
+function openEdit() {
+  if (!currentCustomer) return;
+  document.getElementById("editName").value    = currentCustomer.name    || "";
+  document.getElementById("editPhone").value   = currentCustomer.phone   || "";
+  document.getElementById("editAddress").value = currentCustomer.address || "";
+  document.getElementById("editModal").style.display="flex";
 }
 
-function updateStats() {
-  document.getElementById("statSuccess").textContent = stats.success;
-  document.getElementById("statFail").textContent    = stats.fail;
-  document.getElementById("statSkip").textContent    = stats.skip;
+function closeEdit() {
+  document.getElementById("editModal").style.display="none";
 }
+
+document.getElementById("editModal").addEventListener("click", (e) => {
+  if (e.target === document.getElementById("editModal")) closeEdit();
+});
+
+async function saveCustomer() {
+  if (!currentCustomer) return;
+  const name    = document.getElementById("editName").value.trim();
+  const phone   = document.getElementById("editPhone").value.trim();
+  const address = document.getElementById("editAddress").value.trim();
+
+  const btn = document.querySelector("#editModal .sticky button:first-child");
+  btn.textContent = "儲存中..."; btn.disabled = true;
+
+  try {
+    const res  = await fetch(CUSTOMER_API, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pageId: currentCustomer.pageId, name, phone, address }),
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || "儲存失敗");
+
+    // 本地更新
+    Object.assign(currentCustomer, { name, phone, address });
+    closeEdit();
+    openModal(currentCustomer.pageId);
+    renderList();
+  } catch (err) {
+    alert("儲存失敗：" + err.message);
+  } finally {
+    btn.textContent = "儲存"; btn.disabled = false;
+  }
+}
+
+// 搜尋
+document.getElementById("searchInput").addEventListener("input", renderList);
+
+init();
 </script>
   </main>
 </div>
@@ -357,7 +469,7 @@ function updateStats() {
   <a href="admin-orders.html" class="admin-bnav-item"><i class="ti ti-clipboard-list"></i>訂單</a>
   <a href="admin-products.html" class="admin-bnav-item"><i class="ti ti-package"></i>商品</a>
   <a href="admin-add.html" class="admin-bnav-item"><i class="ti ti-plus"></i>新增</a>
-  <a href="admin-customers.html" class="admin-bnav-item"><i class="ti ti-users"></i>客戶</a>
+  <a href="admin-customers.html" class="admin-bnav-item active"><i class="ti ti-users"></i>客戶</a>
   <a href="admin-banners.html" class="admin-bnav-item"><i class="ti ti-photo"></i>輪播</a>
 </nav>
 </body>

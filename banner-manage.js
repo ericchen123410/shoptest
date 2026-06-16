@@ -1,74 +1,82 @@
-// POST → 寄送訂單通知信（使用 Gmail SMTP via fetch）
 export default async function handler(req, res) {
-  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
 
   try {
-    const { orderId, customerId, total, items } = req.body;
-    const { GMAIL_USER, GMAIL_PASS } = process.env;
+    const { NOTION_TOKEN, DATABASE_ID } = process.env;
+    const {
+      tname, jname, jprice, jsprice, idnumber,
+      mainCategory, category,
+      description,
+      image, images,
+      weight,
+      isView, isHot, isSale, isNew,
+    } = req.body;
 
-    if (!GMAIL_USER || !GMAIL_PASS) {
-      return res.status(500).json({ error: "未設定 Gmail 環境變數" });
+    if (!tname) {
+      return res.status(400).json({ error: "商品名稱為必填" });
     }
 
-    const itemsText = Array.isArray(items)
-      ? items.map(i => `${i.name}${i.variant ? `（${i.variant}）` : ""} × ${i.qty}  NT$${Math.floor(i.price * i.qty).toLocaleString()}`).join("\n")
-      : (items || "");
-
-    const subject = `新訂單 ${orderId}`;
-    const bodyText = [
-      "W-82 大阪代購 新訂單",
-      "",
-      `訂單編號：${orderId}`,
-      `客戶編號：${customerId || "—"}`,
-      `訂單金額：NT$ ${Math.floor(total || 0).toLocaleString()}`,
-      "",
-      "商品明細：",
-      itemsText,
-      "",
-      "請至後台查看：https://shoptest-chi.vercel.app/admin.html",
-    ].join("\n");
-
-    // Base64 encode credentials
-    const credentials = Buffer.from(`${GMAIL_USER}:${GMAIL_PASS}`).toString("base64");
-
-    // 使用 Gmail API 寄信
-    const emailContent = [
-      `To: ${GMAIL_USER}`,
-      `From: W-82訂單系統 <${GMAIL_USER}>`,
-      `Subject: ${subject}`,
-      "Content-Type: text/plain; charset=UTF-8",
-      "",
-      bodyText,
-    ].join("\r\n");
-
-    const encoded = Buffer.from(emailContent)
-      .toString("base64")
-      .replace(/\+/g, "-")
-      .replace(/\//g, "_")
-      .replace(/=+$/, "");
-
-    // 用 OAuth2 不方便，改用 nodemailer（Vercel 支援 npm）
-    const { createTransport } = await import("nodemailer");
-    const transporter = createTransport({
-      host: "smtp.gmail.com",
-      port: 465,
-      secure: true,
-      auth: {
-        user: GMAIL_USER,
-        pass: GMAIL_PASS,
+    const response = await fetch("https://api.notion.com/v1/pages", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${NOTION_TOKEN}`,
+        "Notion-Version": "2022-06-28",
+        "Content-Type": "application/json",
       },
+      body: JSON.stringify({
+        parent: { database_id: DATABASE_ID },
+        properties: {
+          tname: {
+            title: [{ text: { content: tname } }],
+          },
+          jname: { rich_text: [{ text: { content: jname || "" } }] },
+          jprice: {
+            number: Number(jprice) || 0,
+          },
+          jsprice: {
+            number: Number(jsprice) || 0,
+          },
+          description: {
+            rich_text: [{ text: { content: description || "" } }],
+          },
+          image: {
+            rich_text: [{ text: { content: image || "" } }],
+          },
+          images: {
+            rich_text: [{ text: { content: images || "" } }],
+          },
+          mainCategory: {
+            select: mainCategory ? { name: mainCategory } : null,
+          },
+          category: {
+            select: category ? { name: category } : null,
+          },
+          weight: {
+            number: Number(weight) || 0,
+          },
+          idnumber: { rich_text: [{ text: { content: idnumber ? String(idnumber) : '' } }] },
+          isView:  { checkbox: !!isView },
+          isHot:   { checkbox: !!isHot  },
+          isSale:  { checkbox: !!isSale },
+          isNew:   { checkbox: !!isNew  },
+          update: {
+            date: { start: new Date().toISOString().split("T")[0] },
+          },
+        },
+      }),
     });
 
-    await transporter.sendMail({
-      from: `"W-82 訂單系統" <${GMAIL_USER}>`,
-      to: GMAIL_USER,
-      subject,
-      text: bodyText,
-    });
+    const data = await response.json();
 
-    res.status(200).json({ success: true });
+    if (!response.ok) {
+      return res.status(500).json({ error: data.message || "Notion 寫入失敗" });
+    }
+
+    res.status(200).json({ success: true, id: data.id });
+
   } catch (err) {
-    console.error("寄信失敗:", err.message);
     res.status(500).json({ error: err.message });
   }
 }
