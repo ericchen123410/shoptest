@@ -1,27 +1,436 @@
 <!DOCTYPE html>
 <html lang="zh">
 <head>
-  <meta charset="UTF-8"/>
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>熱賣商品 | W-82</title>
+  <title>結帳</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
   <link rel="stylesheet" href="js/theme.css">
+
+<style>
+.max-w-xl.mx-auto { max-width: 640px; margin: 0 auto; padding: 16px !important; }
+.bg-white.rounded-2xl.shadow-sm { background: var(--white) !important; border-radius: var(--radius-lg) !important; box-shadow: none !important; }
+.text-sm.font-medium.text-gray-700 { font-size: 14px !important; font-weight: 600 !important; color: var(--black) !important; }
+input, textarea { font-size: 16px !important; border: 1px solid var(--gray-200) !important; border-radius: var(--radius) !important; padding: 13px 14px !important; }
+input:focus, textarea:focus { border-color: var(--black) !important; outline: none !important; }
+label { font-size: 14px !important; font-weight: 600 !important; color: var(--black) !important; margin-bottom: 6px !important; display: block !important; }
+.border-b { border-bottom: 1px solid var(--gray-200) !important; }
+.text-gray-500 { color: var(--gray-600) !important; }
+.text-red-500 { color: var(--red) !important; }
+.text-green-600 { color: var(--green) !important; }
+/* 訂單摘要 */
+.bg-gray-50 { background: var(--gray-50) !important; border-radius: var(--radius) !important; padding: 14px !important; }
+.font-bold.text-lg { font-size: 20px !important; font-weight: 700 !important; }
+/* 送出按鈕 */
+button[type="submit"], #submitBtn { background: var(--black) !important; color: var(--white) !important; border: none !important; border-radius: var(--radius) !important; padding: 16px !important; font-size: 17px !important; font-weight: 600 !important; width: 100% !important; cursor: pointer !important; }
+</style>
 </head>
-<body>
+<body class="bg-gray-50">
+
 <nav class="top-nav">
-  <button class="nav-icon-btn" onclick="history.back()"><i class="ti ti-arrow-left"></i></button>
-  <span style="font-size:16px;font-weight:600">熱賣商品</span>
-  <a href="cart.html" class="nav-icon-btn"><i class="ti ti-shopping-cart"></i><span id="cartCount" class="cart-badge" style="display:none">0</span></a>
+  <a href="cart.html" class="nav-icon-btn"><i class="ti ti-arrow-left"></i></a>
+  <span style="font-size:16px;font-weight:600">結帳</span>
+  <div style="width:44px"></div>
 </nav>
-<div class="page-wrap" id="list"></div>
-<nav class="bottom-nav">
-  <a href="index.html"        class="bnav-item"><i class="ti ti-home"></i>首頁</a>
-  <a href="hot.html"          class="bnav-item active"><i class="ti ti-flame"></i>熱賣</a>
-  <a href="search.html"       class="bnav-item"><i class="ti ti-search"></i>搜尋</a>
-  <a href="order-status.html" class="bnav-item"><i class="ti ti-clipboard-list"></i>訂單</a>
-  <a href="about.html"        class="bnav-item"><i class="ti ti-info-circle"></i>關於</a>
-</nav>
-<script type="module" src="./js/hot.js"></script>
+
+<div style="max-width:640px;margin:0 auto;padding:16px">
+
+  <!-- 步驟指示 -->
+  <div class="flex items-center justify-center gap-2 mb-6 text-sm sm:text-base">
+    <span class="text-gray-400">購物車</span>
+    <span class="text-gray-300">›</span>
+    <span class="font-bold text-black">填寫資料</span>
+    <span class="text-gray-300">›</span>
+    <span class="text-gray-400">完成</span>
+  </div>
+
+  <!-- 訂單摘要 -->
+  <div class="bg-white rounded-xl border mb-4">
+    <button onclick="toggleSummary()"
+      class="w-full flex justify-between items-center px-4 py-3 text-sm font-semibold">
+      <span>📦 訂單明細</span>
+      <span id="summaryArrow" class="text-gray-400 transition-transform">▼</span>
+    </button>
+    <div id="summaryContent" class="border-t px-4 pb-4 hidden">
+      <div id="orderItems" class="divide-y text-sm"></div>
+      <div class="flex justify-between items-center mt-2 text-sm text-gray-500">
+        <span>商品小計</span>
+        <span id="orderSubtotal"></span>
+      </div>
+      <div id="orderDiscountRow" class="hidden flex justify-between items-center mt-1 text-sm text-green-600">
+        <span>🎉 滿NT$3,000折扣</span>
+        <span>- NT$200</span>
+      </div>
+      <div class="flex justify-between items-center mt-1 text-sm" id="orderShippingRow">
+        <span>出貨手續費</span>
+        <span id="orderShipping"></span>
+      </div>
+      <div class="flex justify-between items-center mt-3 pt-2 border-t font-bold">
+        <span>總計</span>
+        <span id="orderTotal" class="text-red-500 text-base"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 填寫資料表單 -->
+  <div class="bg-white rounded-xl border px-4 py-4 mb-4">
+    <h2 class="font-bold mb-4">收件資料</h2>
+
+    <div class="space-y-3">
+
+      <div>
+        <label class="text-xs text-gray-500 mb-1 block">姓名 <span class="text-red-500">*</span></label>
+        <input id="name" type="text" placeholder="請輸入姓名"
+          class="w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black">
+      </div>
+
+      <div>
+        <label class="text-xs text-gray-500 mb-1 block">電話 <span class="text-red-500">*</span></label>
+        <input id="phone" type="tel" placeholder="請輸入電話"
+          class="w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black">
+      </div>
+
+      <div>
+        <label class="text-xs text-gray-500 mb-1 block">Email <span class="text-red-500">*</span></label>
+        <input id="email" type="email" placeholder="請輸入 Email"
+          class="w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black">
+      </div>
+
+      <div>
+        <label class="text-xs text-gray-500 mb-1 block">地址 <span class="text-red-500">*</span></label>
+        <input id="address" type="text" placeholder="請輸入收件地址"
+          class="w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black">
+      </div>
+
+
+    </div>
+  </div>
+
+  <!-- 送出按鈕 -->
+  <div class="flex gap-3">
+    <a href="cart.html"
+      class="flex-1 py-3.5 border border-gray-300 text-gray-600 font-medium rounded-xl text-center hover:bg-gray-50 active:bg-gray-100 transition text-base">
+      ← 回到購物車
+    </a>
+    <button id="submitBtn" onclick="submitOrder()"
+      class="flex-1 py-3.5 bg-black text-white font-medium rounded-xl active:bg-gray-800 transition text-base">
+      確認送出訂單
+    </button>
+  </div>
+
+  <p class="text-xs text-center text-gray-400 mt-3">送出後將建立訂單，我們會盡快與您聯繫</p>
+
+</div>
+
+<!-- 成功畫面（預設隱藏）-->
+<div id="successScreen" style="display:none;position:fixed;inset:0;background:#fff;z-index:9999;flex-direction:column;align-items:center;justify-content:center;padding:0 24px">
+  <div class="text-6xl mb-4">🎉</div>
+  <h1 class="text-2xl font-bold mb-2">訂單已送出！</h1>
+  <p class="text-gray-500 text-sm mb-6">感謝您的購買，我們將盡快與您聯繫</p>
+
+  <div class="bg-gray-50 border rounded-xl px-6 py-4 w-full max-w-xs text-center mb-6 space-y-3">
+    <div>
+      <div class="text-xs text-gray-400 mb-0.5">您的訂單編號</div>
+      <div id="displayOrderId" class="text-xl font-bold tracking-widest text-black"></div>
+      <button onclick="copyOrderId()"
+        class="mt-1 text-xs text-gray-400 underline active:text-black">
+        點擊複製
+      </button>
+    </div>
+    <div class="border-t pt-3">
+      <div class="text-xs text-gray-400 mb-0.5">您的客戶編號</div>
+      <div id="displayCustomerId" class="text-base font-bold text-gray-700"></div>
+      <div class="text-xs text-gray-400 mt-0.5">下次購物可用此編號查詢訂單</div>
+    </div>
+  </div>
+
+  <a id="queryLink" href="order-status.html"
+    class="w-full max-w-xs py-3 bg-black text-white text-center font-medium rounded-xl active:bg-gray-800 block mb-3">
+    查詢訂單狀態
+  </a>
+  <a href="index.html"
+    class="w-full max-w-xs py-3 text-center text-sm text-gray-400 underline block">
+    繼續逛逛
+  </a>
+</div>
+
 <script src="./js/cartCount.js"></script>
+<script type="module">
+import { formatPrice } from "./js/utils.js";
+
+const PRODUCTS_API = "https://shoptest-chi.vercel.app/api/products";
+const ORDERS_API   = "https://shoptest-chi.vercel.app/api/orders-manage";
+const CUSTOMER_API = "https://shoptest-chi.vercel.app/api/customer";
+
+const RATE       = 220;
+const SURCHARGE  = 150;
+const FREE_KG    = 10;
+
+let orderItems    = [];
+let orderTotal    = 0;
+let orderSubtotal = 0;
+let orderShipping = 0;
+let orderDiscount = 0;
+
+// ── 初始化：讀購物車 + 抓商品資料 ──────────────────────
+async function init() {
+  const cart = JSON.parse(localStorage.getItem("cart") || "{}");
+  if (!Object.keys(cart).length) {
+    location.href = "cart.html";
+    return;
+  }
+
+  const res = await fetch(PRODUCTS_API, { cache: "no-store" });
+  const products = await res.json();
+
+  // ⭐ 優惠碼（要在使用前宣告）
+  const COUPONS2       = { "hinamecute": { type: "jprice_rate", rate: 0.3 } };
+  const couponCode2    = sessionStorage.getItem("appliedCoupon") || "";
+  const activeCoupon   = COUPONS2[couponCode2] || null;
+
+  orderItems    = [];
+  orderSubtotal = 0;
+  let totalWeight = 0;
+
+  Object.entries(cart).forEach(([cartKey, qty]) => {
+    const [id, variant] = cartKey.split(":");
+    const p = products.find(x => x.id === id);
+    if (!p) return;
+    let unitPrice = p.price;
+    if (activeCoupon?.type === "jprice_rate" && p.jprice) {
+      unitPrice = Math.floor(p.jprice * activeCoupon.rate);
+    }
+    const sub  = unitPrice * qty;
+    orderSubtotal += sub;
+    totalWeight   += (p.weight || 0) * qty;
+    const name = variant ? `${p.name}（${variant}）` : p.name;
+    orderItems.push({ id, idnumber: p.idnumber || "", variant: variant || "", name, qty, price: unitPrice, sub });
+  });
+
+
+  // ⭐ 運費計算
+  const FLAT_SHIPPING  = 200;
+  const FREE_AMOUNT    = 5000;
+  const DISCOUNT_MIN   = 3000;
+  const DISCOUNT_AMT   = 200;
+
+  // 滿 3000 折 200（hinamecute 不適用）
+  orderDiscount         = (!activeCoupon && orderSubtotal >= DISCOUNT_MIN) ? DISCOUNT_AMT : 0;
+  const afterDiscount   = orderSubtotal - orderDiscount;
+  const isFreeShipping  = activeCoupon ? true : afterDiscount >= FREE_AMOUNT;
+  orderShipping         = isFreeShipping ? 0 : FLAT_SHIPPING;
+  orderTotal            = afterDiscount + orderShipping;
+
+  // 訂單明細
+  document.getElementById("orderItems").innerHTML = orderItems.map(i => `
+    <div class="flex justify-between py-2.5">
+      <span class="text-gray-700">${i.name} <span class="text-gray-400">× ${i.qty}</span></span>
+      <span class="font-medium">${formatPrice(i.price * i.qty)}</span>
+    </div>
+  `).join("");
+
+  document.getElementById("orderSubtotal").textContent = formatPrice(orderSubtotal);
+
+  const shippingEl  = document.getElementById("orderShipping");
+  const shippingRow = document.getElementById("orderShippingRow");
+  shippingRow.className = "flex justify-between items-center mt-1 text-sm text-gray-500";
+
+  if (orderDiscount > 0) {
+    const discEl = document.getElementById("orderDiscountRow");
+    if (discEl) discEl.classList.remove("hidden");
+  }
+  shippingEl.textContent = isFreeShipping ? "免出貨手續費" : "NT$200";
+
+  document.getElementById("orderTotal").textContent = formatPrice(orderTotal);
+}
+
+// ── 展開 / 收合訂單明細 ──────────────────────────────
+window.toggleSummary = () => {
+  const content = document.getElementById("summaryContent");
+  const arrow   = document.getElementById("summaryArrow");
+  const isHidden = content.classList.contains("hidden");
+  content.classList.toggle("hidden", !isHidden);
+  arrow.style.transform = isHidden ? "rotate(180deg)" : "";
+};
+
+// ── 送出訂單 ─────────────────────────────────────────
+window.submitOrder = async () => {
+  const name    = document.getElementById("name").value.trim();
+  const phone   = document.getElementById("phone").value.trim();
+  const email   = document.getElementById("email").value.trim();
+  const address = document.getElementById("address").value.trim();
+
+  // 驗證
+  if (!name || !phone || !email || !address) {
+    alert("請填寫所有必填欄位（姓名、電話、Email、地址）");
+    return;
+  }
+  if (!/^\d{8,10}$/.test(phone.replace(/-/g, ""))) {
+    alert("電話格式不正確");
+    return;
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    alert("Email 格式不正確");
+    return;
+  }
+
+  const orderId = "ORD" + Date.now().toString().slice(-8);
+  const btn = document.getElementById("submitBtn");
+  btn.disabled = true;
+  btn.textContent = "確認客戶資料...";
+
+  try {
+    // ⭐ Step 1：查詢或建立客戶
+    const isCouponOrder = sessionStorage.getItem("appliedCoupon") === "hinamecute";
+
+    const custCheck = await fetch(
+      CUSTOMER_API + "?email=" + encodeURIComponent(email)
+    );
+    const custData = await custCheck.json();
+
+    let customerId;
+    if (custData.found) {
+      customerId = custData.customerId;
+    } else {
+      // hinamecute 用 C-161 開頭，尾數從 A 開始
+      const prefix = isCouponOrder ? "C-161" : "W-82";
+      const custCreate = await fetch(CUSTOMER_API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, name, phone, address, prefix }),
+      });
+      const custCreated = await custCreate.json();
+      if (!custCreated.customerId) throw new Error("客戶建立失敗");
+      customerId = custCreated.customerId;
+    }
+
+    // ⭐ Step 2：建立訂單
+    btn.textContent = "建立訂單...";
+    const res = await fetch(ORDERS_API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        orderId, customerId,
+        items: orderItems,
+        total: orderTotal,
+        shipping: orderShipping,
+        discount: orderDiscount,
+      }),
+    });
+
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || "送出失敗");
+
+    localStorage.removeItem("cart");
+    sessionStorage.removeItem("appliedCoupon");
+
+    // ⭐ 寄送訂單通知
+    try {
+      fetch("https://shoptest-chi.vercel.app/api/send-notify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId, customerId, total: orderTotal, items: orderItems }),
+      });
+    } catch {}
+
+    // ⭐ 集運：更新所有選取訂單的 bundleId
+    const bundleOrdersRaw = sessionStorage.getItem("bundleOrders");
+    if (bundleOrdersRaw) {
+      const bundleOrders = JSON.parse(bundleOrdersRaw);
+      const bundleId = "BUNDLE" + Date.now().toString().slice(-8);
+      // 更新所有集運訂單（含本筆）
+      const patchPromises = bundleOrders.map(o =>
+        fetch(ORDERS_API, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pageId: o.pageId, bundleId }),
+        })
+      );
+      // 本筆訂單也標記 bundleId（需要 pageId，先查）
+      await Promise.all(patchPromises);
+      sessionStorage.removeItem("bundleOrders");
+    }
+
+    document.getElementById("displayOrderId").textContent = orderId;
+    document.getElementById("displayCustomerId").textContent = customerId;
+    document.getElementById("queryLink").href = "order-status.html?orderId=" + orderId;
+    document.getElementById("successScreen").style.display="flex";
+
+  } catch (err) {
+    alert("訂單送出失敗，請稍後再試\n" + err.message);
+    btn.disabled = false;
+    btn.textContent = "確認送出訂單";
+  }
+};
+
+// ── 複製訂單編號 ─────────────────────────────────────
+window.copyOrderId = () => {
+  const id = document.getElementById("displayOrderId").textContent;
+  navigator.clipboard.writeText(id).then(() => alert("已複製訂單編號：" + id));
+};
+
+init();
+</script>
+<script>
+// ── Navibar 搜尋共用 JS ───────────────────────────────
+function toggleSearch() {
+  const box = document.getElementById("searchBox");
+  const isHidden = box.classList.contains("hidden");
+  box.classList.toggle("hidden", !isHidden);
+  box.classList.toggle("flex", isHidden);
+  if (isHidden) {
+    setTimeout(() => document.getElementById("navSearchInput").focus(), 50);
+  } else {
+    closeSearch();
+  }
+}
+
+function closeSearch() {
+  const box = document.getElementById("searchBox");
+  box.classList.add("hidden");
+  box.classList.remove("flex");
+  document.getElementById("navSearchInput").value = "";
+}
+
+function onNavSearch(val) {
+  if (typeof handleNavSearch === "function") {
+    handleNavSearch(val);
+  }
+}
+
+// 非首頁：組字完成或按 Enter 才跳到 search.html
+document.addEventListener("DOMContentLoaded", () => {
+  const input = document.getElementById("navSearchInput");
+  if (!input) return;
+
+  let isComposing = false;
+
+  input.addEventListener("compositionstart", () => { isComposing = true; });
+  input.addEventListener("compositionend",   () => {
+    isComposing = false;
+    // 組字完成後如果有值就跳頁
+    const val = input.value.trim();
+    if (val) {
+      window.location.href = "search.html?q=" + encodeURIComponent(val);
+    }
+  });
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !isComposing && input.value.trim()) {
+      window.location.href = "search.html?q=" + encodeURIComponent(input.value.trim());
+    }
+  });
+});
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeSearch();
+});
+
+document.addEventListener("click", (e) => {
+  const wrap = document.getElementById("searchWrap");
+  if (wrap && !wrap.contains(e.target) && dd && !dd.contains(e.target)) {
+    closeSearch();
+  }
+});
+</script>
 </body>
 </html>

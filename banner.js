@@ -1,0 +1,168 @@
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --black:#111;--white:#fff;
+  --gray-50:#f9f9f9;--gray-100:#f2f2f2;--gray-200:#e5e5e5;
+  --gray-400:#aaa;--gray-600:#666;--gray-800:#333;
+  --red:#e24b4a;--green:#059669;--blue:#2563eb;
+  --radius:8px;--radius-lg:12px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,"Noto Sans TC","PingFang TC",sans-serif;background:var(--gray-100);color:var(--black);min-height:100vh}
+
+/* ── 版面 ── */
+.admin-layout{display:flex;min-height:100vh}
+.admin-sidebar{width:200px;background:var(--black);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100}
+.admin-main{margin-left:200px;flex:1;display:flex;flex-direction:column;min-height:100vh}
+.admin-content{flex:1;padding:20px}
+
+/* ── Sidebar ── */
+.sidebar-logo{padding:20px 16px;border-bottom:1px solid #2a2a2a;font-size:20px;font-weight:700;color:var(--white);letter-spacing:-0.5px;text-decoration:none;display:block}
+.sidebar-nav{flex:1;padding:8px 0;overflow-y:auto}
+.sidebar-item{display:flex;align-items:center;gap:10px;padding:12px 16px;font-size:14px;color:#aaa;text-decoration:none;cursor:pointer;background:none;border:none;width:100%;text-align:left;transition:background 0.15s,color 0.15s}
+.sidebar-item i{font-size:18px;flex-shrink:0}
+.sidebar-item:hover{background:#1a1a1a;color:#ddd}
+.sidebar-item.active{background:#222;color:var(--white)}
+.sidebar-footer{border-top:1px solid #2a2a2a;padding:8px 0}
+
+/* ── Topbar ── */
+.admin-topbar{background:var(--white);border-bottom:1px solid var(--gray-200);padding:14px 20px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:50}
+.topbar-title{font-size:18px;font-weight:700}
+.topbar-actions{display:flex;gap:8px;align-items:center}
+
+/* ── 按鈕 ── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:var(--radius);font-size:14px;font-weight:500;cursor:pointer;border:none;text-decoration:none;white-space:nowrap}
+.btn-primary{background:var(--black);color:var(--white)}
+.btn-primary:hover{opacity:0.85}
+.btn-secondary{background:var(--white);color:var(--black);border:1px solid var(--gray-200)}
+.btn-secondary:hover{background:var(--gray-50)}
+.btn-danger{background:#fef2f2;color:var(--red);border:1px solid #fca5a5}
+.btn-sm{padding:6px 12px;font-size:13px}
+
+/* ── 輸入框 ── */
+input[type="text"],input[type="email"],input[type="password"],input[type="number"],input[type="tel"],textarea,select{
+  width:100%;border:1px solid var(--gray-200);border-radius:var(--radius);
+  padding:10px 12px;font-size:14px;background:var(--white);color:var(--black);outline:none
+}
+input:focus,textarea:focus,select:focus{border-color:var(--black)}
+label{font-size:13px;font-weight:600;color:var(--gray-800);margin-bottom:5px;display:block}
+
+/* ── 搜尋列 ── */
+.search-bar{background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius);padding:10px 14px;display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.search-bar input{border:none;background:transparent;font-size:14px;color:var(--black);outline:none;flex:1;padding:0}
+.search-bar i{font-size:18px;color:var(--gray-400)}
+
+/* ── 卡片 ── */
+.card{background:var(--white);border-radius:var(--radius-lg);border:1px solid var(--gray-200);padding:16px}
+.card-sm{padding:12px 14px}
+
+/* ── 訂單列表 ── */
+.order-card{background:var(--white);border-radius:var(--radius-lg);border:1px solid var(--gray-200);padding:14px 16px;margin-bottom:8px;cursor:pointer;transition:border-color 0.15s}
+.order-card:hover{border-color:#999}
+.bundle-card{border:2px solid #bfdbfe;border-radius:var(--radius-lg);overflow:hidden;margin-bottom:8px}
+.bundle-header{background:#eff6ff;padding:10px 16px;display:flex;justify-content:space-between;align-items:center}
+.bundle-footer{background:#eff6ff;padding:8px 16px;font-size:12px;color:#60a5fa;display:flex;justify-content:space-between}
+.bundle-item{padding:12px 16px;border-bottom:1px solid var(--gray-200);cursor:pointer}
+.bundle-item:last-child{border:none}
+
+/* ── 狀態 Badge ── */
+.badge{display:inline-block;font-size:11px;font-weight:600;padding:3px 10px;border-radius:6px}
+.badge-pending{background:#fef9c3;color:#a16207}
+.badge-processing{background:#dbeafe;color:#1d4ed8}
+.badge-shipped{background:#ede9fe;color:#6d28d9}
+.badge-done{background:#dcfce7;color:#15803d}
+.badge-cancelled{background:#f3f4f6;color:#6b7280}
+.badge-cancel-req{background:#ffedd5;color:#c2410c}
+
+/* ── Modal ── */
+.modal-overlay{display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.5);align-items:flex-end;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal-box{background:var(--white);width:100%;max-width:520px;border-radius:16px 16px 0 0;max-height:88vh;display:flex;flex-direction:column}
+.modal-header{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--gray-200);flex-shrink:0}
+.modal-title{font-size:17px;font-weight:700}
+.modal-close{background:none;border:none;cursor:pointer;font-size:24px;color:var(--gray-400);padding:0;line-height:1}
+.modal-body{flex:1;overflow-y:auto;padding:16px 20px}
+.modal-footer{padding:16px 20px;border-top:1px solid var(--gray-200);flex-shrink:0;display:flex;flex-direction:column;gap:8px}
+
+/* ── 表單 ── */
+.form-row{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* ── 標籤切換 ── */
+.filter-bar{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.filter-chip{padding:7px 14px;border-radius:var(--radius);font-size:13px;font-weight:500;border:1px solid var(--gray-200);background:var(--white);cursor:pointer}
+.filter-chip.active{background:var(--black);color:var(--white);border-color:var(--black)}
+
+/* ── 登入頁 ── */
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--gray-100)}
+.login-card{background:var(--white);border-radius:var(--radius-lg);border:1px solid var(--gray-200);padding:32px;width:100%;max-width:360px}
+.login-logo{font-size:28px;font-weight:700;text-align:center;margin-bottom:6px}
+.login-sub{font-size:14px;color:var(--gray-400);text-align:center;margin-bottom:24px}
+
+/* ── 商品卡片(後台) ── */
+.product-row{background:var(--white);border-radius:var(--radius-lg);border:1px solid var(--gray-200);padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:border-color 0.15s}
+.product-row:hover{border-color:#999}
+.product-thumb{width:56px;height:56px;object-fit:cover;border-radius:var(--radius);background:var(--gray-100);flex-shrink:0}
+.product-info{flex:1;min-width:0}
+.product-name{font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.product-meta{font-size:12px;color:var(--gray-400);margin-top:2px}
+.product-price{font-size:16px;font-weight:700;flex-shrink:0}
+
+/* ── 工具 ── */
+.divider{height:1px;background:var(--gray-200);margin:16px 0}
+.text-muted{color:var(--gray-400)}
+.text-sm{font-size:13px}
+.text-xs{font-size:12px}
+.flex{display:flex}
+.flex-col{flex-direction:column}
+.items-center{align-items:center}
+.justify-between{justify-content:space-between}
+.gap-2{gap:8px}
+.gap-3{gap:12px}
+.mt-1{margin-top:4px}
+.mt-2{margin-top:8px}
+.mt-3{margin-top:12px}
+.mb-1{margin-bottom:4px}
+.mb-2{margin-bottom:8px}
+.space-y-2>*+*{margin-top:8px}
+.hidden{display:none}
+.w-full{width:100%}
+.text-green{color:var(--green)}
+.text-red{color:var(--red)}
+.text-blue{color:var(--blue)}
+
+/* ── 手機版 RWD ── */
+@media (max-width: 768px) {
+  .admin-sidebar { display: none; }
+  .admin-main { margin-left: 0; }
+  .admin-topbar { padding: 12px 16px; }
+  .topbar-title { font-size: 16px; }
+  .admin-content { padding: 12px; padding-bottom: 80px; }
+
+  /* 手機底部導覽 */
+  .admin-bottom-nav {
+    display: grid !important;
+    grid-template-columns: repeat(5, 1fr);
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--black); z-index: 100;
+    border-top: 1px solid #2a2a2a;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .admin-bnav-item {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 3px; padding: 8px 4px; font-size: 10px; color: #aaa;
+    text-decoration: none; cursor: pointer; background: none; border: none;
+  }
+  .admin-bnav-item i { font-size: 22px; }
+  .admin-bnav-item.active { color: var(--white); }
+
+  /* 隱藏桌機側邊欄 topbar 的 logo */
+  .topbar-logo { display: none; }
+
+  /* 表單手機版 */
+  .form-grid { grid-template-columns: 1fr !important; }
+  .filter-bar { overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; }
+  .filter-chip { flex-shrink: 0; }
+}
+
+@media (min-width: 769px) {
+  .admin-bottom-nav { display: none !important; }
+}

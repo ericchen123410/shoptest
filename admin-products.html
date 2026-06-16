@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>商品管理 | W-82 後台</title>
+  <title>訂單管理 | W-82 後台</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
   <link rel="stylesheet" href="js/admin-theme.css">
 
@@ -139,6 +139,20 @@ button{cursor:pointer}
 .hidden.bg-white.rounded-2xl{display:none;background:var(--white)!important;border-radius:var(--radius-lg)!important}
 .px-4.py-2\.5.bg-purple-600.text-white{padding:9px 16px!important;background:var(--black)!important;color:var(--white)!important;border:none!important;border-radius:var(--radius)!important;font-size:14px!important}
 </style>
+<style>
+@media (max-width: 768px) {
+  .admin-sidebar { display: none !important; }
+  .admin-main { margin-left: 0 !important; width: 100% !important; }
+  .admin-content { padding: 12px !important; padding-bottom: 72px !important; }
+  .admin-topbar { padding: 12px 16px !important; }
+  .admin-bottom-nav { display: grid !important; }
+  .form-grid { grid-template-columns: 1fr !important; }
+  .filter-bar { flex-wrap: nowrap !important; overflow-x: auto !important; }
+}
+@media (min-width: 769px) {
+  .admin-bottom-nav { display: none !important; }
+}
+</style>
 </head>
 <body>
 
@@ -149,8 +163,8 @@ if (sessionStorage.getItem("adminAuth") !== "1") location.href = "admin.html";
   <aside class="admin-sidebar">
     <a href="admin.html" class="sidebar-logo">W-82</a>
     <nav class="sidebar-nav">
-      <a href="admin-orders.html"         class="sidebar-item"><i class="ti ti-clipboard-list"></i>訂單管理</a>
-      <a href="admin-products.html"       class="sidebar-item active"><i class="ti ti-package"></i>商品管理</a>
+      <a href="admin-orders.html"         class="sidebar-item active"><i class="ti ti-clipboard-list"></i>訂單管理</a>
+      <a href="admin-products.html"       class="sidebar-item"><i class="ti ti-package"></i>商品管理</a>
       <a href="admin-add.html"            class="sidebar-item"><i class="ti ti-plus"></i>新增商品</a>
       <a href="admin-customers.html"      class="sidebar-item"><i class="ti ti-users"></i>客戶管理</a>
       <a href="admin-banners.html"        class="sidebar-item"><i class="ti ti-photo"></i>輪播管理</a>
@@ -167,128 +181,150 @@ if (sessionStorage.getItem("adminAuth") !== "1") location.href = "admin.html";
 
 <div style="padding:0">
 
-  <!-- 搜尋 + 篩選 -->
-  <div class="flex gap-2 mb-4">
-    <input id="searchInput" type="text" placeholder="搜尋商品名稱、商品編號…"
-      class="flex-1 border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black">
-    <select id="filterStatus"
-      class="border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black bg-white">
-      <option value="all">全部</option>
-      <option value="on">上架中</option>
-      <option value="off">已下架</option>
-    </select>
+  <!-- 總筆數 -->
+  <div class="flex items-center justify-between mb-3">
+    <span id="totalBadge" class="text-xs text-gray-400"></span>
   </div>
 
-  <!-- 大分類篩選 -->
-  <div class="mb-2">
-    <div id="mainCatBtns" class="flex flex-wrap gap-1.5"></div>
+  <!-- 狀態篩選 -->
+  <div class="overflow-x-auto mb-4 -mx-4 px-4">
+    <div id="filterBtns" class="flex gap-2 w-max">
+      <!-- JS 產生 -->
+    </div>
   </div>
 
-  <!-- 小分類篩選 -->
-  <div id="subCatWrap" class="hidden mb-3">
-    <div id="subCatBtns" class="flex flex-wrap gap-1.5"></div>
+  <!-- 搜尋 -->
+  <div class="relative mb-4">
+    <input id="searchInput" type="text" placeholder="搜尋訂單編號、客戶編號、商品名稱、商品編號…"
+      class="w-full border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black pr-10">
+    <span class="absolute right-3 top-2.5 text-gray-400">🔍</span>
   </div>
 
-  <div id="productCount" class="text-xs text-gray-400 mb-3"></div>
-  <div id="productList" class="space-y-2"></div>
+  <!-- 訂單列表 -->
+  <div id="orderList" class="space-y-3"></div>
+
+  <!-- 後台集運合併區 -->
+  <div id="adminMergeArea" class="hidden sticky bottom-0 bg-white border rounded-2xl shadow-lg p-4 mt-3">
+    <div class="text-xs font-semibold text-gray-500 mb-2">集運合併</div>
+    <div id="adminMergeSummary" class="text-sm text-gray-600 mb-3"></div>
+    <div class="flex gap-2">
+      <button onclick="adminClearMerge()"
+        class="flex-1 py-2.5 border rounded-xl text-sm text-gray-500 hover:bg-gray-50">
+        取消
+      </button>
+      <button onclick="adminConfirmMerge()"
+        class="flex-1 py-2.5 bg-black text-white font-medium rounded-xl text-sm">
+        確認集運合併
+      </button>
+    </div>
+  </div>
+
 </div>
 
-<!-- 編輯 Modal -->
-<div id="editModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.5);align-items:flex-end;justify-content:center">
+<!-- 訂單詳情 Modal -->
+<!-- 後台修改商品 Modal -->
+<div id="adminItemsModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.5);align-items:flex-end;justify-content:center">
+  <div class="bg-white w-full sm:max-w-lg sm:rounded-2xl rounded-t-2xl max-h-[85vh] flex flex-col">
+    <div class="flex justify-between items-center px-5 py-4 border-b shrink-0">
+      <h3 class="font-bold text-base">修改商品</h3>
+      <button onclick="closeAdminItemsModal()" class="text-gray-400 hover:text-black text-xl">✕</button>
+    </div>
+    <div id="adminItemsEditor" class="flex-1 overflow-y-auto px-5 py-4 space-y-3"></div>
+    <div class="px-5 py-4 border-t shrink-0 space-y-2">
+      <div class="flex justify-between text-sm font-bold">
+        <span>新合計</span>
+        <span id="adminItemsNewTotal" class="text-red-500"></span>
+      </div>
+      <div id="adminItemsDetail" class="text-xs text-gray-400"></div>
+      <p id="adminItemsSaveStatus" class="text-xs text-center hidden"></p>
+      <button id="adminItemsSaveBtn" onclick="adminSaveItems()"
+        class="w-full py-3 bg-black text-white font-medium rounded-xl text-sm">儲存變更</button>
+    </div>
+  </div>
+</div>
+
+<!-- 後台編輯集運 Modal -->
+<div id="adminBundleModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.5);align-items:flex-end;justify-content:center">
+  <div class="bg-white w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl max-h-[85vh] flex flex-col">
+    <div class="flex justify-between items-center px-5 py-4 border-b shrink-0">
+      <h3 class="font-bold text-base" id="adminBundleTitle">編輯集運批次</h3>
+      <button onclick="closeAdminBundleModal()" class="text-gray-400 hover:text-black text-xl">✕</button>
+    </div>
+    <div class="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+      <div>
+        <div class="text-xs font-semibold text-blue-500 mb-2">📦 批次內的訂單</div>
+        <div id="adminBundleIn" class="space-y-2"></div>
+      </div>
+      <div>
+        <div class="text-xs font-semibold text-gray-500 mb-2">➕ 可加入的待處理訂單</div>
+        <div id="adminBundleOut" class="space-y-2"></div>
+      </div>
+    </div>
+    <div class="px-5 py-4 border-t shrink-0">
+      <button onclick="closeAdminBundleModal()" class="w-full py-3 border rounded-xl text-sm text-gray-500 hover:bg-gray-50">關閉</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.5);align-items:flex-end;justify-content:center">
   <div class="bg-white w-full sm:max-w-lg sm:rounded-2xl rounded-t-2xl max-h-[90vh] overflow-y-auto">
+
+    <!-- Modal Header -->
     <div class="admin-topbar">
-      <span class="topbar-title">商品管理</span>
+      <span class="topbar-title">訂單管理</span>
       <div class="topbar-actions" id="topbarActions"></div>
     </div>
     <div class="admin-content">
-    <div class="px-4 py-4 space-y-3">
-      <div>
-        <label class="text-xs text-gray-500 mb-1 block">商品名稱</label>
-        <input id="editName" type="text" class="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black">
-      </div>
-      <div>
-        <label class="text-xs text-gray-500 mb-1 block">商品編號</label>
-        <input id="editIdnumber" type="text" placeholder="idnumber"
-          class="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black">
-      </div>
-
-      <div class="grid grid-cols-2 gap-3">
-        <div>
-          <label class="text-xs text-gray-500 mb-1 block">日幣原價</label>
-          <input id="editJprice" type="number" class="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black">
-        </div>
-        <div>
-          <label class="text-xs text-gray-500 mb-1 block">日幣特價</label>
-          <input id="editJsprice" type="number" class="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black">
-        </div>
-      </div>
-      <div class="grid grid-cols-2 gap-3">
-        <div>
-          <label class="text-xs text-gray-500 mb-1 block">大分類</label>
-          <input id="editMainCat" type="text" class="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black">
-        </div>
-        <div>
-          <label class="text-xs text-gray-500 mb-1 block">小分類</label>
-          <input id="editCat" type="text" class="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black">
-        </div>
-      </div>
-      <div class="grid grid-cols-2 gap-3">
-        <div>
-          <label class="text-xs text-gray-500 mb-1 block">重量（kg）</label>
-          <input id="editWeight" type="number" step="0.01" class="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black">
-        </div>
-        <div>
-          <label class="text-xs text-gray-500 mb-1 block">排序 <span class="text-gray-300">（數字小的排前面）</span></label>
-          <input id="editSort" type="number" placeholder="例：1" class="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black">
-        </div>
-      </div>
-      <!-- 圖片上傳 -->
-      <div>
-        <label class="text-xs text-gray-500 mb-2 block">圖片（第一張為主圖）</label>
-        <div class="flex flex-wrap gap-2 mb-2" id="editImgSlots"></div>
-        <button type="button" onclick="addEditImgSlot()"
-          class="w-full py-2 border border-dashed border-gray-300 rounded-xl text-xs text-gray-400 hover:border-gray-500 transition">
-          ＋ 新增圖片
+      <div class="flex items-center gap-2">
+        <button onclick="deleteOrder()"
+          class="text-xs text-red-400 hover:text-red-600 px-2 py-1 rounded-lg hover:bg-red-50 transition">
+          🗑 刪除
         </button>
+        <button onclick="closeModal()" class="text-gray-400 hover:text-black text-xl w-8 h-8 flex items-center justify-center">✕</button>
+      </div>
+    </div>
+
+    <div class="px-4 py-4 space-y-4">
+
+      <!-- 狀態更新 -->
+      <div>
+        <div class="text-xs text-gray-500 mb-2 font-medium">訂單狀態</div>
+        <div id="statusBtns" class="flex flex-wrap gap-2"></div>
       </div>
 
-      <!-- AI 生成 -->
-      <div class="bg-purple-50 rounded-xl p-3 border border-purple-100">
-        <div class="text-xs font-medium text-purple-700 mb-2">🤖 AI 生成描述</div>
-        <div class="flex gap-2">
-          <input id="editAiName" type="text" placeholder="輸入日文名稱或編號"
-            class="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white"
-            onkeydown="if(event.key==='Enter') generateEditDesc()">
-          <button id="editAiBtn" onclick="generateEditDesc()"
-            class="px-3 py-2 bg-purple-600 text-white text-xs font-medium rounded-lg hover:bg-purple-700 transition shrink-0">
-            ✨ 生成
+      <!-- 客戶資料 -->
+      <div class="bg-gray-50 rounded-xl p-3 space-y-2">
+        <div class="flex justify-between items-center mb-1">
+          <span class="text-xs font-medium text-gray-500">客戶資料</span>
+          <span id="modalCustomerId" class="text-xs font-bold text-blue-500"></span>
+        </div>
+        <div id="customerInfo">
+          <div class="text-xs text-gray-400 text-center py-2">載入中...</div>
+        </div>
+      </div>
+
+      <!-- 訂單明細 -->
+      <div>
+        <div class="flex justify-between items-center mb-2">
+          <div class="text-xs font-medium text-gray-500">訂單明細</div>
+          <button id="adminEditItemsBtn" onclick="openAdminItemsModal()"
+            class="text-xs px-2 py-1 border rounded-lg text-gray-500 hover:bg-gray-50 hidden">
+            ✏️ 修改商品
           </button>
         </div>
-        <p id="editAiStatus" class="text-xs mt-1.5 hidden"></p>
-      </div>
-
-      <div>
-        <label class="text-xs text-gray-500 mb-1 block">商品描述</label>
-        <textarea id="editDesc" rows="5"
-          class="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black resize-none"></textarea>
-      </div>
-      <div class="grid grid-cols-2 gap-2">
-        <label class="flex items-center gap-2 border rounded-xl px-3 py-2.5 cursor-pointer hover:bg-gray-50">
-          <input id="editIsView" type="checkbox" class="w-4 h-4 accent-black">
-          <span class="text-sm">上架</span>
-        </label>
-        <label class="flex items-center gap-2 border rounded-xl px-3 py-2.5 cursor-pointer hover:bg-gray-50">
-          <input id="editIsNew" type="checkbox" class="w-4 h-4 accent-black">
-          <span class="text-sm">🆕 新品</span>
-        </label>
-        <label class="flex items-center gap-2 border rounded-xl px-3 py-2.5 cursor-pointer hover:bg-gray-50">
-          <input id="editIsHot" type="checkbox" class="w-4 h-4 accent-black">
-          <span class="text-sm">🔥 熱賣</span>
-        </label>
-        <label class="flex items-center gap-2 border rounded-xl px-3 py-2.5 cursor-pointer hover:bg-gray-50">
-          <input id="editIsSale" type="checkbox" class="w-4 h-4 accent-black">
-          <span class="text-sm">🈹 特價</span>
-        </label>
+        <div id="modalItems" class="space-y-1.5"></div>
+        <div id="modalDiscountRow" class="hidden flex justify-between items-center mt-2 text-sm text-green-600">
+          <span>🎉 滿NT$3,000折扣</span>
+          <span id="modalDiscount"></span>
+        </div>
+        <div id="modalShippingRow" class="flex justify-between items-center mt-1 text-sm text-gray-500">
+          <span>出貨手續費</span>
+          <span id="modalShipping"></span>
+        </div>
+        <div class="flex justify-between items-center mt-3 pt-3 border-t font-bold">
+          <span>合計</span>
+          <span class="text-red-500 text-lg" id="modalTotal"></span>
+        </div>
       </div>
 
     </div>
@@ -296,425 +332,614 @@ if (sessionStorage.getItem("adminAuth") !== "1") location.href = "admin.html";
 </div>
 
 <script>
-const PRODUCTS_API = "https://shoptest-chi.vercel.app/api/products";
-const UPDATE_API   = "https://shoptest-chi.vercel.app/api/product-update";
+const ORDERS_API  = "https://shoptest-chi.vercel.app/api/orders-manage?type=list";
+const UPDATE_API  = "https://shoptest-chi.vercel.app/api/orders-manage";
+const CUSTOMER_API = "https://shoptest-chi.vercel.app/api/customer";
 
-let allProducts    = [];
-let editingProduct = null;
-let activeMain     = "";
-let activeSub      = "";
-let editImgUrls    = [];
+const STATUS_LIST = ["全部", "待處理", "處理中", "已出貨", "已完成", "已取消"];
+const STATUS_STYLE = {
+  "待處理": "bg-yellow-100 text-yellow-700",
+  "處理中": "bg-blue-100 text-blue-600",
+  "已出貨": "bg-purple-100 text-purple-600",
+  "已完成": "bg-green-100 text-green-600",
+  "已取消": "bg-gray-100 text-gray-500",
+};
 
-const BTN_NORMAL = "px-3 py-1 rounded-full border text-xs transition bg-white text-gray-600 border-gray-300 hover:border-black active:bg-gray-100";
-const BTN_ACTIVE = "px-3 py-1 rounded-full border text-xs transition bg-black text-white border-black";
+let allOrders    = [];
+let activeFilter = "全部";
+let currentOrder = null;
+
+const BTN_NORMAL = "shrink-0 px-3 py-1.5 rounded-full text-xs border transition bg-white text-gray-600 border-gray-300 hover:border-black";
+const BTN_ACTIVE = "shrink-0 px-3 py-1.5 rounded-full text-xs border transition bg-black text-white border-black";
 
 // ── 初始化 ───────────────────────────────────────────
 async function init() {
-  document.getElementById("productList").innerHTML =
+  document.getElementById("orderList").innerHTML =
     `<div class="text-center text-gray-400 py-10 text-sm">載入中...</div>`;
+
   try {
-    const res = await fetch(PRODUCTS_API + "?showAll=1", { cache: "no-store" });
-    allProducts = await res.json();
-
-    // ⭐ 與首頁相同排序：sort 小的排前面，沒有 sort 排最後，再依時間
-    allProducts.sort((a, b) => {
-      const sa = a.sort || 9999;
-      const sb = b.sort || 9999;
-      if (sa !== sb) return sa - sb;
-      return new Date(b.update || b.createdTime) - new Date(a.update || a.createdTime);
-    });
-
-    renderCatBtns();
-    renderList();
+    const res = await fetch(ORDERS_API);
+    allOrders  = await res.json();
+    renderFilterBtns();
+    renderOrders();
   } catch (err) {
-    document.getElementById("productList").innerHTML =
-      `<div class="text-center text-red-400 py-6 text-sm">載入失敗</div>`;
+    document.getElementById("orderList").innerHTML =
+      `<div class="text-center text-red-400 py-10 text-sm">載入失敗：${err.message}</div>`;
   }
 }
 
-// ── 分類按鈕 ─────────────────────────────────────────
-function renderCatBtns() {
-  // 大分類
-  const mains = ["全部", ...new Set(allProducts.map(p => p.mainCategory).filter(Boolean))].sort((a,b) => a==="全部"?-1:b==="全部"?1:a.localeCompare(b));
-  const mainEl = document.getElementById("mainCatBtns");
-  mainEl.innerHTML = "";
-  mains.forEach(m => {
+// ── 篩選按鈕 ─────────────────────────────────────────
+function renderFilterBtns() {
+  const el = document.getElementById("filterBtns");
+  el.innerHTML = "";
+  STATUS_LIST.forEach(s => {
+    const count = s === "全部" ? allOrders.length
+      : allOrders.filter(o => o.status === s).length;
     const btn = document.createElement("button");
-    btn.textContent = m;
-    btn.className = (m === (activeMain||"全部")) ? BTN_ACTIVE : BTN_NORMAL;
+    btn.className = s === activeFilter ? BTN_ACTIVE : BTN_NORMAL;
+    btn.innerHTML = `${s} <span class="opacity-60">${count}</span>`;
     btn.onclick = () => {
-      activeMain = m === "全部" ? "" : m;
-      activeSub  = "";
-      renderCatBtns();
-      renderSubBtns();
-      renderList();
+      activeFilter = s;
+      renderFilterBtns();
+      renderOrders();
     };
-    mainEl.appendChild(btn);
-  });
-  renderSubBtns();
-}
-
-function renderSubBtns() {
-  const pool = activeMain
-    ? allProducts.filter(p => p.mainCategory === activeMain)
-    : allProducts;
-  const subs = [...new Set(pool.map(p => p.category).filter(Boolean))].sort();
-
-  const wrap  = document.getElementById("subCatWrap");
-  const subEl = document.getElementById("subCatBtns");
-
-  if (!subs.length) { wrap.style.display="none"; return; }
-  wrap.style.display="flex";
-  subEl.innerHTML = "";
-
-  ["全部", ...subs].forEach(s => {
-    const btn = document.createElement("button");
-    btn.textContent = s;
-    btn.className = (s === (activeSub||"全部")) ? BTN_ACTIVE : BTN_NORMAL;
-    btn.onclick = () => {
-      activeSub = s === "全部" ? "" : s;
-      renderSubBtns();
-      renderList();
-    };
-    subEl.appendChild(btn);
+    el.appendChild(btn);
   });
 }
 
-// ── 列表渲染 ─────────────────────────────────────────
-function renderList() {
-  const kw     = document.getElementById("searchInput").value.trim().toLowerCase();
-  const status = document.getElementById("filterStatus").value;
+// ── 訂單列表 ─────────────────────────────────────────
+function renderOrders() {
+  const keyword = document.getElementById("searchInput").value.trim().toLowerCase();
 
-  let list = allProducts;
-  if (kw)             list = list.filter(p =>
-    (p.name||"").toLowerCase().includes(kw) ||
-    (p.idnumber||"").toLowerCase().includes(kw)
-  );
-  if (status==="on")  list = list.filter(p => p.isView);
-  if (status==="off") list = list.filter(p => !p.isView);
-  if (activeMain)     list = list.filter(p => p.mainCategory === activeMain);
-  if (activeSub)      list = list.filter(p => p.category     === activeSub);
+  let list = allOrders;
+  if (activeFilter !== "全部")
+    list = list.filter(o => o.status === activeFilter);
+  if (keyword)
+    list = list.filter(o =>
+      (o.orderId    || "").toLowerCase().includes(keyword) ||
+      (o.customerId || "").toLowerCase().includes(keyword) ||
+      (Array.isArray(o.items) && o.items.some(i =>
+        (i.name     || "").toLowerCase().includes(keyword) ||
+        (i.idnumber || "").toLowerCase().includes(keyword)
+      ))
+    );
 
-  document.getElementById("productCount").textContent = `共 ${list.length} 件`;
+  document.getElementById("totalBadge").textContent = `共 ${allOrders.length} 筆`;
 
   if (!list.length) {
-    document.getElementById("productList").innerHTML =
-      `<div class="text-center text-gray-400 py-10 text-sm">沒有符合的商品</div>`;
+    document.getElementById("orderList").innerHTML =
+      `<div class="text-center text-gray-400 py-10 text-sm">沒有符合的訂單</div>`;
     return;
   }
 
-  document.getElementById("productList").innerHTML = list.map(p => {
-    const img = p.image || p.images?.[0] || "";
+  // 群組化：有 bundleId 的放在一起
+  const bundles = {};
+  const singles = [];
+  list.forEach(o => {
+    if (o.bundleId) {
+      if (!bundles[o.bundleId]) bundles[o.bundleId] = [];
+      bundles[o.bundleId].push(o);
+    } else {
+      singles.push(o);
+    }
+  });
+
+  const renderOrderCard = (o, inBundle = false) => {
+    const style = STATUS_STYLE[o.status] || "bg-gray-100 text-gray-500";
+    const date  = formatDate(o.createdAt);
+    const firstItem = Array.isArray(o.items)
+      ? (o.items[0] ? `${o.items[0].name}${o.items.length > 1 ? ` 等${o.items.length}件` : ''}` : "")
+      : (o.items?.split("\n")[0] || "");
+    const canBundle = o.status === "待處理" && !o.bundleId;
     return `
-      <div class="bg-white rounded-xl border px-3 py-3 flex items-center gap-3">
-        ${img ? `<img src="${img}" class="w-14 h-14 object-cover rounded-lg shrink-0">` : `<div class="w-14 h-14 bg-gray-100 rounded-lg shrink-0 flex items-center justify-center text-gray-300 text-xl">📷</div>`}
-        <div class="flex-1 min-w-0">
-          <div class="text-sm font-semibold truncate">${p.name}</div>
-          <div class="text-xs text-gray-400 mt-0.5">${[p.mainCategory,p.category].filter(Boolean).join(" · ")}</div>
-          ${p.idnumber ? `<div class="text-xs text-gray-300 mt-0.5">#${p.idnumber}</div>` : ""}
-          ${p.sort ? `<div class="text-xs text-gray-300 mt-0.5">排序：${p.sort}</div>` : ""}
-          <div class="text-xs text-red-500 mt-0.5 font-medium">NT$ ${Math.round(p.price||0).toLocaleString()}</div>
-        </div>
-        <div class="flex flex-col items-end gap-2 shrink-0">
-          <span class="text-xs px-2 py-0.5 rounded-full font-medium ${p.isView ? "bg-green-100 text-green-600" : "bg-gray-100 text-gray-400"}">
-            ${p.isView ? "上架" : "下架"}
-          </span>
-          <div class="flex gap-1.5">
-            <button onclick="toggleView('${p.id}', ${!p.isView})"
-              class="text-xs px-2 py-1 border rounded-lg hover:bg-gray-50 active:bg-gray-100">
-              ${p.isView ? "下架" : "上架"}
-            </button>
-            <button onclick="openEdit('${p.id}')"
-              class="text-xs px-2 py-1 border rounded-lg hover:bg-gray-50 active:bg-gray-100">
-              編輯
-            </button>
+      <div class="${inBundle ? "border-b last:border-0 px-4 py-3" : "bg-white rounded-xl border px-4 py-3.5"} hover:bg-gray-50 active:bg-gray-100 transition">
+        <div class="flex items-start gap-2">
+          ${!inBundle && canBundle ? `
+          <label class="flex flex-col items-center shrink-0 cursor-pointer gap-0.5 mt-1" title="勾選加入集運">
+            <input type="checkbox" value="${o.pageId}" data-total="${o.total}" data-discount="${o.discount || 0}"
+              onchange="adminToggleMerge(this)"
+              class="w-4 h-4 accent-black cursor-pointer">
+            <span class="text-gray-400" style="font-size:9px">集運</span>
+          </label>` : `<div class="w-5 shrink-0"></div>`}
+          <div class="flex-1 min-w-0 cursor-pointer" onclick="openModal('${o.orderId}')">
+            <div class="flex justify-between items-start">
+              <div class="min-w-0">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="font-bold text-sm tracking-wide">${o.orderId}</span>
+                  <span class="text-xs px-2 py-0.5 rounded-full font-medium ${style}">${o.status}</span>
+                </div>
+                ${o.customerId ? `<div class="text-xs text-blue-500 font-medium mb-0.5">${o.customerId}</div>` : ""}
+                <div class="text-xs text-gray-400 truncate">${firstItem}</div>
+              </div>
+              <div class="text-right shrink-0 ml-3">
+                <div class="font-bold text-red-500 text-sm">NT$ ${Math.round(o.total||0).toLocaleString()}</div>
+                ${o.discount > 0 ? `<div class="text-xs text-green-600">折 NT$${o.discount}</div>` : ""}
+                ${o.shipping > 0 ? `<div class="text-xs text-gray-400">手續費 NT$${o.shipping}</div>` : o.shipping === 0 && o.total > 0 ? `<div class="text-xs text-green-600">免手續費</div>` : ""}
+                <div class="text-xs text-gray-400 mt-0.5">${date}</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>`;
+  };
+
+  const bundleHtml = Object.entries(bundles).map(([bundleId, orders]) => {
+    const shortId    = bundleId.replace("BUNDLE","");
+    const grandTotal = orders.reduce((s,o) => s + (o.total||0), 0);
+    const custId     = orders[0]?.customerId || "";
+    return `
+      <div class="bg-white rounded-xl border-2 border-blue-200 overflow-hidden">
+        <div class="bg-blue-50 px-4 py-2 flex justify-between items-center">
+          <div class="flex items-center gap-2">
+            <span>📦</span>
+            <span class="text-xs font-bold text-blue-600">集運 #${shortId}</span>
+            <span class="text-xs text-blue-400">${orders.length} 筆</span>
+            ${custId ? `<span class="text-xs text-blue-400">${custId}</span>` : ""}
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-bold text-blue-600">合計 NT$ ${Math.floor(grandTotal).toLocaleString()}</span>
+            ${orders.every(o => o.status === "待處理") ? `
+            <button onclick="event.stopPropagation(); adminEditBundle('${bundleId}')"
+              class="text-xs px-2 py-1 bg-white border border-blue-200 text-blue-500 rounded-lg hover:bg-blue-50 shrink-0">✏️ 編輯</button>` : ""}
+          </div>
+        </div>
+        ${orders.map(o => renderOrderCard(o, true)).join("")}
+        <div class="bg-blue-50 px-4 py-2 text-xs text-blue-400 flex justify-between">
+          <span>小計 NT$ ${Math.floor(grandTotal).toLocaleString()}</span>
+          <span>${grandTotal >= 5000 ? "✅ 已達免手續費門檻" : `還差 NT$ ${Math.ceil(5000 - grandTotal).toLocaleString()} 可免手續費`}</span>
+        </div>
+      </div>`;
   }).join("");
+
+  const singlesHtml = singles.map(o => renderOrderCard(o, false)).join("");
+
+  document.getElementById("orderList").innerHTML = bundleHtml + singlesHtml;
+
+  // 重設集運勾選
+  _adminMergeSelected.clear();
+  updateAdminMergeArea();
 }
 
-// ── 快速上下架 ────────────────────────────────────────
-async function toggleView(id, newVal) {
-  const p = allProducts.find(x => x.id === id);
-  if (!p) return;
+// ── Modal ─────────────────────────────────────────────
+function openModal(orderId) {
+  currentOrder = allOrders.find(o => o.orderId === orderId);
+  if (!currentOrder) return;
+
+  const o    = currentOrder;
+  const date = formatDate(o.createdAt);
+
+  document.getElementById("modalOrderId").textContent = o.orderId;
+  const bundleEl = document.getElementById("modalBundleId");
+  if (o.bundleId) {
+    bundleEl.textContent = "📦 集運批次 #" + o.bundleId.replace("BUNDLE","");
+    bundleEl.style.display="flex";
+  } else {
+    bundleEl.style.display="none";
+  }
+  document.getElementById("modalDate").textContent       = date;
+  document.getElementById("modalCustomerId").textContent = o.customerId || "—";
+  document.getElementById("modalTotal").textContent = `NT$ ${Math.round(o.total||0).toLocaleString()}`;
+  // 待處理才顯示修改商品按鈕
+  const editItemsBtn = document.getElementById("adminEditItemsBtn");
+  if (editItemsBtn) {
+    editItemsBtn.style.display=(o.status !== "待處理" || !Array.isArray(o.items)?"none":"flex");
+  }
+  // 折扣
+  const discEl = document.getElementById("modalDiscountRow");
+  if (o.discount > 0) {
+    document.getElementById("modalDiscount").textContent = `- NT$${o.discount}`;
+    discEl.style.display="flex";
+  } else {
+    discEl.style.display="none";
+  }
+  // 手續費
+  const shipEl  = document.getElementById("modalShipping");
+  const shipRow = document.getElementById("modalShippingRow");
+  if (o.shipping > 0) {
+    shipEl.textContent = `NT$${o.shipping}`;
+    shipRow.className  = "flex justify-between items-center mt-1 text-sm text-gray-500";
+  } else if (o.shipping === 0 && o.total > 0) {
+    shipEl.textContent = "免手續費";
+    shipRow.className  = "flex justify-between items-center mt-1 text-sm text-green-600";
+  } else {
+    shipRow.className  = "hidden";
+  }
+
+  // ⭐ 用 customerId 的 email 查詢客戶資料
+  const infoEl = document.getElementById("customerInfo");
+  infoEl.innerHTML = `<div class="text-xs text-gray-400 text-center py-2">載入中...</div>`;
+
+  if (o.customerId) {
+    // 從 customer API 查詢（用 customerId 找 email 需要另一個方式）
+    // 先顯示客戶編號，並從訂單資料庫查詢
+    fetchCustomerByEmail(o.customerId, infoEl);
+  } else {
+    infoEl.innerHTML = `<div class="text-xs text-gray-400 text-center py-2">無客戶資料</div>`;
+  }
+
+  // 商品明細
+  let itemsArr;
+  let itemsHtml;
+  if (Array.isArray(o.items)) {
+    itemsHtml = o.items.map(i => `
+      <div class="py-2 border-b border-gray-50 last:border-0">
+        <div class="flex justify-between items-start text-sm">
+          <span class="text-gray-700 flex-1 min-w-0 mr-2">${i.name}${i.variant ? ` <span class="text-gray-400">（${i.variant}）</span>` : ""}</span>
+          <span class="text-gray-500 shrink-0">× ${i.qty}</span>
+        </div>
+        <div class="flex justify-between text-xs text-gray-400 mt-0.5">
+          <span>單價 NT$${Math.floor(i.price).toLocaleString()}</span>
+          <span class="text-gray-600 font-medium">NT$${Math.floor(i.price * i.qty).toLocaleString()}</span>
+        </div>
+      </div>`).join("");
+  } else {
+    itemsHtml = (o.items || "").split("\n").filter(Boolean).map(line => `
+      <div class="flex justify-between text-sm py-1.5 border-b border-gray-50 last:border-0">
+        <span class="text-gray-700">${line.split("（")[0].trim()}</span>
+        <span class="text-gray-500 shrink-0 ml-2">${line.match(/（(.+)）/)?.[1] || ""}</span>
+      </div>`).join("");
+  }
+  document.getElementById("modalItems").innerHTML = itemsHtml;
+
+  // 狀態按鈕
+  const statusEl = document.getElementById("statusBtns");
+  statusEl.innerHTML = "";
+  ["待處理", "處理中", "已出貨", "已完成", "已取消"].forEach(s => {
+    const btn = document.createElement("button");
+    const isActive = s === o.status;
+    btn.textContent = s;
+    btn.className = isActive
+      ? `px-3 py-1.5 rounded-full text-xs font-medium border transition ${STATUS_STYLE[s]} border-transparent`
+      : "px-3 py-1.5 rounded-full text-xs border transition bg-white text-gray-500 border-gray-300 hover:border-gray-500";
+    if (!isActive) {
+      btn.onclick = () => updateStatus(s);
+    }
+    statusEl.appendChild(btn);
+  });
+
+  document.getElementById("modal").style.display="flex";
+  document.body.style.overflow = "hidden";
+}
+
+function closeModal() {
+  document.getElementById("modal").style.display="none";
+  document.body.style.overflow = "";
+  currentOrder = null;
+}
+
+// 點背景關閉
+document.getElementById("modal").addEventListener("click", (e) => {
+  if (e.target === document.getElementById("modal")) closeModal();
+});
+
+// ── 查詢客戶資料 ─────────────────────────────────────
+async function fetchCustomerByEmail(customerId, el) {
+  try {
+    // 用 customerId 查詢（GET ?customerId=xxx）
+    const res  = await fetch(CUSTOMER_API + "?customerId=" + encodeURIComponent(customerId));
+    const data = await res.json();
+
+    if (data.found) {
+      el.innerHTML = `
+        <div class="space-y-1.5 text-sm">
+          <div class="flex justify-between">
+            <span class="text-gray-500">姓名</span>
+            <span class="font-medium">${data.name || "—"}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-500">電話</span>
+            <a href="tel:${data.phone}" class="font-medium text-blue-500">${data.phone || "—"}</a>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-500">Email</span>
+            <a href="mailto:${data.email}" class="font-medium text-blue-500 text-xs">${data.email || "—"}</a>
+          </div>
+          <div class="text-sm">
+            <span class="text-gray-500">地址　</span>
+            <span class="font-medium">${data.address || "—"}</span>
+          </div>
+        </div>`;
+    } else {
+      el.innerHTML = `<div class="text-xs text-gray-400 text-center py-2">找不到客戶資料</div>`;
+    }
+  } catch (err) {
+    el.innerHTML = `<div class="text-xs text-red-400 text-center py-2">載入失敗</div>`;
+  }
+}
+
+// ── 更新狀態 ─────────────────────────────────────────
+async function updateStatus(newStatus) {
+  if (!currentOrder) return;
+
+  const btns = document.getElementById("statusBtns").querySelectorAll("button");
+  btns.forEach(b => b.disabled = true);
+
   try {
     const res  = await fetch(UPDATE_API, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ pageId: id, isView: newVal, update: true }),
+      body: JSON.stringify({ pageId: currentOrder.pageId, status: newStatus }),
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || "更新失敗");
+
+    // 本地更新
+    currentOrder.status = newStatus;
+    allOrders.find(o => o.orderId === currentOrder.orderId).status = newStatus;
+
+    closeModal();
+    renderFilterBtns();
+    renderOrders();
+
+  } catch (err) {
+    alert("更新失敗：" + err.message);
+    btns.forEach(b => b.disabled = false);
+  }
+}
+
+// ── 刪除訂單 ─────────────────────────────────────────
+async function deleteOrder() {
+  if (!currentOrder) return;
+  if (!confirm(`確定刪除訂單「${currentOrder.orderId}」？
+此操作無法復原。`)) return;
+
+  try {
+    const res  = await fetch(UPDATE_API, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pageId: currentOrder.pageId }),
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || "刪除失敗");
+
+    // 本地移除
+    allOrders = allOrders.filter(o => o.orderId !== currentOrder.orderId);
+    closeModal();
+    renderFilterBtns();
+    renderOrders();
+  } catch (err) {
+    alert("刪除失敗：" + err.message);
+  }
+}
+
+// ── 搜尋 ─────────────────────────────────────────────
+document.getElementById("searchInput").addEventListener("input", renderOrders);
+
+// ── 工具 ─────────────────────────────────────────────
+function formatDate(iso) {
+  const d = new Date(iso);
+  return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
+}
+
+init();
+
+// ── 後台修改商品 ─────────────────────────────────────
+let _adminEditItems = null;
+
+function openAdminItemsModal() {
+  if (!currentOrder || !Array.isArray(currentOrder.items)) return;
+  _adminEditItems = JSON.parse(JSON.stringify(currentOrder.items));
+  document.getElementById("adminItemsSaveStatus").style.display="none";
+  const btn = document.getElementById("adminItemsSaveBtn");
+  btn.disabled = false; btn.textContent = "儲存變更";
+  renderAdminItemsEditor();
+  document.getElementById("adminItemsModal").style.display="flex";
+  document.body.style.overflow = "hidden";
+}
+
+function closeAdminItemsModal() {
+  document.getElementById("adminItemsModal").style.display="none";
+  document.body.style.overflow = "";
+}
+
+function renderAdminItemsEditor() {
+  const items = _adminEditItems;
+  const DISCOUNT_MIN = 3000, DISCOUNT_AMT = 200, FREE = 5000, FLAT = 200;
+  const subtotal  = items.reduce((s, i) => s + i.price * i.qty, 0);
+  const discount  = subtotal >= DISCOUNT_MIN ? DISCOUNT_AMT : 0;
+  const afterDisc = subtotal - discount;
+  const shipping  = afterDisc >= FREE ? 0 : FLAT;
+  const total     = afterDisc + shipping;
+
+  document.getElementById("adminItemsNewTotal").textContent = `NT$${Math.floor(total).toLocaleString()}`;
+  const detailParts = [`小計 NT$${Math.floor(subtotal).toLocaleString()}`];
+  if (discount > 0) detailParts.push(`折扣 -NT$${discount}`);
+  detailParts.push(shipping === 0 ? "免出貨手續費" : `出貨手續費 NT$${shipping}`);
+  const detailEl = document.getElementById("adminItemsDetail");
+  if (detailEl) detailEl.textContent = detailParts.join(" → ");
+
+  document.getElementById("adminItemsEditor").innerHTML = items.map((item, idx) => `
+    <div class="flex items-center gap-3 border rounded-xl p-3 ${item.qty === 0 ? "opacity-40" : ""}">
+      <div class="flex-1 min-w-0">
+        <div class="text-sm font-medium">${item.name}${item.variant ? ` <span class="text-xs text-gray-400">（${item.variant}）</span>` : ""}</div>
+        <div class="text-xs text-gray-400 mt-0.5">單價 NT$${Math.floor(item.price).toLocaleString()}</div>
+      </div>
+      <div class="flex items-center gap-2 shrink-0">
+        <div class="flex items-center border rounded-lg overflow-hidden">
+          <button onclick="adminChangeItemQty(${idx}, -1)" class="w-8 h-8 flex items-center justify-center text-lg hover:bg-gray-100">−</button>
+          <span class="w-8 text-center text-sm font-medium">${item.qty}</span>
+          <button onclick="adminChangeItemQty(${idx}, 1)" class="w-8 h-8 flex items-center justify-center text-lg hover:bg-gray-100">＋</button>
+        </div>
+        <button onclick="adminRemoveItem(${idx})" class="text-gray-300 hover:text-red-400 text-xl transition">✕</button>
+      </div>
+    </div>`).join("");
+}
+
+window.adminChangeItemQty = (idx, delta) => {
+  _adminEditItems[idx].qty = Math.max(0, _adminEditItems[idx].qty + delta);
+  renderAdminItemsEditor();
+};
+
+window.adminRemoveItem = (idx) => {
+  _adminEditItems.splice(idx, 1);
+  renderAdminItemsEditor();
+};
+
+async function adminSaveItems() {
+  const items = _adminEditItems.filter(i => i.qty > 0);
+  if (!items.length) { alert("至少保留一件商品"); return; }
+
+  const FLAT = 200, FREE = 5000, DISCOUNT_MIN = 3000, DISCOUNT_AMT = 200;
+  const subtotal  = items.reduce((s, i) => s + i.price * i.qty, 0);
+  const discount  = subtotal >= DISCOUNT_MIN ? DISCOUNT_AMT : 0;
+  const afterDisc = subtotal - discount;
+  const shipping  = afterDisc >= FREE ? 0 : FLAT;
+  const total     = afterDisc + shipping;
+
+  const btn    = document.getElementById("adminItemsSaveBtn");
+  const status = document.getElementById("adminItemsSaveStatus");
+  btn.disabled = true; btn.textContent = "儲存中...";
+
+  try {
+    const res  = await fetch(ORDERS_API_ADMIN, {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pageId: currentOrder.pageId, items, total, shipping, discount }),
     });
     const data = await res.json();
     if (!data.success) throw new Error(data.error);
-    p.isView = newVal;
-    renderList();
-  } catch (err) {
-    alert("更新失敗：" + err.message);
-  }
-}
-
-// ── 編輯 Modal ────────────────────────────────────────
-function openEdit(id) {
-  try {
-  editingProduct = allProducts.find(x => x.id === id);
-  if (!editingProduct) { console.error("找不到商品 id:", id); return; }
-  const p = editingProduct;
-  document.getElementById("editName").value     = p.name    || "";
-  document.getElementById("editIdnumber").value = p.idnumber || "";
-  document.getElementById("editJprice").value   = p.jprice  || "";
-  document.getElementById("editJsprice").value  = p.jsprice || "";
-  document.getElementById("editWeight").value   = p.weight      || "";
-  document.getElementById("editSort").value     = p.sort        || "";
-  document.getElementById("editMainCat").value  = p.mainCategory|| "";
-  document.getElementById("editCat").value      = p.category    || "";
-  document.getElementById("editDesc").value     = p.description || "";
-  document.getElementById("editIsView").checked = p.isView;
-  document.getElementById("editIsNew").checked  = p.isNew;
-  document.getElementById("editIsHot").checked  = p.isHot;
-  document.getElementById("editIsSale").checked = p.isSale;
-  editImgUrls = [];
-  document.getElementById("editImgSlots").innerHTML = "";
-  const imagesRaw = Array.isArray(p.images) ? p.images.join(",") : (p.images || "");
-  const allImgs = imagesRaw.split(",").map(s => s.trim()).filter(Boolean);
-  const existingImgs = p.image ? [p.image, ...allImgs.filter(u => u !== p.image)] : allImgs;
-  existingImgs.forEach(url => addEditImgSlot(url));
-  if (!existingImgs.length) addEditImgSlot();
-  document.getElementById("editModal").style.display="flex";
-  document.body.style.overflow = "hidden";
-  } catch(err) { console.error("openEdit 錯誤:", err); alert("編輯開啟失敗：" + err.message); }
-}
-
-function closeEdit() {
-  document.getElementById("editModal").style.display="none";
-  document.body.style.overflow = "";
-  editingProduct = null;
-}
-
-document.getElementById("editModal").addEventListener("click", (e) => {
-  if (e.target === document.getElementById("editModal")) closeEdit();
-});
-
-async function saveEdit() {
-  if (!editingProduct) return;
-  const payload = {
-    pageId:       editingProduct.id,
-    tname:        document.getElementById("editName").value.trim(),
-    mainCategory: document.getElementById("editMainCat").value.trim(),
-    category:     document.getElementById("editCat").value.trim(),
-    description:  document.getElementById("editDesc").value.trim(),
-    idnumber:     document.getElementById("editIdnumber").value !== "" ? document.getElementById("editIdnumber").value : undefined,
-    weight:       Number(document.getElementById("editWeight").value) || 0,
-    sort:         document.getElementById('editSort').value !== '' ? Number(document.getElementById('editSort').value) : undefined,
-    isView:       document.getElementById("editIsView").checked,
-    isNew:        document.getElementById("editIsNew").checked,
-    isHot:        document.getElementById("editIsHot").checked,
-    isSale:       document.getElementById("editIsSale").checked,
-    update:       true,
-  };
-  const jp  = document.getElementById("editJprice").value;
-  const jsp = document.getElementById("editJsprice").value;
-  if (jp)  payload.jprice  = Number(jp);
-  if (jsp) payload.jsprice = Number(jsp);
-
-  // ⭐ 圖片
-  // 不管有無圖片都送，讓 Notion 可以被清空
-  const validImgs = editImgUrls.filter(Boolean);
-  payload.image  = validImgs[0]  || "";
-  payload.images = validImgs.join(",");
-
-  const btn = document.querySelector("#editModal .sticky button:first-child");
-  btn.textContent = "儲存中..."; btn.disabled = true;
-
-  try {
-    const res  = await fetch(UPDATE_API, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    const data = await res.json();
-    if (!data.success) throw new Error(data.error || "儲存失敗");
-
-    // 本地更新
-    Object.assign(editingProduct, {
-      name:         payload.tname,
-      mainCategory: payload.mainCategory,
-      category:     payload.category,
-      description:  payload.description,
-      weight:       payload.weight,
-      isView:       payload.isView,
-      isNew:        payload.isNew,
-      isHot:        payload.isHot,
-      isSale:       payload.isSale,
-      sort:         payload.sort,
-      idnumber:     payload.idnumber,
-      image:        payload.image,
-      images:       payload.images,
-    });
-
-    // ⭐ 重新排序（sort 小的排前面，沒有 sort 排最後）
-    allProducts.sort((a, b) => {
-      const sa = a.sort || 9999;
-      const sb = b.sort || 9999;
-      return sa !== sb ? sa - sb : 0;
-    });
-
-    closeEdit();
-    // ⭐ 重新從 API 載入最新資料（確保圖片等欄位同步）
+    status.textContent = "✅ 已更新！";
+    status.className   = "text-xs text-center text-green-600";
+    status.style.display="flex";
+    closeAdminItemsModal();
     await init();
-  } catch (err) {
-    alert("儲存失敗：" + err.message);
-  } finally {
-    btn.textContent = "儲存變更"; btn.disabled = false;
-  }
-}
-
-// ── 商品管理圖片上傳 ─────────────────────────────────
-const CLOUD_NAME_P    = "doue38blc";
-const UPLOAD_PRESET_P = "shop_upload";
-function addEditImgSlot(existingUrl) {
-  const slotIdx   = editImgUrls.length;
-  editImgUrls.push(existingUrl || "");
-  const container = document.getElementById("editImgSlots");
-  const slot      = document.createElement("div");
-  slot.id         = `editSlot-${slotIdx}`;
-  slot.className  = "relative w-16 h-16 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center cursor-pointer hover:border-gray-400 transition overflow-hidden bg-gray-50 shrink-0";
-  const hasImg    = !!existingUrl;
-
-  // 用 DOM 操作避免字串拼接問題
-  const ph = document.createElement("span");
-  ph.className = "slot-ph text-gray-300 text-lg pointer-events-none" + (hasImg ? " hidden" : "");
-  ph.textContent = "📷";
-
-  const img = document.createElement("img");
-  img.className = "slot-img absolute inset-0 w-full h-full object-cover";
-  img.style.display = hasImg ? "block" : "none";
-  if (hasImg) img.src = existingUrl;
-
-  const loader = document.createElement("div");
-  loader.className = "slot-load hidden absolute inset-0 bg-gray-50 flex items-center justify-center text-xs";
-  loader.textContent = "⏳";
-
-  const delBtn = document.createElement("button");
-  delBtn.className = "slot-del absolute top-0 right-0 bg-black bg-opacity-60 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs z-10" + (hasImg ? "" : " hidden");
-  delBtn.textContent = "✕";
-  delBtn.onclick = (e) => removeEditSlot(slotIdx, e);
-
-  slot.appendChild(ph);
-  slot.appendChild(img);
-  slot.appendChild(loader);
-  slot.appendChild(delBtn);
-
-  if (slotIdx === 0) {
-    const label = document.createElement("span");
-    label.className = "absolute bottom-0 left-0 right-0 bg-black bg-opacity-40 text-white text-xs text-center leading-4";
-    label.textContent = "主圖";
-    slot.appendChild(label);
-  }
-
-  if (!hasImg) slot.onclick = () => pickEditSlot(slotIdx, slot);
-  container.appendChild(slot);
-}
-
-function pickEditSlot(slotIdx, slot) {
-  const input = document.createElement("input");
-  input.type = "file"; input.accept = "image/*";
-  input.onchange = async (e) => {
-    const file = e.target.files[0]; if (!file) return;
-    slot.querySelector(".slot-ph").style.display="none";
-    slot.querySelector(".slot-load").style.display="flex";
-    try {
-      const fd = new FormData();
-      fd.append("file", file); fd.append("upload_preset", UPLOAD_PRESET_P);
-      const res  = await fetch("https://api.cloudinary.com/v1_1/"+CLOUD_NAME_P+"/image/upload", {method:"POST",body:fd});
-      const data = await res.json();
-      if (!data.secure_url) throw new Error("失敗");
-      editImgUrls[slotIdx] = data.secure_url;
-      slot.querySelector(".slot-img").src = data.secure_url;
-      slot.querySelector(".slot-img").style.display = "block";
-      slot.querySelector(".slot-ph").style.display = "none";
-      slot.querySelector(".slot-del").style.display = "flex";
-      slot.onclick = null;
-    } catch { alert("上傳失敗"); slot.querySelector(".slot-ph").style.display="flex"; }
-    finally { slot.querySelector(".slot-load").style.display="none"; }
-  };
-  input.click();
-}
-
-function removeEditSlot(slotIdx, e) {
-  e.stopPropagation();
-  editImgUrls[slotIdx] = "";
-  const slot = document.getElementById("editSlot-"+slotIdx);
-  slot.querySelector(".slot-img").style.display = "none";
-  slot.querySelector(".slot-del").style.display = "none";
-  slot.querySelector(".slot-ph").style.display = "";
-  slot.onclick = () => pickEditSlot(slotIdx, slot);
-}
-
-// ── AI 生成描述 ──────────────────────────────────────
-const GENERATE_API = "https://shoptest-chi.vercel.app/api/generate-description";
-
-async function generateEditDesc() {
-  const name   = document.getElementById("editAiName").value.trim();
-  const btn    = document.getElementById("editAiBtn");
-  const status = document.getElementById("editAiStatus");
-
-  if (!name) {
-    alert("請輸入日文商品名稱或編號");
-    document.getElementById("editAiName").focus();
-    return;
-  }
-
-  btn.disabled    = true;
-  btn.textContent = "⏳...";
-  status.textContent = "生成中，約需 5-10 秒…";
-  status.className   = "text-xs mt-1.5 text-gray-400";
-  status.style.display="flex";
-
-  try {
-    // 優先用 jname+idnumber，否則用手動輸入
-    const body = name
-      ? { productName: "コストコ " + name }
-      : { jname: editingProduct?.jname || "", idnumber: editingProduct?.idnumber || "" };
-
-    const res  = await fetch(GENERATE_API, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "生成失敗");
-
-    const text = data.text || "";
-
-    const nameMatch = text.match(/商品名稱[：:]\s*(.+)/);
-    if (nameMatch && !document.getElementById("editName").value.trim()) {
-      document.getElementById("editName").value = nameMatch[1].trim();
-    }
-
-    const descMatch = text.match(/商品內容跟特點[\s\S]*/);
-    if (descMatch) {
-      document.getElementById("editDesc").value = descMatch[0].trim();
-    }
-
-    status.textContent = "✅ 已生成，請確認內容";
-    status.className   = "text-xs mt-1.5 text-green-600";
-
+    openModal(currentOrder.orderId);
   } catch (err) {
     status.textContent = "❌ " + err.message;
-    status.className   = "text-xs mt-1.5 text-red-500";
-  } finally {
-    btn.disabled    = false;
-    btn.textContent = "✨ 生成";
+    status.className   = "text-xs text-center text-red-500";
+    status.style.display="flex";
+    btn.disabled = false; btn.textContent = "儲存變更";
   }
 }
 
-// 搜尋 + 篩選
-document.getElementById("searchInput").addEventListener("input", renderList);
-document.getElementById("filterStatus").addEventListener("change", renderList);
+// ── 後台集運功能 ─────────────────────────────────────
+const ORDERS_API_ADMIN = "https://shoptest-chi.vercel.app/api/orders-manage";
+let _adminMergeSelected = new Set();
 
-init();
+window.adminToggleMerge = (checkbox) => {
+  if (checkbox.checked) _adminMergeSelected.add(checkbox.value);
+  else _adminMergeSelected.delete(checkbox.value);
+  updateAdminMergeArea();
+};
+
+function updateAdminMergeArea() {
+  const area    = document.getElementById("adminMergeArea");
+  const summary = document.getElementById("adminMergeSummary");
+  if (_adminMergeSelected.size < 2) { area.style.display="none"; return; }
+
+  let total = 0, hasDisc = false;
+  document.querySelectorAll("#orderList input[type=checkbox]:checked").forEach(cb => {
+    total   += Number(cb.dataset.total) || 0;
+    if (Number(cb.dataset.discount) > 0) hasDisc = true;
+  });
+
+  const DISCOUNT_MIN = 3000, DISCOUNT_AMT = 200, FREE = 5000;
+  const discount     = (!hasDisc && total >= DISCOUNT_MIN) ? DISCOUNT_AMT : 0;
+  const afterDisc    = total - discount;
+  const shipping     = afterDisc >= FREE ? 0 : 200;
+  const grandTotal   = afterDisc + shipping;
+
+  summary.innerHTML = `
+    <div class="space-y-1">
+      <div class="flex justify-between text-sm"><span class="text-gray-500">選取 ${_adminMergeSelected.size} 筆</span><span>NT$${Math.floor(total).toLocaleString()}</span></div>
+      ${discount > 0 ? `<div class="flex justify-between text-sm text-green-600"><span>🎉 折扣</span><span>- NT$${discount}</span></div>` : ""}
+      <div class="flex justify-between text-sm ${shipping === 0 ? "text-green-600" : "text-gray-500"}"><span>出貨手續費</span><span>${shipping === 0 ? "免手續費" : "NT$" + shipping}</span></div>
+      <div class="flex justify-between text-sm font-bold pt-1 border-t"><span>合計</span><span class="text-red-500">NT$${Math.floor(grandTotal).toLocaleString()}</span></div>
+      <div class="text-xs text-gray-400">${afterDisc >= FREE ? "✅ 已達免手續費門檻" : `還差 NT$ ${Math.ceil(FREE - afterDisc).toLocaleString()} 可免手續費`}</div>
+    </div>`;
+  area.style.display="flex";
+}
+
+function adminClearMerge() {
+  _adminMergeSelected.clear();
+  document.querySelectorAll("#orderList input[type=checkbox]").forEach(cb => cb.checked = false);
+  updateAdminMergeArea();
+}
+
+async function adminConfirmMerge() {
+  if (_adminMergeSelected.size < 2) return;
+  const btn = document.querySelector("#adminMergeArea button:last-child");
+  btn.disabled = true; btn.textContent = "處理中...";
+  try {
+    const bundleId = "BUNDLE" + Date.now().toString().slice(-8);
+    await Promise.all([..._adminMergeSelected].map(pageId =>
+      fetch(ORDERS_API_ADMIN, {
+        method: "PATCH", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pageId, bundleId }),
+      })
+    ));
+    adminClearMerge();
+    await init();
+  } catch (err) {
+    alert("集運失敗：" + err.message);
+  } finally {
+    btn.disabled = false; btn.textContent = "確認集運合併";
+  }
+}
+
+// ── 後台編輯集運批次 ──────────────────────────────────
+window.adminEditBundle = (bundleId) => {
+  const bundleOrders = allOrders.filter(o => o.bundleId === bundleId);
+  const freeOrders   = allOrders.filter(o => !o.bundleId && o.status === "待處理");
+  const shortId      = bundleId.replace("BUNDLE","");
+
+  document.getElementById("adminBundleTitle").textContent = `編輯集運批次 #${shortId}`;
+  document.getElementById("adminBundleIn").innerHTML = bundleOrders.map(o => `
+    <div class="flex items-center justify-between border rounded-xl px-3 py-2.5 bg-blue-50">
+      <div><div class="text-sm font-medium">${o.orderId}</div><div class="text-xs text-gray-400">NT$ ${Math.floor(o.total||0).toLocaleString()}</div></div>
+      <button onclick="adminRemoveFromBundle('${o.pageId}','${bundleId}')"
+        class="text-xs px-2 py-1 border border-red-200 text-red-400 rounded-lg hover:bg-red-50 ml-2">移除</button>
+    </div>`).join("") || '<div class="text-xs text-gray-400 text-center py-2">批次已空</div>';
+
+  document.getElementById("adminBundleOut").innerHTML = freeOrders.length ? freeOrders.map(o => `
+    <div class="flex items-center justify-between border rounded-xl px-3 py-2.5">
+      <div><div class="text-sm font-medium">${o.orderId}</div><div class="text-xs text-gray-400">NT$ ${Math.floor(o.total||0).toLocaleString()}</div></div>
+      <button onclick="adminAddToBundle('${o.pageId}','${bundleId}')"
+        class="text-xs px-2 py-1 border border-blue-200 text-blue-500 rounded-lg hover:bg-blue-50 ml-2">加入</button>
+    </div>`).join("") : '<div class="text-xs text-gray-400 text-center py-2">沒有可加入的訂單</div>';
+
+  document.getElementById("adminBundleModal").style.display="flex";
+};
+
+function closeAdminBundleModal() {
+  document.getElementById("adminBundleModal").style.display="none";
+}
+
+async function adminRemoveFromBundle(pageId, bundleId) {
+  await fetch(ORDERS_API_ADMIN, {
+    method: "PATCH", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ pageId, bundleId: "" }),
+  });
+  // 若剩一筆也一起移除
+  const remaining = allOrders.filter(o => o.bundleId === bundleId && o.pageId !== pageId);
+  if (remaining.length === 1) {
+    await fetch(ORDERS_API_ADMIN, {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pageId: remaining[0].pageId, bundleId: "" }),
+    });
+  }
+  closeAdminBundleModal();
+  await init();
+}
+
+async function adminAddToBundle(pageId, bundleId) {
+  await fetch(ORDERS_API_ADMIN, {
+    method: "PATCH", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ pageId, bundleId }),
+  });
+  closeAdminBundleModal();
+  await init();
+}
+
 </script>
   </main>
 </div>
+
+<nav class="admin-bottom-nav" style="display:none">
+  <a href="admin-orders.html" class="admin-bnav-item active"><i class="ti ti-clipboard-list"></i>訂單</a>
+  <a href="admin-products.html" class="admin-bnav-item"><i class="ti ti-package"></i>商品</a>
+  <a href="admin-add.html" class="admin-bnav-item"><i class="ti ti-plus"></i>新增</a>
+  <a href="admin-customers.html" class="admin-bnav-item"><i class="ti ti-users"></i>客戶</a>
+  <a href="admin-banners.html" class="admin-bnav-item"><i class="ti ti-photo"></i>輪播</a>
+</nav>
 </body>
 </html>

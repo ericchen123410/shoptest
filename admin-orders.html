@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>訂單管理 | W-82 後台</title>
+  <title>客戶管理 | W-82 後台</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
   <link rel="stylesheet" href="js/admin-theme.css">
 
@@ -139,6 +139,20 @@ button{cursor:pointer}
 .hidden.bg-white.rounded-2xl{display:none;background:var(--white)!important;border-radius:var(--radius-lg)!important}
 .px-4.py-2\.5.bg-purple-600.text-white{padding:9px 16px!important;background:var(--black)!important;color:var(--white)!important;border:none!important;border-radius:var(--radius)!important;font-size:14px!important}
 </style>
+<style>
+@media (max-width: 768px) {
+  .admin-sidebar { display: none !important; }
+  .admin-main { margin-left: 0 !important; width: 100% !important; }
+  .admin-content { padding: 12px !important; padding-bottom: 72px !important; }
+  .admin-topbar { padding: 12px 16px !important; }
+  .admin-bottom-nav { display: grid !important; }
+  .form-grid { grid-template-columns: 1fr !important; }
+  .filter-bar { flex-wrap: nowrap !important; overflow-x: auto !important; }
+}
+@media (min-width: 769px) {
+  .admin-bottom-nav { display: none !important; }
+}
+</style>
 </head>
 <body>
 
@@ -149,10 +163,10 @@ if (sessionStorage.getItem("adminAuth") !== "1") location.href = "admin.html";
   <aside class="admin-sidebar">
     <a href="admin.html" class="sidebar-logo">W-82</a>
     <nav class="sidebar-nav">
-      <a href="admin-orders.html"         class="sidebar-item active"><i class="ti ti-clipboard-list"></i>訂單管理</a>
+      <a href="admin-orders.html"         class="sidebar-item"><i class="ti ti-clipboard-list"></i>訂單管理</a>
       <a href="admin-products.html"       class="sidebar-item"><i class="ti ti-package"></i>商品管理</a>
       <a href="admin-add.html"            class="sidebar-item"><i class="ti ti-plus"></i>新增商品</a>
-      <a href="admin-customers.html"      class="sidebar-item"><i class="ti ti-users"></i>客戶管理</a>
+      <a href="admin-customers.html"      class="sidebar-item active"><i class="ti ti-users"></i>客戶管理</a>
       <a href="admin-banners.html"        class="sidebar-item"><i class="ti ti-photo"></i>輪播管理</a>
       <a href="admin-batch-add.html"      class="sidebar-item"><i class="ti ti-list-check"></i>批次上架</a>
       <a href="admin-batch-generate.html" class="sidebar-item"><i class="ti ti-sparkles"></i>AI批次生成</a>
@@ -167,149 +181,43 @@ if (sessionStorage.getItem("adminAuth") !== "1") location.href = "admin.html";
 
 <div style="padding:0">
 
-  <!-- 總筆數 -->
-  <div class="flex items-center justify-between mb-3">
-    <span id="totalBadge" class="text-xs text-gray-400"></span>
-  </div>
-
-  <!-- 狀態篩選 -->
-  <div class="overflow-x-auto mb-4 -mx-4 px-4">
-    <div id="filterBtns" class="flex gap-2 w-max">
-      <!-- JS 產生 -->
-    </div>
-  </div>
-
   <!-- 搜尋 -->
   <div class="relative mb-4">
-    <input id="searchInput" type="text" placeholder="搜尋訂單編號、客戶編號、商品名稱、商品編號…"
+    <input id="searchInput" type="text" placeholder="搜尋客戶編號、姓名、Email…"
       class="w-full border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black pr-10">
     <span class="absolute right-3 top-2.5 text-gray-400">🔍</span>
   </div>
 
-  <!-- 訂單列表 -->
-  <div id="orderList" class="space-y-3"></div>
-
-  <!-- 後台集運合併區 -->
-  <div id="adminMergeArea" class="hidden sticky bottom-0 bg-white border rounded-2xl shadow-lg p-4 mt-3">
-    <div class="text-xs font-semibold text-gray-500 mb-2">集運合併</div>
-    <div id="adminMergeSummary" class="text-sm text-gray-600 mb-3"></div>
-    <div class="flex gap-2">
-      <button onclick="adminClearMerge()"
-        class="flex-1 py-2.5 border rounded-xl text-sm text-gray-500 hover:bg-gray-50">
-        取消
-      </button>
-      <button onclick="adminConfirmMerge()"
-        class="flex-1 py-2.5 bg-black text-white font-medium rounded-xl text-sm">
-        確認集運合併
-      </button>
-    </div>
-  </div>
-
+  <div id="customerCount" class="text-xs text-gray-400 mb-3"></div>
+  <div id="customerList" class="space-y-2"></div>
 </div>
 
-<!-- 訂單詳情 Modal -->
-<!-- 後台修改商品 Modal -->
-<div id="adminItemsModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.5);align-items:flex-end;justify-content:center">
-  <div class="bg-white w-full sm:max-w-lg sm:rounded-2xl rounded-t-2xl max-h-[85vh] flex flex-col">
-    <div class="flex justify-between items-center px-5 py-4 border-b shrink-0">
-      <h3 class="font-bold text-base">修改商品</h3>
-      <button onclick="closeAdminItemsModal()" class="text-gray-400 hover:text-black text-xl">✕</button>
-    </div>
-    <div id="adminItemsEditor" class="flex-1 overflow-y-auto px-5 py-4 space-y-3"></div>
-    <div class="px-5 py-4 border-t shrink-0 space-y-2">
-      <div class="flex justify-between text-sm font-bold">
-        <span>新合計</span>
-        <span id="adminItemsNewTotal" class="text-red-500"></span>
-      </div>
-      <div id="adminItemsDetail" class="text-xs text-gray-400"></div>
-      <p id="adminItemsSaveStatus" class="text-xs text-center hidden"></p>
-      <button id="adminItemsSaveBtn" onclick="adminSaveItems()"
-        class="w-full py-3 bg-black text-white font-medium rounded-xl text-sm">儲存變更</button>
-    </div>
-  </div>
-</div>
-
-<!-- 後台編輯集運 Modal -->
-<div id="adminBundleModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.5);align-items:flex-end;justify-content:center">
-  <div class="bg-white w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl max-h-[85vh] flex flex-col">
-    <div class="flex justify-between items-center px-5 py-4 border-b shrink-0">
-      <h3 class="font-bold text-base" id="adminBundleTitle">編輯集運批次</h3>
-      <button onclick="closeAdminBundleModal()" class="text-gray-400 hover:text-black text-xl">✕</button>
-    </div>
-    <div class="flex-1 overflow-y-auto px-5 py-4 space-y-4">
-      <div>
-        <div class="text-xs font-semibold text-blue-500 mb-2">📦 批次內的訂單</div>
-        <div id="adminBundleIn" class="space-y-2"></div>
-      </div>
-      <div>
-        <div class="text-xs font-semibold text-gray-500 mb-2">➕ 可加入的待處理訂單</div>
-        <div id="adminBundleOut" class="space-y-2"></div>
-      </div>
-    </div>
-    <div class="px-5 py-4 border-t shrink-0">
-      <button onclick="closeAdminBundleModal()" class="w-full py-3 border rounded-xl text-sm text-gray-500 hover:bg-gray-50">關閉</button>
-    </div>
-  </div>
-</div>
-
+<!-- 客戶詳情 Modal -->
 <div id="modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.5);align-items:flex-end;justify-content:center">
   <div class="bg-white w-full sm:max-w-lg sm:rounded-2xl rounded-t-2xl max-h-[90vh] overflow-y-auto">
 
-    <!-- Modal Header -->
     <div class="admin-topbar">
-      <span class="topbar-title">訂單管理</span>
+      <span class="topbar-title">客戶管理</span>
       <div class="topbar-actions" id="topbarActions"></div>
     </div>
     <div class="admin-content">
       <div class="flex items-center gap-2">
-        <button onclick="deleteOrder()"
-          class="text-xs text-red-400 hover:text-red-600 px-2 py-1 rounded-lg hover:bg-red-50 transition">
-          🗑 刪除
-        </button>
+        <button onclick="openEdit()"
+          class="text-xs px-3 py-1.5 border rounded-lg hover:bg-gray-50 font-medium">編輯</button>
         <button onclick="closeModal()" class="text-gray-400 hover:text-black text-xl w-8 h-8 flex items-center justify-center">✕</button>
       </div>
     </div>
 
     <div class="px-4 py-4 space-y-4">
 
-      <!-- 狀態更新 -->
-      <div>
-        <div class="text-xs text-gray-500 mb-2 font-medium">訂單狀態</div>
-        <div id="statusBtns" class="flex flex-wrap gap-2"></div>
-      </div>
-
       <!-- 客戶資料 -->
-      <div class="bg-gray-50 rounded-xl p-3 space-y-2">
-        <div class="flex justify-between items-center mb-1">
-          <span class="text-xs font-medium text-gray-500">客戶資料</span>
-          <span id="modalCustomerId" class="text-xs font-bold text-blue-500"></span>
-        </div>
-        <div id="customerInfo">
-          <div class="text-xs text-gray-400 text-center py-2">載入中...</div>
-        </div>
-      </div>
+      <div id="customerDetail" class="bg-gray-50 rounded-xl p-3 space-y-2"></div>
 
-      <!-- 訂單明細 -->
+      <!-- 訂單列表 -->
       <div>
-        <div class="flex justify-between items-center mb-2">
-          <div class="text-xs font-medium text-gray-500">訂單明細</div>
-          <button id="adminEditItemsBtn" onclick="openAdminItemsModal()"
-            class="text-xs px-2 py-1 border rounded-lg text-gray-500 hover:bg-gray-50 hidden">
-            ✏️ 修改商品
-          </button>
-        </div>
-        <div id="modalItems" class="space-y-1.5"></div>
-        <div id="modalDiscountRow" class="hidden flex justify-between items-center mt-2 text-sm text-green-600">
-          <span>🎉 滿NT$3,000折扣</span>
-          <span id="modalDiscount"></span>
-        </div>
-        <div id="modalShippingRow" class="flex justify-between items-center mt-1 text-sm text-gray-500">
-          <span>出貨手續費</span>
-          <span id="modalShipping"></span>
-        </div>
-        <div class="flex justify-between items-center mt-3 pt-3 border-t font-bold">
-          <span>合計</span>
-          <span class="text-red-500 text-lg" id="modalTotal"></span>
+        <div class="text-xs font-semibold text-gray-500 mb-2">訂單紀錄</div>
+        <div id="orderList" class="space-y-2">
+          <div class="text-xs text-gray-400 text-center py-3">載入中...</div>
         </div>
       </div>
 
@@ -317,12 +225,43 @@ if (sessionStorage.getItem("adminAuth") !== "1") location.href = "admin.html";
   </div>
 </div>
 
-<script>
-const ORDERS_API  = "https://shoptest-chi.vercel.app/api/orders-manage?type=list";
-const UPDATE_API  = "https://shoptest-chi.vercel.app/api/orders-manage";
-const CUSTOMER_API = "https://shoptest-chi.vercel.app/api/customer";
+<!-- 編輯 Modal -->
+<div id="editModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.5);align-items:flex-end;justify-content:center">
+  <div class="bg-white w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl">
+    <div class="sticky top-0 bg-white flex justify-between items-center px-4 py-3 border-b rounded-t-2xl">
+      <h2 class="font-bold text-sm">編輯客戶資料</h2>
+      <div class="flex items-center gap-2">
+        <button onclick="saveCustomer()"
+          class="px-3 py-1.5 bg-black text-white text-xs font-medium rounded-lg active:bg-gray-800">
+          儲存
+        </button>
+        <button onclick="closeEdit()" class="text-gray-400 hover:text-black text-xl w-8 h-8 flex items-center justify-center">✕</button>
+      </div>
+    </div>
+    <div class="px-4 py-4 space-y-3">
+      <div>
+        <label class="text-xs text-gray-500 mb-1 block">姓名</label>
+        <input id="editName" type="text"
+          class="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black">
+      </div>
+      <div>
+        <label class="text-xs text-gray-500 mb-1 block">電話</label>
+        <input id="editPhone" type="tel"
+          class="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black">
+      </div>
+      <div>
+        <label class="text-xs text-gray-500 mb-1 block">地址</label>
+        <input id="editAddress" type="text"
+          class="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black">
+      </div>
+    </div>
+  </div>
+</div>
 
-const STATUS_LIST = ["全部", "待處理", "處理中", "已出貨", "已完成", "已取消"];
+<script>
+const CUSTOMER_API = "https://shoptest-chi.vercel.app/api/customer";
+const ORDERS_API   = "https://shoptest-chi.vercel.app/api/orders-manage?type=list";
+
 const STATUS_STYLE = {
   "待處理": "bg-yellow-100 text-yellow-700",
   "處理中": "bg-blue-100 text-blue-600",
@@ -331,593 +270,207 @@ const STATUS_STYLE = {
   "已取消": "bg-gray-100 text-gray-500",
 };
 
-let allOrders    = [];
-let activeFilter = "全部";
-let currentOrder = null;
-
-const BTN_NORMAL = "shrink-0 px-3 py-1.5 rounded-full text-xs border transition bg-white text-gray-600 border-gray-300 hover:border-black";
-const BTN_ACTIVE = "shrink-0 px-3 py-1.5 rounded-full text-xs border transition bg-black text-white border-black";
+let allCustomers   = [];
+let currentCustomer = null;
 
 // ── 初始化 ───────────────────────────────────────────
 async function init() {
-  document.getElementById("orderList").innerHTML =
+  document.getElementById("customerList").innerHTML =
     `<div class="text-center text-gray-400 py-10 text-sm">載入中...</div>`;
-
   try {
-    const res = await fetch(ORDERS_API);
-    allOrders  = await res.json();
-    renderFilterBtns();
-    renderOrders();
+    const res  = await fetch(CUSTOMER_API + "?type=list");
+    allCustomers = await res.json();
+    renderList();
   } catch (err) {
-    document.getElementById("orderList").innerHTML =
-      `<div class="text-center text-red-400 py-10 text-sm">載入失敗：${err.message}</div>`;
+    document.getElementById("customerList").innerHTML =
+      `<div class="text-center text-red-400 py-6 text-sm">載入失敗</div>`;
   }
 }
 
-// ── 篩選按鈕 ─────────────────────────────────────────
-function renderFilterBtns() {
-  const el = document.getElementById("filterBtns");
-  el.innerHTML = "";
-  STATUS_LIST.forEach(s => {
-    const count = s === "全部" ? allOrders.length
-      : allOrders.filter(o => o.status === s).length;
-    const btn = document.createElement("button");
-    btn.className = s === activeFilter ? BTN_ACTIVE : BTN_NORMAL;
-    btn.innerHTML = `${s} <span class="opacity-60">${count}</span>`;
-    btn.onclick = () => {
-      activeFilter = s;
-      renderFilterBtns();
-      renderOrders();
-    };
-    el.appendChild(btn);
-  });
-}
+// ── 客戶列表 ─────────────────────────────────────────
+function renderList() {
+  const kw = document.getElementById("searchInput").value.trim().toLowerCase();
+  let list = allCustomers;
+  if (kw) list = list.filter(c =>
+    (c.customerId || "").toLowerCase().includes(kw) ||
+    (c.name       || "").toLowerCase().includes(kw) ||
+    (c.email      || "").toLowerCase().includes(kw) ||
+    (c.phone      || "").includes(kw)
+  );
 
-// ── 訂單列表 ─────────────────────────────────────────
-function renderOrders() {
-  const keyword = document.getElementById("searchInput").value.trim().toLowerCase();
-
-  let list = allOrders;
-  if (activeFilter !== "全部")
-    list = list.filter(o => o.status === activeFilter);
-  if (keyword)
-    list = list.filter(o =>
-      (o.orderId    || "").toLowerCase().includes(keyword) ||
-      (o.customerId || "").toLowerCase().includes(keyword) ||
-      (Array.isArray(o.items) && o.items.some(i =>
-        (i.name     || "").toLowerCase().includes(keyword) ||
-        (i.idnumber || "").toLowerCase().includes(keyword)
-      ))
-    );
-
-  document.getElementById("totalBadge").textContent = `共 ${allOrders.length} 筆`;
+  document.getElementById("customerCount").textContent = `共 ${allCustomers.length} 位客戶`;
 
   if (!list.length) {
-    document.getElementById("orderList").innerHTML =
-      `<div class="text-center text-gray-400 py-10 text-sm">沒有符合的訂單</div>`;
+    document.getElementById("customerList").innerHTML =
+      `<div class="text-center text-gray-400 py-10 text-sm">沒有符合的客戶</div>`;
     return;
   }
 
-  // 群組化：有 bundleId 的放在一起
-  const bundles = {};
-  const singles = [];
-  list.forEach(o => {
-    if (o.bundleId) {
-      if (!bundles[o.bundleId]) bundles[o.bundleId] = [];
-      bundles[o.bundleId].push(o);
-    } else {
-      singles.push(o);
-    }
-  });
-
-  const renderOrderCard = (o, inBundle = false) => {
-    const style = STATUS_STYLE[o.status] || "bg-gray-100 text-gray-500";
-    const date  = formatDate(o.createdAt);
-    const firstItem = Array.isArray(o.items)
-      ? (o.items[0] ? `${o.items[0].name}${o.items.length > 1 ? ` 等${o.items.length}件` : ''}` : "")
-      : (o.items?.split("\n")[0] || "");
-    const canBundle = o.status === "待處理" && !o.bundleId;
+  document.getElementById("customerList").innerHTML = list.map(c => {
+    const date = new Date(c.createdAt);
+    const dateStr = `${date.getFullYear()}/${date.getMonth()+1}/${date.getDate()}`;
     return `
-      <div class="${inBundle ? "border-b last:border-0 px-4 py-3" : "bg-white rounded-xl border px-4 py-3.5"} hover:bg-gray-50 active:bg-gray-100 transition">
-        <div class="flex items-start gap-2">
-          ${!inBundle && canBundle ? `
-          <label class="flex flex-col items-center shrink-0 cursor-pointer gap-0.5 mt-1" title="勾選加入集運">
-            <input type="checkbox" value="${o.pageId}" data-total="${o.total}" data-discount="${o.discount || 0}"
-              onchange="adminToggleMerge(this)"
-              class="w-4 h-4 accent-black cursor-pointer">
-            <span class="text-gray-400" style="font-size:9px">集運</span>
-          </label>` : `<div class="w-5 shrink-0"></div>`}
-          <div class="flex-1 min-w-0 cursor-pointer" onclick="openModal('${o.orderId}')">
-            <div class="flex justify-between items-start">
-              <div class="min-w-0">
-                <div class="flex items-center gap-2 mb-1">
-                  <span class="font-bold text-sm tracking-wide">${o.orderId}</span>
-                  <span class="text-xs px-2 py-0.5 rounded-full font-medium ${style}">${o.status}</span>
-                </div>
-                ${o.customerId ? `<div class="text-xs text-blue-500 font-medium mb-0.5">${o.customerId}</div>` : ""}
-                <div class="text-xs text-gray-400 truncate">${firstItem}</div>
-              </div>
-              <div class="text-right shrink-0 ml-3">
-                <div class="font-bold text-red-500 text-sm">NT$ ${Math.round(o.total||0).toLocaleString()}</div>
-                ${o.discount > 0 ? `<div class="text-xs text-green-600">折 NT$${o.discount}</div>` : ""}
-                ${o.shipping > 0 ? `<div class="text-xs text-gray-400">手續費 NT$${o.shipping}</div>` : o.shipping === 0 && o.total > 0 ? `<div class="text-xs text-green-600">免手續費</div>` : ""}
-                <div class="text-xs text-gray-400 mt-0.5">${date}</div>
-              </div>
+      <div onclick="openModal('${c.pageId}')"
+        class="bg-white rounded-xl border px-4 py-3 cursor-pointer hover:shadow-md active:bg-gray-50 transition">
+        <div class="flex items-center justify-between">
+          <div class="min-w-0">
+            <div class="flex items-center gap-2 mb-0.5">
+              <span class="text-xs font-bold text-blue-500">${c.customerId}</span>
+              <span class="text-sm font-medium text-gray-800">${c.name || "—"}</span>
             </div>
+            <div class="text-xs text-gray-400">${c.email}</div>
+            ${c.phone ? `<div class="text-xs text-gray-400">${c.phone}</div>` : ""}
           </div>
-        </div>
-      </div>`;
-  };
-
-  const bundleHtml = Object.entries(bundles).map(([bundleId, orders]) => {
-    const shortId    = bundleId.replace("BUNDLE","");
-    const grandTotal = orders.reduce((s,o) => s + (o.total||0), 0);
-    const custId     = orders[0]?.customerId || "";
-    return `
-      <div class="bg-white rounded-xl border-2 border-blue-200 overflow-hidden">
-        <div class="bg-blue-50 px-4 py-2 flex justify-between items-center">
-          <div class="flex items-center gap-2">
-            <span>📦</span>
-            <span class="text-xs font-bold text-blue-600">集運 #${shortId}</span>
-            <span class="text-xs text-blue-400">${orders.length} 筆</span>
-            ${custId ? `<span class="text-xs text-blue-400">${custId}</span>` : ""}
-          </div>
-          <div class="flex items-center gap-2">
-            <span class="text-xs font-bold text-blue-600">合計 NT$ ${Math.floor(grandTotal).toLocaleString()}</span>
-            ${orders.every(o => o.status === "待處理") ? `
-            <button onclick="event.stopPropagation(); adminEditBundle('${bundleId}')"
-              class="text-xs px-2 py-1 bg-white border border-blue-200 text-blue-500 rounded-lg hover:bg-blue-50 shrink-0">✏️ 編輯</button>` : ""}
-          </div>
-        </div>
-        ${orders.map(o => renderOrderCard(o, true)).join("")}
-        <div class="bg-blue-50 px-4 py-2 text-xs text-blue-400 flex justify-between">
-          <span>小計 NT$ ${Math.floor(grandTotal).toLocaleString()}</span>
-          <span>${grandTotal >= 5000 ? "✅ 已達免手續費門檻" : `還差 NT$ ${Math.ceil(5000 - grandTotal).toLocaleString()} 可免手續費`}</span>
+          <div class="text-xs text-gray-300 shrink-0 ml-2">${dateStr}</div>
         </div>
       </div>`;
   }).join("");
-
-  const singlesHtml = singles.map(o => renderOrderCard(o, false)).join("");
-
-  document.getElementById("orderList").innerHTML = bundleHtml + singlesHtml;
-
-  // 重設集運勾選
-  _adminMergeSelected.clear();
-  updateAdminMergeArea();
 }
 
-// ── Modal ─────────────────────────────────────────────
-function openModal(orderId) {
-  currentOrder = allOrders.find(o => o.orderId === orderId);
-  if (!currentOrder) return;
+// ── 客戶詳情 Modal ────────────────────────────────────
+async function openModal(pageId) {
+  currentCustomer = allCustomers.find(c => c.pageId === pageId);
+  if (!currentCustomer) return;
 
-  const o    = currentOrder;
-  const date = formatDate(o.createdAt);
+  const c = currentCustomer;
+  document.getElementById("modalCustomerId").textContent = c.customerId;
+  document.getElementById("modalEmail").textContent      = c.email;
 
-  document.getElementById("modalOrderId").textContent = o.orderId;
-  const bundleEl = document.getElementById("modalBundleId");
-  if (o.bundleId) {
-    bundleEl.textContent = "📦 集運批次 #" + o.bundleId.replace("BUNDLE","");
-    bundleEl.style.display="flex";
-  } else {
-    bundleEl.style.display="none";
-  }
-  document.getElementById("modalDate").textContent       = date;
-  document.getElementById("modalCustomerId").textContent = o.customerId || "—";
-  document.getElementById("modalTotal").textContent = `NT$ ${Math.round(o.total||0).toLocaleString()}`;
-  // 待處理才顯示修改商品按鈕
-  const editItemsBtn = document.getElementById("adminEditItemsBtn");
-  if (editItemsBtn) {
-    editItemsBtn.style.display=(o.status !== "待處理" || !Array.isArray(o.items)?"none":"flex");
-  }
-  // 折扣
-  const discEl = document.getElementById("modalDiscountRow");
-  if (o.discount > 0) {
-    document.getElementById("modalDiscount").textContent = `- NT$${o.discount}`;
-    discEl.style.display="flex";
-  } else {
-    discEl.style.display="none";
-  }
-  // 手續費
-  const shipEl  = document.getElementById("modalShipping");
-  const shipRow = document.getElementById("modalShippingRow");
-  if (o.shipping > 0) {
-    shipEl.textContent = `NT$${o.shipping}`;
-    shipRow.className  = "flex justify-between items-center mt-1 text-sm text-gray-500";
-  } else if (o.shipping === 0 && o.total > 0) {
-    shipEl.textContent = "免手續費";
-    shipRow.className  = "flex justify-between items-center mt-1 text-sm text-green-600";
-  } else {
-    shipRow.className  = "hidden";
-  }
-
-  // ⭐ 用 customerId 的 email 查詢客戶資料
-  const infoEl = document.getElementById("customerInfo");
-  infoEl.innerHTML = `<div class="text-xs text-gray-400 text-center py-2">載入中...</div>`;
-
-  if (o.customerId) {
-    // 從 customer API 查詢（用 customerId 找 email 需要另一個方式）
-    // 先顯示客戶編號，並從訂單資料庫查詢
-    fetchCustomerByEmail(o.customerId, infoEl);
-  } else {
-    infoEl.innerHTML = `<div class="text-xs text-gray-400 text-center py-2">無客戶資料</div>`;
-  }
-
-  // 商品明細
-  let itemsArr;
-  let itemsHtml;
-  if (Array.isArray(o.items)) {
-    itemsHtml = o.items.map(i => `
-      <div class="py-2 border-b border-gray-50 last:border-0">
-        <div class="flex justify-between items-start text-sm">
-          <span class="text-gray-700 flex-1 min-w-0 mr-2">${i.name}${i.variant ? ` <span class="text-gray-400">（${i.variant}）</span>` : ""}</span>
-          <span class="text-gray-500 shrink-0">× ${i.qty}</span>
-        </div>
-        <div class="flex justify-between text-xs text-gray-400 mt-0.5">
-          <span>單價 NT$${Math.floor(i.price).toLocaleString()}</span>
-          <span class="text-gray-600 font-medium">NT$${Math.floor(i.price * i.qty).toLocaleString()}</span>
-        </div>
-      </div>`).join("");
-  } else {
-    itemsHtml = (o.items || "").split("\n").filter(Boolean).map(line => `
-      <div class="flex justify-between text-sm py-1.5 border-b border-gray-50 last:border-0">
-        <span class="text-gray-700">${line.split("（")[0].trim()}</span>
-        <span class="text-gray-500 shrink-0 ml-2">${line.match(/（(.+)）/)?.[1] || ""}</span>
-      </div>`).join("");
-  }
-  document.getElementById("modalItems").innerHTML = itemsHtml;
-
-  // 狀態按鈕
-  const statusEl = document.getElementById("statusBtns");
-  statusEl.innerHTML = "";
-  ["待處理", "處理中", "已出貨", "已完成", "已取消"].forEach(s => {
-    const btn = document.createElement("button");
-    const isActive = s === o.status;
-    btn.textContent = s;
-    btn.className = isActive
-      ? `px-3 py-1.5 rounded-full text-xs font-medium border transition ${STATUS_STYLE[s]} border-transparent`
-      : "px-3 py-1.5 rounded-full text-xs border transition bg-white text-gray-500 border-gray-300 hover:border-gray-500";
-    if (!isActive) {
-      btn.onclick = () => updateStatus(s);
-    }
-    statusEl.appendChild(btn);
-  });
+  document.getElementById("customerDetail").innerHTML = `
+    <div class="space-y-2 text-sm">
+      <div class="flex justify-between">
+        <span class="text-gray-500">姓名</span>
+        <span class="font-medium">${c.name || "—"}</span>
+      </div>
+      <div class="flex justify-between">
+        <span class="text-gray-500">電話</span>
+        <a href="tel:${c.phone}" class="font-medium text-blue-500">${c.phone || "—"}</a>
+      </div>
+      <div class="flex justify-between">
+        <span class="text-gray-500">Email</span>
+        <a href="mailto:${c.email}" class="font-medium text-blue-500 text-xs">${c.email}</a>
+      </div>
+      <div class="text-sm">
+        <span class="text-gray-500">地址　</span>
+        <span class="font-medium">${c.address || "—"}</span>
+      </div>
+    </div>`;
 
   document.getElementById("modal").style.display="flex";
   document.body.style.overflow = "hidden";
+
+  // 載入該客戶訂單
+  loadCustomerOrders(c.customerId, c.email);
+}
+
+async function loadCustomerOrders(customerId, email) {
+  const el = document.getElementById("orderList");
+  try {
+    const res  = await fetch(ORDERS_API);
+    const allOrders = await res.json();
+    const orders = allOrders.filter(o => o.customerId === customerId);
+
+    if (!orders.length) {
+      el.innerHTML = `<div class="text-xs text-gray-400 text-center py-3">尚無訂單紀錄</div>`;
+      return;
+    }
+
+    el.innerHTML = orders.map(o => {
+      const style   = STATUS_STYLE[o.status] || "bg-gray-100 text-gray-500";
+      const date    = new Date(o.createdAt);
+      const dateStr = `${date.getMonth()+1}/${date.getDate()} ${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}`;
+      const firstItem = o.items?.split("\n")[0] || "";
+      return `
+        <div class="flex items-center justify-between border rounded-xl px-3 py-2.5 bg-gray-50">
+          <div class="min-w-0">
+            <div class="flex items-center gap-2 mb-0.5">
+              <span class="text-xs font-bold">${o.orderId}</span>
+              <span class="text-xs px-1.5 py-0.5 rounded-full ${style}">${o.status}</span>
+            </div>
+            <div class="text-xs text-gray-400 truncate max-w-[180px]">${firstItem}</div>
+          </div>
+          <div class="text-right shrink-0 ml-2">
+            <div class="text-sm font-bold text-red-500">NT$ ${Math.round(o.total||0).toLocaleString()}</div>
+            <div class="text-xs text-gray-400">${dateStr}</div>
+          </div>
+        </div>`;
+    }).join("");
+  } catch {
+    el.innerHTML = `<div class="text-xs text-red-400 text-center py-3">訂單載入失敗</div>`;
+  }
 }
 
 function closeModal() {
   document.getElementById("modal").style.display="none";
   document.body.style.overflow = "";
-  currentOrder = null;
+  currentCustomer = null;
 }
 
-// 點背景關閉
 document.getElementById("modal").addEventListener("click", (e) => {
   if (e.target === document.getElementById("modal")) closeModal();
 });
 
-// ── 查詢客戶資料 ─────────────────────────────────────
-async function fetchCustomerByEmail(customerId, el) {
-  try {
-    // 用 customerId 查詢（GET ?customerId=xxx）
-    const res  = await fetch(CUSTOMER_API + "?customerId=" + encodeURIComponent(customerId));
-    const data = await res.json();
-
-    if (data.found) {
-      el.innerHTML = `
-        <div class="space-y-1.5 text-sm">
-          <div class="flex justify-between">
-            <span class="text-gray-500">姓名</span>
-            <span class="font-medium">${data.name || "—"}</span>
-          </div>
-          <div class="flex justify-between">
-            <span class="text-gray-500">電話</span>
-            <a href="tel:${data.phone}" class="font-medium text-blue-500">${data.phone || "—"}</a>
-          </div>
-          <div class="flex justify-between">
-            <span class="text-gray-500">Email</span>
-            <a href="mailto:${data.email}" class="font-medium text-blue-500 text-xs">${data.email || "—"}</a>
-          </div>
-          <div class="text-sm">
-            <span class="text-gray-500">地址　</span>
-            <span class="font-medium">${data.address || "—"}</span>
-          </div>
-        </div>`;
-    } else {
-      el.innerHTML = `<div class="text-xs text-gray-400 text-center py-2">找不到客戶資料</div>`;
-    }
-  } catch (err) {
-    el.innerHTML = `<div class="text-xs text-red-400 text-center py-2">載入失敗</div>`;
-  }
+// ── 編輯客戶資料 ─────────────────────────────────────
+function openEdit() {
+  if (!currentCustomer) return;
+  document.getElementById("editName").value    = currentCustomer.name    || "";
+  document.getElementById("editPhone").value   = currentCustomer.phone   || "";
+  document.getElementById("editAddress").value = currentCustomer.address || "";
+  document.getElementById("editModal").style.display="flex";
 }
 
-// ── 更新狀態 ─────────────────────────────────────────
-async function updateStatus(newStatus) {
-  if (!currentOrder) return;
+function closeEdit() {
+  document.getElementById("editModal").style.display="none";
+}
 
-  const btns = document.getElementById("statusBtns").querySelectorAll("button");
-  btns.forEach(b => b.disabled = true);
+document.getElementById("editModal").addEventListener("click", (e) => {
+  if (e.target === document.getElementById("editModal")) closeEdit();
+});
+
+async function saveCustomer() {
+  if (!currentCustomer) return;
+  const name    = document.getElementById("editName").value.trim();
+  const phone   = document.getElementById("editPhone").value.trim();
+  const address = document.getElementById("editAddress").value.trim();
+
+  const btn = document.querySelector("#editModal .sticky button:first-child");
+  btn.textContent = "儲存中..."; btn.disabled = true;
 
   try {
-    const res  = await fetch(UPDATE_API, {
+    const res  = await fetch(CUSTOMER_API, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ pageId: currentOrder.pageId, status: newStatus }),
+      body: JSON.stringify({ pageId: currentCustomer.pageId, name, phone, address }),
     });
     const data = await res.json();
-    if (!data.success) throw new Error(data.error || "更新失敗");
+    if (!data.success) throw new Error(data.error || "儲存失敗");
 
     // 本地更新
-    currentOrder.status = newStatus;
-    allOrders.find(o => o.orderId === currentOrder.orderId).status = newStatus;
-
-    closeModal();
-    renderFilterBtns();
-    renderOrders();
-
+    Object.assign(currentCustomer, { name, phone, address });
+    closeEdit();
+    openModal(currentCustomer.pageId);
+    renderList();
   } catch (err) {
-    alert("更新失敗：" + err.message);
-    btns.forEach(b => b.disabled = false);
+    alert("儲存失敗：" + err.message);
+  } finally {
+    btn.textContent = "儲存"; btn.disabled = false;
   }
 }
 
-// ── 刪除訂單 ─────────────────────────────────────────
-async function deleteOrder() {
-  if (!currentOrder) return;
-  if (!confirm(`確定刪除訂單「${currentOrder.orderId}」？
-此操作無法復原。`)) return;
-
-  try {
-    const res  = await fetch(UPDATE_API, {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ pageId: currentOrder.pageId }),
-    });
-    const data = await res.json();
-    if (!data.success) throw new Error(data.error || "刪除失敗");
-
-    // 本地移除
-    allOrders = allOrders.filter(o => o.orderId !== currentOrder.orderId);
-    closeModal();
-    renderFilterBtns();
-    renderOrders();
-  } catch (err) {
-    alert("刪除失敗：" + err.message);
-  }
-}
-
-// ── 搜尋 ─────────────────────────────────────────────
-document.getElementById("searchInput").addEventListener("input", renderOrders);
-
-// ── 工具 ─────────────────────────────────────────────
-function formatDate(iso) {
-  const d = new Date(iso);
-  return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
-}
+// 搜尋
+document.getElementById("searchInput").addEventListener("input", renderList);
 
 init();
-
-// ── 後台修改商品 ─────────────────────────────────────
-let _adminEditItems = null;
-
-function openAdminItemsModal() {
-  if (!currentOrder || !Array.isArray(currentOrder.items)) return;
-  _adminEditItems = JSON.parse(JSON.stringify(currentOrder.items));
-  document.getElementById("adminItemsSaveStatus").style.display="none";
-  const btn = document.getElementById("adminItemsSaveBtn");
-  btn.disabled = false; btn.textContent = "儲存變更";
-  renderAdminItemsEditor();
-  document.getElementById("adminItemsModal").style.display="flex";
-  document.body.style.overflow = "hidden";
-}
-
-function closeAdminItemsModal() {
-  document.getElementById("adminItemsModal").style.display="none";
-  document.body.style.overflow = "";
-}
-
-function renderAdminItemsEditor() {
-  const items = _adminEditItems;
-  const DISCOUNT_MIN = 3000, DISCOUNT_AMT = 200, FREE = 5000, FLAT = 200;
-  const subtotal  = items.reduce((s, i) => s + i.price * i.qty, 0);
-  const discount  = subtotal >= DISCOUNT_MIN ? DISCOUNT_AMT : 0;
-  const afterDisc = subtotal - discount;
-  const shipping  = afterDisc >= FREE ? 0 : FLAT;
-  const total     = afterDisc + shipping;
-
-  document.getElementById("adminItemsNewTotal").textContent = `NT$${Math.floor(total).toLocaleString()}`;
-  const detailParts = [`小計 NT$${Math.floor(subtotal).toLocaleString()}`];
-  if (discount > 0) detailParts.push(`折扣 -NT$${discount}`);
-  detailParts.push(shipping === 0 ? "免出貨手續費" : `出貨手續費 NT$${shipping}`);
-  const detailEl = document.getElementById("adminItemsDetail");
-  if (detailEl) detailEl.textContent = detailParts.join(" → ");
-
-  document.getElementById("adminItemsEditor").innerHTML = items.map((item, idx) => `
-    <div class="flex items-center gap-3 border rounded-xl p-3 ${item.qty === 0 ? "opacity-40" : ""}">
-      <div class="flex-1 min-w-0">
-        <div class="text-sm font-medium">${item.name}${item.variant ? ` <span class="text-xs text-gray-400">（${item.variant}）</span>` : ""}</div>
-        <div class="text-xs text-gray-400 mt-0.5">單價 NT$${Math.floor(item.price).toLocaleString()}</div>
-      </div>
-      <div class="flex items-center gap-2 shrink-0">
-        <div class="flex items-center border rounded-lg overflow-hidden">
-          <button onclick="adminChangeItemQty(${idx}, -1)" class="w-8 h-8 flex items-center justify-center text-lg hover:bg-gray-100">−</button>
-          <span class="w-8 text-center text-sm font-medium">${item.qty}</span>
-          <button onclick="adminChangeItemQty(${idx}, 1)" class="w-8 h-8 flex items-center justify-center text-lg hover:bg-gray-100">＋</button>
-        </div>
-        <button onclick="adminRemoveItem(${idx})" class="text-gray-300 hover:text-red-400 text-xl transition">✕</button>
-      </div>
-    </div>`).join("");
-}
-
-window.adminChangeItemQty = (idx, delta) => {
-  _adminEditItems[idx].qty = Math.max(0, _adminEditItems[idx].qty + delta);
-  renderAdminItemsEditor();
-};
-
-window.adminRemoveItem = (idx) => {
-  _adminEditItems.splice(idx, 1);
-  renderAdminItemsEditor();
-};
-
-async function adminSaveItems() {
-  const items = _adminEditItems.filter(i => i.qty > 0);
-  if (!items.length) { alert("至少保留一件商品"); return; }
-
-  const FLAT = 200, FREE = 5000, DISCOUNT_MIN = 3000, DISCOUNT_AMT = 200;
-  const subtotal  = items.reduce((s, i) => s + i.price * i.qty, 0);
-  const discount  = subtotal >= DISCOUNT_MIN ? DISCOUNT_AMT : 0;
-  const afterDisc = subtotal - discount;
-  const shipping  = afterDisc >= FREE ? 0 : FLAT;
-  const total     = afterDisc + shipping;
-
-  const btn    = document.getElementById("adminItemsSaveBtn");
-  const status = document.getElementById("adminItemsSaveStatus");
-  btn.disabled = true; btn.textContent = "儲存中...";
-
-  try {
-    const res  = await fetch(ORDERS_API_ADMIN, {
-      method: "PATCH", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ pageId: currentOrder.pageId, items, total, shipping, discount }),
-    });
-    const data = await res.json();
-    if (!data.success) throw new Error(data.error);
-    status.textContent = "✅ 已更新！";
-    status.className   = "text-xs text-center text-green-600";
-    status.style.display="flex";
-    closeAdminItemsModal();
-    await init();
-    openModal(currentOrder.orderId);
-  } catch (err) {
-    status.textContent = "❌ " + err.message;
-    status.className   = "text-xs text-center text-red-500";
-    status.style.display="flex";
-    btn.disabled = false; btn.textContent = "儲存變更";
-  }
-}
-
-// ── 後台集運功能 ─────────────────────────────────────
-const ORDERS_API_ADMIN = "https://shoptest-chi.vercel.app/api/orders-manage";
-let _adminMergeSelected = new Set();
-
-window.adminToggleMerge = (checkbox) => {
-  if (checkbox.checked) _adminMergeSelected.add(checkbox.value);
-  else _adminMergeSelected.delete(checkbox.value);
-  updateAdminMergeArea();
-};
-
-function updateAdminMergeArea() {
-  const area    = document.getElementById("adminMergeArea");
-  const summary = document.getElementById("adminMergeSummary");
-  if (_adminMergeSelected.size < 2) { area.style.display="none"; return; }
-
-  let total = 0, hasDisc = false;
-  document.querySelectorAll("#orderList input[type=checkbox]:checked").forEach(cb => {
-    total   += Number(cb.dataset.total) || 0;
-    if (Number(cb.dataset.discount) > 0) hasDisc = true;
-  });
-
-  const DISCOUNT_MIN = 3000, DISCOUNT_AMT = 200, FREE = 5000;
-  const discount     = (!hasDisc && total >= DISCOUNT_MIN) ? DISCOUNT_AMT : 0;
-  const afterDisc    = total - discount;
-  const shipping     = afterDisc >= FREE ? 0 : 200;
-  const grandTotal   = afterDisc + shipping;
-
-  summary.innerHTML = `
-    <div class="space-y-1">
-      <div class="flex justify-between text-sm"><span class="text-gray-500">選取 ${_adminMergeSelected.size} 筆</span><span>NT$${Math.floor(total).toLocaleString()}</span></div>
-      ${discount > 0 ? `<div class="flex justify-between text-sm text-green-600"><span>🎉 折扣</span><span>- NT$${discount}</span></div>` : ""}
-      <div class="flex justify-between text-sm ${shipping === 0 ? "text-green-600" : "text-gray-500"}"><span>出貨手續費</span><span>${shipping === 0 ? "免手續費" : "NT$" + shipping}</span></div>
-      <div class="flex justify-between text-sm font-bold pt-1 border-t"><span>合計</span><span class="text-red-500">NT$${Math.floor(grandTotal).toLocaleString()}</span></div>
-      <div class="text-xs text-gray-400">${afterDisc >= FREE ? "✅ 已達免手續費門檻" : `還差 NT$ ${Math.ceil(FREE - afterDisc).toLocaleString()} 可免手續費`}</div>
-    </div>`;
-  area.style.display="flex";
-}
-
-function adminClearMerge() {
-  _adminMergeSelected.clear();
-  document.querySelectorAll("#orderList input[type=checkbox]").forEach(cb => cb.checked = false);
-  updateAdminMergeArea();
-}
-
-async function adminConfirmMerge() {
-  if (_adminMergeSelected.size < 2) return;
-  const btn = document.querySelector("#adminMergeArea button:last-child");
-  btn.disabled = true; btn.textContent = "處理中...";
-  try {
-    const bundleId = "BUNDLE" + Date.now().toString().slice(-8);
-    await Promise.all([..._adminMergeSelected].map(pageId =>
-      fetch(ORDERS_API_ADMIN, {
-        method: "PATCH", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pageId, bundleId }),
-      })
-    ));
-    adminClearMerge();
-    await init();
-  } catch (err) {
-    alert("集運失敗：" + err.message);
-  } finally {
-    btn.disabled = false; btn.textContent = "確認集運合併";
-  }
-}
-
-// ── 後台編輯集運批次 ──────────────────────────────────
-window.adminEditBundle = (bundleId) => {
-  const bundleOrders = allOrders.filter(o => o.bundleId === bundleId);
-  const freeOrders   = allOrders.filter(o => !o.bundleId && o.status === "待處理");
-  const shortId      = bundleId.replace("BUNDLE","");
-
-  document.getElementById("adminBundleTitle").textContent = `編輯集運批次 #${shortId}`;
-  document.getElementById("adminBundleIn").innerHTML = bundleOrders.map(o => `
-    <div class="flex items-center justify-between border rounded-xl px-3 py-2.5 bg-blue-50">
-      <div><div class="text-sm font-medium">${o.orderId}</div><div class="text-xs text-gray-400">NT$ ${Math.floor(o.total||0).toLocaleString()}</div></div>
-      <button onclick="adminRemoveFromBundle('${o.pageId}','${bundleId}')"
-        class="text-xs px-2 py-1 border border-red-200 text-red-400 rounded-lg hover:bg-red-50 ml-2">移除</button>
-    </div>`).join("") || '<div class="text-xs text-gray-400 text-center py-2">批次已空</div>';
-
-  document.getElementById("adminBundleOut").innerHTML = freeOrders.length ? freeOrders.map(o => `
-    <div class="flex items-center justify-between border rounded-xl px-3 py-2.5">
-      <div><div class="text-sm font-medium">${o.orderId}</div><div class="text-xs text-gray-400">NT$ ${Math.floor(o.total||0).toLocaleString()}</div></div>
-      <button onclick="adminAddToBundle('${o.pageId}','${bundleId}')"
-        class="text-xs px-2 py-1 border border-blue-200 text-blue-500 rounded-lg hover:bg-blue-50 ml-2">加入</button>
-    </div>`).join("") : '<div class="text-xs text-gray-400 text-center py-2">沒有可加入的訂單</div>';
-
-  document.getElementById("adminBundleModal").style.display="flex";
-};
-
-function closeAdminBundleModal() {
-  document.getElementById("adminBundleModal").style.display="none";
-}
-
-async function adminRemoveFromBundle(pageId, bundleId) {
-  await fetch(ORDERS_API_ADMIN, {
-    method: "PATCH", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ pageId, bundleId: "" }),
-  });
-  // 若剩一筆也一起移除
-  const remaining = allOrders.filter(o => o.bundleId === bundleId && o.pageId !== pageId);
-  if (remaining.length === 1) {
-    await fetch(ORDERS_API_ADMIN, {
-      method: "PATCH", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ pageId: remaining[0].pageId, bundleId: "" }),
-    });
-  }
-  closeAdminBundleModal();
-  await init();
-}
-
-async function adminAddToBundle(pageId, bundleId) {
-  await fetch(ORDERS_API_ADMIN, {
-    method: "PATCH", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ pageId, bundleId }),
-  });
-  closeAdminBundleModal();
-  await init();
-}
-
 </script>
   </main>
 </div>
+
+<nav class="admin-bottom-nav" style="display:none">
+  <a href="admin-orders.html" class="admin-bnav-item"><i class="ti ti-clipboard-list"></i>訂單</a>
+  <a href="admin-products.html" class="admin-bnav-item"><i class="ti ti-package"></i>商品</a>
+  <a href="admin-add.html" class="admin-bnav-item"><i class="ti ti-plus"></i>新增</a>
+  <a href="admin-customers.html" class="admin-bnav-item active"><i class="ti ti-users"></i>客戶</a>
+  <a href="admin-banners.html" class="admin-bnav-item"><i class="ti ti-photo"></i>輪播</a>
+</nav>
 </body>
 </html>

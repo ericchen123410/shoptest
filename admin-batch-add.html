@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>批次上架 | W-82 後台</title>
+  <title>輪播管理 | W-82 後台</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
   <link rel="stylesheet" href="js/admin-theme.css">
 
@@ -139,6 +139,20 @@ button{cursor:pointer}
 .hidden.bg-white.rounded-2xl{display:none;background:var(--white)!important;border-radius:var(--radius-lg)!important}
 .px-4.py-2\.5.bg-purple-600.text-white{padding:9px 16px!important;background:var(--black)!important;color:var(--white)!important;border:none!important;border-radius:var(--radius)!important;font-size:14px!important}
 </style>
+<style>
+@media (max-width: 768px) {
+  .admin-sidebar { display: none !important; }
+  .admin-main { margin-left: 0 !important; width: 100% !important; }
+  .admin-content { padding: 12px !important; padding-bottom: 72px !important; }
+  .admin-topbar { padding: 12px 16px !important; }
+  .admin-bottom-nav { display: grid !important; }
+  .form-grid { grid-template-columns: 1fr !important; }
+  .filter-bar { flex-wrap: nowrap !important; overflow-x: auto !important; }
+}
+@media (min-width: 769px) {
+  .admin-bottom-nav { display: none !important; }
+}
+</style>
 </head>
 <body>
 
@@ -153,8 +167,8 @@ if (sessionStorage.getItem("adminAuth") !== "1") location.href = "admin.html";
       <a href="admin-products.html"       class="sidebar-item"><i class="ti ti-package"></i>商品管理</a>
       <a href="admin-add.html"            class="sidebar-item"><i class="ti ti-plus"></i>新增商品</a>
       <a href="admin-customers.html"      class="sidebar-item"><i class="ti ti-users"></i>客戶管理</a>
-      <a href="admin-banners.html"        class="sidebar-item"><i class="ti ti-photo"></i>輪播管理</a>
-      <a href="admin-batch-add.html"      class="sidebar-item active"><i class="ti ti-list-check"></i>批次上架</a>
+      <a href="admin-banners.html"        class="sidebar-item active"><i class="ti ti-photo"></i>輪播管理</a>
+      <a href="admin-batch-add.html"      class="sidebar-item"><i class="ti ti-list-check"></i>批次上架</a>
       <a href="admin-batch-generate.html" class="sidebar-item"><i class="ti ti-sparkles"></i>AI批次生成</a>
     </nav>
     <div class="sidebar-footer">
@@ -163,391 +177,431 @@ if (sessionStorage.getItem("adminAuth") !== "1") location.href = "admin.html";
     </div>
   </aside>
   <main class="admin-main">
-    <div class="admin-topbar"><span class="topbar-title">批次上架</span></div>
+    <div class="admin-topbar"><span class="topbar-title">輪播管理</span></div>
     <div class="admin-content">
 
 
-<div style="padding:0">
+<div class="px-4 py-5 max-w-3xl mx-auto space-y-4">
 
-  <!-- 標題 -->
+  <!-- 新增 Banner -->
   <div class="bg-white rounded-2xl p-4 shadow-sm">
-    <div class="flex items-center justify-between mb-1">
-      <div class="flex items-center gap-2">
-        <span class="text-xl">📦</span>
-        <h1 class="font-bold text-base">批次上架商品</h1>
+    <h2 class="font-semibold text-sm mb-3">新增輪播圖</h2>
+
+    <!-- Step 1: 上傳區 -->
+    <div id="step1">
+      <div id="uploadArea"
+        class="flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-xl py-8 cursor-pointer hover:border-gray-400 transition mb-3"
+        onclick="document.getElementById('bannerFileInput').click()">
+        <div class="flex flex-col items-center text-gray-400">
+          <span class="text-3xl mb-2">🖼</span>
+          <span class="text-sm">點擊上傳輪播圖</span>
+          <span class="text-xs text-gray-300 mt-1">上傳後可拖曳選取裁切範圍</span>
+        </div>
       </div>
-      <div class="flex items-center gap-2">
-        <button onclick="addRow()"
-          class="px-3 py-1.5 border rounded-xl text-sm hover:bg-gray-50 transition">
-          ＋ 新增一列
+      <input id="bannerFileInput" type="file" accept="image/*" class="hidden">
+    </div>
+
+    <!-- Step 2: 裁切介面 -->
+    <div id="step2" class="hidden">
+      <div class="text-xs text-gray-500 mb-2 flex items-center justify-between">
+        <span>📐 拖曳調整裁切範圍（比例 16:7）</span>
+        <button onclick="resetCrop()" class="text-xs text-gray-400 hover:text-black underline">重置</button>
+      </div>
+
+      <!-- 裁切容器 -->
+      <div id="cropWrap" class="relative overflow-hidden rounded-xl bg-black mb-3"
+        style="max-height: 400px;">
+        <img id="cropImg" class="block w-full" draggable="false">
+        <div id="cropBox">
+          <div class="handle tl" data-dir="tl"></div>
+          <div class="handle tr" data-dir="tr"></div>
+          <div class="handle bl" data-dir="bl"></div>
+          <div class="handle br" data-dir="br"></div>
+        </div>
+      </div>
+
+      <!-- 尺寸提示 -->
+      <div class="text-xs text-gray-400 mb-3 text-center" id="cropSizeHint"></div>
+
+      <div class="flex gap-2">
+        <input id="bannerTitle" type="text" placeholder="圖片名稱（方便辨識）"
+          class="flex-1 border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black">
+        <button onclick="cropAndUpload()" id="uploadBtn"
+          class="px-4 py-2.5 bg-black text-white text-sm font-medium rounded-xl active:bg-gray-800 transition shrink-0">
+          裁切並上傳
         </button>
-        <button id="submitBtn" onclick="submitAll()"
-          class="px-4 py-1.5 bg-black text-white text-sm font-medium rounded-xl hover:bg-gray-800 transition">
-          ✅ 全部送出
+        <button onclick="cancelCrop()" class="px-3 py-2.5 border rounded-xl text-sm text-gray-500 hover:bg-gray-50">
+          取消
         </button>
       </div>
-    </div>
-    <p class="text-xs text-gray-400">填完所有商品後，點「全部送出」一次寫入 Notion</p>
-  </div>
-
-  <!-- 進度條（送出時顯示）-->
-  <div id="progressWrap" class="hidden bg-white rounded-2xl p-4 shadow-sm">
-    <div class="flex justify-between text-xs text-gray-500 mb-1.5">
-      <span id="progressText">0 / 0</span>
-      <span id="progressPct">0%</span>
-    </div>
-    <div class="w-full bg-gray-100 rounded-full h-2 mb-2">
-      <div id="progressBar" class="bg-black h-2 rounded-full transition-all" style="width:0%"></div>
-    </div>
-    <div class="flex gap-4 text-xs">
-      <span class="text-green-600">✅ 成功：<span id="statSuccess">0</span></span>
-      <span class="text-red-500">❌ 失敗：<span id="statFail">0</span></span>
+      <p id="addStatus" class="text-xs text-gray-400 mt-2 hidden"></p>
     </div>
   </div>
 
-  <!-- 表格標題 -->
-  <div class="hidden sm:grid gap-2 px-1 text-xs text-gray-400 font-medium"
-    style="grid-template-columns: 2fr 1fr 1fr 1fr 1fr 80px 32px;">
-    <span>商品名稱 *</span>
-    <span>日幣售價 *</span>
-    <span>大分類</span>
-    <span>小分類</span>
-    <span>商品編號</span>
-    <span>圖片</span>
-    <span></span>
+  <!-- Banner 列表 -->
+  <div class="bg-white rounded-2xl p-4 shadow-sm">
+    <div class="flex justify-between items-center mb-3">
+      <h2 class="font-semibold text-sm">目前輪播圖</h2>
+      <span id="bannerCount" class="text-xs text-gray-400"></span>
+    </div>
+    <div id="bannerList" class="space-y-3">
+      <div class="text-center text-gray-400 text-sm py-6">載入中...</div>
+    </div>
   </div>
-
-  <!-- 商品列表 -->
-  <div id="rowList" class="space-y-2"></div>
-
-  <!-- 底部按鈕 -->
-  <div class="flex justify-between items-center pb-8">
-    <button onclick="addRow()"
-      class="px-4 py-2.5 border-2 border-dashed border-gray-300 rounded-xl text-sm text-gray-400 hover:border-gray-500 hover:text-gray-600 transition w-full">
-      ＋ 新增一列
-    </button>
-  </div>
-
 </div>
 
 <script>
-const ADD_API       = "https://shoptest-chi.vercel.app/api/add-product";
 const CLOUD_NAME    = "doue38blc";
 const UPLOAD_PRESET = "shop_upload";
-const imgUrls       = {}; // rowId → uploadedUrl
-const PRODUCTS_API = "https://shoptest-chi.vercel.app/api/products";
+const BANNER_API    = "https://shoptest-chi.vercel.app/api/banner-manage";
 
-let rowCount = 0;
-let mainCategories = [];
-let subCategories  = [];
+// 目標裁切比例 16:7
+const TARGET_RATIO = 16 / 7;
+const TARGET_W = 2800;
+const TARGET_H = 1226;
 
-// ── 圖片上傳 ─────────────────────────────────────────
-function addImgSlot(rowId) {
-  if (!imgUrls[rowId]) imgUrls[rowId] = [];
-  const slotIdx   = imgUrls[rowId].length;
-  imgUrls[rowId].push("");
+let banners    = [];
+let origFile   = null;
+let imgNatW    = 0, imgNatH = 0;  // 原始圖片尺寸
+let dispW      = 0, dispH = 0;    // 顯示尺寸
+let scale      = 1;               // 顯示/原始 比例
 
-  const container = document.getElementById(`imgSlots-${rowId}`);
-  const slot      = document.createElement("div");
-  slot.id         = `slot-${rowId}-${slotIdx}`;
-  slot.className  = "relative w-16 h-16 rounded-lg border-2 border-dashed border-gray-200 flex items-center justify-center cursor-pointer hover:border-gray-400 transition overflow-hidden bg-gray-50 shrink-0";
-  slot.innerHTML  = `
-    <span class="slot-ph text-gray-300 text-lg pointer-events-none">📷</span>
-    <img class="slot-img hidden absolute inset-0 w-full h-full object-cover">
-    <div class="slot-load hidden absolute inset-0 bg-gray-50 flex items-center justify-center text-xs">⏳</div>
-    <button onclick="removeImgSlot(${rowId},${slotIdx},event)"
-      class="slot-del hidden absolute top-0 right-0 bg-black bg-opacity-60 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs z-10">✕</button>
-    ${slotIdx === 0 ? '<span class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-40 text-white text-xs text-center leading-4">主圖</span>' : ""}`;
-  slot.onclick = () => pickSlotImg(rowId, slotIdx, slot);
-  container.appendChild(slot);
-}
+// cropBox 位置（以顯示尺寸為單位）
+let crop = { x: 0, y: 0, w: 0, h: 0 };
+let drag = null; // { type: 'move'|'tl'|'tr'|'bl'|'br', startX, startY, startCrop }
 
-function pickSlotImg(rowId, slotIdx, slot) {
-  const input = document.createElement("input");
-  input.type = "file"; input.accept = "image/*";
-  input.onchange = async (e) => {
-    const file = e.target.files[0]; if (!file) return;
-    slot.querySelector(".slot-ph").style.display="none";
-    slot.querySelector(".slot-load").style.display="flex";
-    try {
-      const fd = new FormData();
-      fd.append("file", file); fd.append("upload_preset", UPLOAD_PRESET);
-      const res  = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { method:"POST", body:fd });
-      const data = await res.json();
-      if (!data.secure_url) throw new Error("上傳失敗");
-      imgUrls[rowId][slotIdx] = data.secure_url;
-      slot.querySelector(".slot-img").src = data.secure_url;
-      slot.querySelector(".slot-img").style.display="flex";
-      slot.querySelector(".slot-del").style.display="flex";
-      slot.onclick = null;
-    } catch { alert("圖片上傳失敗"); slot.querySelector(".slot-ph").style.display="flex"; }
-    finally { slot.querySelector(".slot-load").style.display="none"; }
-  };
-  input.click();
-}
-
-function removeImgSlot(rowId, slotIdx, e) {
-  e.stopPropagation();
-  imgUrls[rowId][slotIdx] = "";
-  const slot = document.getElementById(`slot-${rowId}-${slotIdx}`);
-  const imgEl = slot.querySelector(".slot-img");
-  imgEl.src = "";
-  imgEl.style.display = "none";
-  imgEl.style.display="none";
-  slot.querySelector(".slot-del").style.display = "none";
-  slot.querySelector(".slot-del").style.display="none";
-  slot.querySelector(".slot-ph").style.display = "";
-  slot.querySelector(".slot-ph").style.display="flex";
-  slot.onclick = () => pickSlotImg(rowId, slotIdx, slot);
-}
-
-// ── 初始化：載入現有分類 ──────────────────────────────
-(async () => {
+// ── 初始化 ───────────────────────────────────────────
+async function init() {
   try {
-    const res  = await fetch(PRODUCTS_API, { cache: "no-store" });
-    const data = await res.json();
-    mainCategories = [...new Set(data.map(p => p.mainCategory).filter(Boolean))].sort();
-    subCategories  = data.map(p => ({ main: p.mainCategory, sub: p.category })).filter(p => p.sub);
-  } catch {}
-  // 預設加 3 列
-  addRow(); addRow(); addRow();
-})();
-
-// ── 新增一列 ─────────────────────────────────────────
-function addRow() {
-  rowCount++;
-  const id  = rowCount;
-  const div = document.createElement("div");
-  div.id    = `row-${id}`;
-  div.className = "bg-white rounded-xl border p-3 shadow-sm";
-
-  div.innerHTML = `
-    <div class="flex flex-col gap-2 sm:grid sm:items-start" style="--cols: 2fr 1fr 1fr 1fr 1fr 80px 32px;">
-
-      <!-- 商品名稱 -->
-      <div>
-        <label class="text-xs text-gray-400 sm:hidden mb-0.5 block">商品名稱 *</label>
-        <input id="name-${id}" type="text" placeholder="商品名稱"
-          class="w-full border rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black">
-      </div>
-
-      <!-- 台幣售價 -->
-      <div>
-        <label class="text-xs text-gray-400 sm:hidden mb-0.5 block">日幣售價 *</label>
-        <input id="jprice-${id}" type="number" placeholder="¥0"
-          class="w-full border rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black">
-      </div>
-
-      <!-- 大分類 -->
-      <div>
-        <label class="text-xs text-gray-400 sm:hidden mb-0.5 block">大分類</label>
-        <div id="mainBtns-${id}" class="flex flex-wrap gap-1 mb-1">
-          ${mainCategories.map(m => `
-            <button type="button" onclick="selectMain(${id}, '${m}')"
-              class="main-btn-${id} px-2 py-0.5 rounded-full border text-xs transition bg-white text-gray-600 border-gray-300 hover:border-black">
-              ${m}
-            </button>`).join("")}
-        </div>
-        <input id="main-${id}" type="text" placeholder="或輸入新分類"
-          class="w-full border rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
-          oninput="onMainInput(${id})">
-      </div>
-
-      <!-- 小分類 -->
-      <div>
-        <label class="text-xs text-gray-400 sm:hidden mb-0.5 block">小分類</label>
-        <div id="subBtns-${id}" class="flex flex-wrap gap-1 mb-1 hidden"></div>
-        <input id="sub-${id}" type="text" placeholder="或輸入新分類"
-          class="w-full border rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black">
-      </div>
-
-      <!-- 商品編號 -->
-      <div>
-        <label class="text-xs text-gray-400 sm:hidden mb-0.5 block">商品編號</label>
-        <input id="idnum-${id}" type="text" placeholder="編號"
-          class="w-full border rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black">
-      </div>
-
-      <!-- 圖片區（跨欄，多張）-->
-      <div class="sm:col-span-full">
-        <label class="text-xs text-gray-400 mb-1.5 block">圖片（第一張為主圖）</label>
-        <div class="flex flex-wrap gap-2" id="imgSlots-${id}"></div>
-        <button type="button" onclick="addImgSlot(${id})"
-          class="mt-2 w-full py-1.5 border border-dashed border-gray-300 rounded-lg text-xs text-gray-400 hover:border-gray-500 transition">
-          ＋ 新增圖片
-        </button>
-      </div>
-
-      <!-- 刪除 -->
-      <button onclick="removeRow(${id})"
-        class="self-end sm:mt-1 w-full sm:w-8 h-8 flex items-center justify-center text-red-300 hover:text-red-500 text-sm rounded-lg hover:bg-red-50 transition border border-red-100 sm:border-0">
-        <span class="sm:hidden text-xs mr-1">刪除此列</span>
-        ✕
-      </button>
-
-    </div>
-    <div id="rowStatus-${id}" class="text-xs mt-1.5 hidden"></div>
-  `;
-
-  const gridEl = div.querySelector(".sm\\:grid");
-  if (gridEl) gridEl.style.gridTemplateColumns = "2fr 1fr 1fr 1fr 1fr 80px 32px";
-  document.getElementById("rowList").appendChild(div);
-  imgUrls[id] = [];
-  setTimeout(() => addImgSlot(id), 0);
+    const res = await fetch(BANNER_API + "?all=1");
+    banners   = await res.json();
+    renderList();
+  } catch (err) {
+    document.getElementById("bannerList").innerHTML =
+      `<div class="text-center text-red-400 text-sm py-4">載入失敗</div>`;
+  }
 }
 
-function removeRow(id) {
-  const el = document.getElementById(`row-${id}`);
-  if (el) el.remove();
+// ── 檔案選取 ─────────────────────────────────────────
+document.getElementById("bannerFileInput").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  e.target.value = "";
+  origFile = file;
+
+  const url = URL.createObjectURL(file);
+  const img = document.getElementById("cropImg");
+  img.onload = () => {
+    imgNatW = img.naturalWidth;
+    imgNatH = img.naturalHeight;
+    dispW   = img.offsetWidth;
+    dispH   = img.offsetHeight;
+    scale   = imgNatW / dispW;
+    initCropBox();
+    document.getElementById("step1").style.display="none";
+    document.getElementById("step2").style.display="flex";
+  };
+  img.src = url;
+});
+
+function initCropBox() {
+  // 預設裁切框：以 16:7 比例，盡量填滿寬度，置中
+  dispW = document.getElementById("cropImg").offsetWidth;
+  dispH = document.getElementById("cropImg").offsetHeight;
+  scale = imgNatW / dispW;
+
+  let cw = dispW;
+  let ch = cw / TARGET_RATIO;
+  if (ch > dispH) {
+    ch = dispH;
+    cw = ch * TARGET_RATIO;
+  }
+  crop = {
+    x: (dispW - cw) / 2,
+    y: (dispH - ch) / 2,
+    w: cw,
+    h: ch,
+  };
+  renderCropBox();
 }
 
-const BTN_NORMAL = "px-2 py-0.5 rounded-full border text-xs transition bg-white text-gray-600 border-gray-300 hover:border-black";
-const BTN_ACTIVE = "px-2 py-0.5 rounded-full border text-xs transition bg-black text-white border-black";
+function resetCrop() { initCropBox(); }
 
-function selectMain(id, value) {
-  document.getElementById(`main-${id}`).value = value;
-  // 更新按鈕樣式
-  document.querySelectorAll(`.main-btn-${id}`).forEach(btn => {
-    btn.className = btn.textContent.trim() === value ? BTN_ACTIVE : BTN_NORMAL;
-  });
-  // 清空小分類
-  document.getElementById(`sub-${id}`).value = "";
-  renderSubBtns(id, value);
+function renderCropBox() {
+  const box = document.getElementById("cropBox");
+  box.style.left   = crop.x + "px";
+  box.style.top    = crop.y + "px";
+  box.style.width  = crop.w + "px";
+  box.style.height = crop.h + "px";
+
+  // 顯示原始像素尺寸
+  const pw = Math.round(crop.w * scale);
+  const ph = Math.round(crop.h * scale);
+  document.getElementById("cropSizeHint").textContent =
+    `裁切區域：${pw} × ${ph} px → 輸出 2800 × 1226 px（高解析度）`;
 }
 
-function onMainInput(id) {
-  const val = document.getElementById(`main-${id}`).value.trim();
-  // 取消所有大分類按鈕選中
-  document.querySelectorAll(`.main-btn-${id}`).forEach(btn => {
-    btn.className = BTN_NORMAL;
-  });
-  renderSubBtns(id, val);
+// ── 拖曳邏輯 ─────────────────────────────────────────
+const cropBox  = document.getElementById("cropBox");
+const cropWrap = document.getElementById("cropWrap");
+
+function getPos(e) {
+  const rect = cropWrap.getBoundingClientRect();
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+  return { x: clientX - rect.left, y: clientY - rect.top };
 }
 
-function renderSubBtns(id, selectedMain) {
-  const el = document.getElementById(`subBtns-${id}`);
-  if (!selectedMain) { el.style.display="none"; return; }
+cropBox.addEventListener("mousedown",  startDrag);
+cropBox.addEventListener("touchstart", startDrag, { passive: false });
 
-  const subs = [...new Set(
-    subCategories.filter(s => s.main === selectedMain).map(s => s.sub)
-  )].sort();
+function startDrag(e) {
+  e.preventDefault();
+  const dir = e.target.dataset.dir || "move";
+  const pos = getPos(e);
+  drag = { type: dir, startX: pos.x, startY: pos.y, startCrop: { ...crop } };
 
-  if (!subs.length) { el.style.display="none"; return; }
-  el.style.display="flex";
-  el.innerHTML = subs.map(s => `
-    <button type="button" onclick="selectSub(${id}, '${s}')"
-      class="sub-btn-${id} ${BTN_NORMAL}">
-      ${s}
-    </button>`).join("");
+  document.addEventListener("mousemove", onDrag);
+  document.addEventListener("touchmove", onDrag, { passive: false });
+  document.addEventListener("mouseup",   endDrag);
+  document.addEventListener("touchend",  endDrag);
 }
 
-function selectSub(id, value) {
-  document.getElementById(`sub-${id}`).value = value;
-  document.querySelectorAll(`.sub-btn-${id}`).forEach(btn => {
-    btn.className = btn.textContent.trim() === value ? BTN_ACTIVE : BTN_NORMAL;
-  });
+function onDrag(e) {
+  if (!drag) return;
+  e.preventDefault();
+  const pos = getPos(e);
+  const dx  = pos.x - drag.startX;
+  const dy  = pos.y - drag.startY;
+  const sc  = drag.startCrop;
+
+  dispW = document.getElementById("cropImg").offsetWidth;
+  dispH = document.getElementById("cropImg").offsetHeight;
+
+  let { x, y, w, h } = sc;
+
+  if (drag.type === "move") {
+    x = sc.x + dx;
+    y = sc.y + dy;
+    x = Math.max(0, Math.min(dispW - w, x));
+    y = Math.max(0, Math.min(dispH - h, y));
+  } else {
+    // 縮放：鎖定 16:7 比例
+    const MIN = 100;
+    if (drag.type === "br") {
+      w = Math.max(MIN, sc.w + dx);
+      h = w / TARGET_RATIO;
+      if (x + w > dispW) { w = dispW - x; h = w / TARGET_RATIO; }
+      if (y + h > dispH) { h = dispH - y; w = h * TARGET_RATIO; }
+    } else if (drag.type === "bl") {
+      w = Math.max(MIN, sc.w - dx);
+      h = w / TARGET_RATIO;
+      x = sc.x + sc.w - w;
+      if (x < 0) { x = 0; w = sc.x + sc.w; h = w / TARGET_RATIO; }
+      if (y + h > dispH) { h = dispH - y; w = h * TARGET_RATIO; x = sc.x + sc.w - w; }
+    } else if (drag.type === "tr") {
+      w = Math.max(MIN, sc.w + dx);
+      h = w / TARGET_RATIO;
+      y = sc.y + sc.h - h;
+      if (x + w > dispW) { w = dispW - x; h = w / TARGET_RATIO; y = sc.y + sc.h - h; }
+      if (y < 0) { y = 0; h = sc.y + sc.h; w = h * TARGET_RATIO; }
+    } else if (drag.type === "tl") {
+      w = Math.max(MIN, sc.w - dx);
+      h = w / TARGET_RATIO;
+      x = sc.x + sc.w - w;
+      y = sc.y + sc.h - h;
+      if (x < 0) { x = 0; w = sc.x + sc.w; h = w / TARGET_RATIO; y = sc.y + sc.h - h; }
+      if (y < 0) { y = 0; h = sc.y + sc.h; w = h * TARGET_RATIO; x = sc.x + sc.w - w; }
+    }
+  }
+
+  crop = { x, y, w, h };
+  scale = imgNatW / dispW;
+  renderCropBox();
 }
 
-// ── 全部送出 ─────────────────────────────────────────
-async function submitAll() {
-  // 收集所有列
-  const rows = [];
-  document.querySelectorAll("[id^='row-']").forEach(el => {
-    const id = el.id.replace("row-", "");
-    const name  = document.getElementById(`name-${id}`)?.value.trim();
-    const price = document.getElementById(`jprice-${id}`)?.value.trim();
-    if (!name && !price) return; // 完全空的跳過
-    rows.push({ id: id, name, price,
-      main:  document.getElementById(`main-${id}`)?.value.trim() || "",
-      sub:   document.getElementById(`sub-${id}`)?.value.trim()  || "",
-      idnum: document.getElementById(`idnum-${id}`)?.value.trim() || "",
+function endDrag() {
+  drag = null;
+  document.removeEventListener("mousemove", onDrag);
+  document.removeEventListener("touchmove", onDrag);
+  document.removeEventListener("mouseup",   endDrag);
+  document.removeEventListener("touchend",  endDrag);
+}
+
+// ── 裁切並上傳 ────────────────────────────────────────
+async function cropAndUpload() {
+  const btn    = document.getElementById("uploadBtn");
+  const status = document.getElementById("addStatus");
+
+  btn.disabled    = true;
+  btn.textContent = "處理中...";
+  status.textContent = "";
+  status.style.display="flex";
+
+  try {
+    // Canvas 裁切
+    const canvas  = document.createElement("canvas");
+    canvas.width  = TARGET_W;
+    canvas.height = TARGET_H;
+    const ctx = canvas.getContext("2d");
+
+    const img = document.getElementById("cropImg");
+    // 把顯示座標換算回原圖座標
+    dispW = img.offsetWidth;
+    scale = imgNatW / dispW;
+
+    const sx = crop.x * scale;
+    const sy = crop.y * scale;
+    const sw = crop.w * scale;
+    const sh = crop.h * scale;
+
+    ctx.drawImage(img, sx, sy, sw, sh, 0, 0, TARGET_W, TARGET_H);
+
+    // 轉 blob 上傳
+    status.textContent = "⏳ 上傳至 Cloudinary...";
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/png"));
+
+    const fd = new FormData();
+    fd.append("file", blob, "banner.png");
+    fd.append("upload_preset", UPLOAD_PRESET);
+
+    const upRes  = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
+      method: "POST", body: fd,
     });
-  });
+    const upData = await upRes.json();
+    if (!upData.secure_url) throw new Error("上傳失敗");
 
-  if (!rows.length) { alert("請至少填寫一筆商品"); return; }
+    const imageUrl = upData.secure_url;
+    const title    = document.getElementById("bannerTitle").value.trim() || "Banner";
 
-  // 驗證
-  const invalid = rows.filter(r => !r.name || !r.price);
-  if (invalid.length) {
-    alert(`有 ${invalid.length} 筆商品未填寫名稱或日幣售價，請補齊後再送出`);
+    // 寫入 Notion
+    status.textContent = "⏳ 儲存至 Notion...";
+    const addRes  = await fetch(BANNER_API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title, image: imageUrl, order: banners.length + 1 }),
+    });
+    const addData = await addRes.json();
+    if (!addData.success) throw new Error(addData.error || "新增失敗");
+
+    status.textContent = "✅ 新增成功！";
+    setTimeout(() => {
+      cancelCrop();
+      init();
+    }, 1200);
+
+  } catch (err) {
+    status.textContent = "❌ " + err.message;
+    btn.disabled = false;
+    btn.textContent = "裁切並上傳";
+  }
+}
+
+function cancelCrop() {
+  document.getElementById("step1").style.display="flex";
+  document.getElementById("step2").style.display="none";
+  document.getElementById("bannerTitle").value = "";
+  document.getElementById("addStatus").style.display="none";
+  document.getElementById("uploadBtn").disabled = false;
+  document.getElementById("uploadBtn").textContent = "裁切並上傳";
+  origFile = null;
+  URL.revokeObjectURL(document.getElementById("cropImg").src);
+}
+
+// ── 列表渲染 ─────────────────────────────────────────
+function renderList() {
+  const el = document.getElementById("bannerList");
+  document.getElementById("bannerCount").textContent = `共 ${banners.length} 張`;
+
+  if (!banners.length) {
+    el.innerHTML = `<div class="text-center text-gray-400 text-sm py-6">尚無輪播圖</div>`;
     return;
   }
 
-  const btn = document.getElementById("submitBtn");
-  btn.disabled = true;
-  btn.textContent = "送出中...";
+  el.innerHTML = banners.map((b, i) => `
+    <div id="banner-${b.pageId}" class="flex items-center gap-3 border rounded-xl p-3 bg-gray-50">
+      <div class="flex flex-col gap-1 shrink-0">
+        <button onclick="moveUp(${i})"
+          class="w-7 h-7 flex items-center justify-center rounded-lg border bg-white text-gray-400 hover:text-black text-xs"
+          ${i === 0 ? "disabled" : ""}>▲</button>
+        <button onclick="moveDown(${i})"
+          class="w-7 h-7 flex items-center justify-center rounded-lg border bg-white text-gray-400 hover:text-black text-xs"
+          ${i === banners.length - 1 ? "disabled" : ""}>▼</button>
+      </div>
+      <img src="${b.image}" class="w-24 h-14 object-cover rounded-lg shrink-0 bg-gray-200">
+      <div class="flex-1 min-w-0">
+        <div class="text-sm font-medium text-gray-800 truncate">${b.title || "未命名"}</div>
+        <div class="text-xs text-gray-400 mt-0.5">排序：${b.order}</div>
+      </div>
+      <div class="flex flex-col items-end gap-2 shrink-0">
+        <button onclick="toggleActive('${b.pageId}', ${!b.isActive}, ${i})"
+          class="text-xs px-2.5 py-1 rounded-full border font-medium transition
+                 ${b.isActive ? "bg-green-100 text-green-600 border-green-200" : "bg-gray-100 text-gray-400 border-gray-200"}">
+          ${b.isActive ? "顯示中" : "已隱藏"}
+        </button>
+        <button onclick="deleteBanner('${b.pageId}', ${i})"
+          class="text-xs text-red-400 hover:text-red-600">刪除</button>
+      </div>
+    </div>`).join("");
+}
 
-  document.getElementById("progressWrap").style.display="flex";
-  let success = 0, fail = 0;
+// ── 排序 ─────────────────────────────────────────────
+async function moveUp(idx)   { if (idx > 0) await swapOrder(idx, idx-1); }
+async function moveDown(idx) { if (idx < banners.length-1) await swapOrder(idx, idx+1); }
 
-  for (let i = 0; i < rows.length; i++) {
-    const r = rows[i];
-    updateProgress(i, rows.length);
+async function swapOrder(a, b) {
+  const ba = banners[a], bb = banners[b];
+  try {
+    await Promise.all([
+      fetch(BANNER_API, { method:"PATCH", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ pageId: ba.pageId, order: bb.order }) }),
+      fetch(BANNER_API, { method:"PATCH", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ pageId: bb.pageId, order: ba.order }) }),
+    ]);
+    [banners[a], banners[b]] = [banners[b], banners[a]];
+    renderList();
+  } catch (err) { alert("排序失敗：" + err.message); }
+}
 
-    const statusEl = document.getElementById(`rowStatus-${r.id}`);
-    const rowEl    = document.getElementById(`row-${r.id}`);
-    statusEl.style.display="flex";
-    statusEl.textContent = "⏳ 送出中...";
-    statusEl.className   = "text-xs mt-1.5 text-purple-500";
-    rowEl.classList.add("bg-purple-50");
+// ── 顯示切換 ─────────────────────────────────────────
+async function toggleActive(pageId, newVal, idx) {
+  try {
+    const res  = await fetch(BANNER_API, { method:"PATCH", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ pageId, isActive: newVal }) });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error);
+    banners[idx].isActive = newVal;
+    renderList();
+  } catch (err) { alert("更新失敗：" + err.message); }
+}
 
-    try {
-      const res  = await fetch(ADD_API, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          tname:        r.name,
-          jprice:       Number(r.price) || 0,
-          jsprice:      0,
-          mainCategory: r.main,
-          category:     r.sub,
-          idnumber:     r.idnum ? r.idnum : null,
-          image:        (imgUrls[Number(r.id)] || imgUrls[r.id] || []).filter(Boolean)[0] || "",
-          images:       (imgUrls[Number(r.id)] || imgUrls[r.id] || []).filter(Boolean).join(","),
-          isView:       true,
-          isNew:        false,
-          isHot:        false,
-          isSale:       false,
-          description:  "",
-          weight:       0,
-        }),
-      });
-      const data = await res.json();
-      if (!data.success) throw new Error(data.error || "新增失敗");
+// ── 刪除 ─────────────────────────────────────────────
+async function deleteBanner(pageId, idx) {
+  if (!confirm(`確定刪除「${banners[idx].title || "此圖片"}」嗎？`)) return;
+  try {
+    const res  = await fetch(BANNER_API, { method:"DELETE", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ pageId }) });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error);
+    banners.splice(idx, 1);
+    renderList();
+  } catch (err) { alert("刪除失敗：" + err.message); }
+}
 
-      statusEl.textContent = "✅ 已上架";
-      statusEl.className   = "text-xs mt-1.5 text-green-600 font-medium";
-      rowEl.classList.remove("bg-purple-50");
-      rowEl.classList.add("bg-green-50");
-      success++;
-    } catch (err) {
-      statusEl.textContent = `❌ ${err.message}`;
-      statusEl.className   = "text-xs mt-1.5 text-red-500";
-      rowEl.classList.remove("bg-purple-50");
-      rowEl.classList.add("bg-red-50");
-      fail++;
-    }
-
-    document.getElementById("statSuccess").textContent = success;
-    document.getElementById("statFail").textContent    = fail;
-
-    // 間隔 500ms 避免 API 過載
-    if (i < rows.length - 1) await new Promise(r => setTimeout(r, 500));
+// 視窗縮放時重新計算裁切框
+window.addEventListener("resize", () => {
+  if (!document.getElementById("step2").classList.contains("hidden")) {
+    initCropBox();
   }
+});
 
-  updateProgress(rows.length, rows.length);
-  btn.disabled = false;
-  btn.textContent = "✅ 全部送出";
-}
-
-function updateProgress(current, total) {
-  const pct = total ? Math.round(current / total * 100) : 0;
-  document.getElementById("progressText").textContent = `${current} / ${total}`;
-  document.getElementById("progressPct").textContent  = `${pct}%`;
-  document.getElementById("progressBar").style.width  = `${pct}%`;
-}
+init();
 </script>
   </main>
 </div>
+
+<nav class="admin-bottom-nav" style="display:none">
+  <a href="admin-orders.html" class="admin-bnav-item"><i class="ti ti-clipboard-list"></i>訂單</a>
+  <a href="admin-products.html" class="admin-bnav-item"><i class="ti ti-package"></i>商品</a>
+  <a href="admin-add.html" class="admin-bnav-item"><i class="ti ti-plus"></i>新增</a>
+  <a href="admin-customers.html" class="admin-bnav-item"><i class="ti ti-users"></i>客戶</a>
+  <a href="admin-banners.html" class="admin-bnav-item active"><i class="ti ti-photo"></i>輪播</a>
+</nav>
 </body>
 </html>

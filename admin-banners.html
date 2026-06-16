@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>輪播管理 | W-82 後台</title>
+  <title>新增商品 | W-82 後台</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
   <link rel="stylesheet" href="js/admin-theme.css">
 
@@ -139,6 +139,20 @@ button{cursor:pointer}
 .hidden.bg-white.rounded-2xl{display:none;background:var(--white)!important;border-radius:var(--radius-lg)!important}
 .px-4.py-2\.5.bg-purple-600.text-white{padding:9px 16px!important;background:var(--black)!important;color:var(--white)!important;border:none!important;border-radius:var(--radius)!important;font-size:14px!important}
 </style>
+<style>
+@media (max-width: 768px) {
+  .admin-sidebar { display: none !important; }
+  .admin-main { margin-left: 0 !important; width: 100% !important; }
+  .admin-content { padding: 12px !important; padding-bottom: 72px !important; }
+  .admin-topbar { padding: 12px 16px !important; }
+  .admin-bottom-nav { display: grid !important; }
+  .form-grid { grid-template-columns: 1fr !important; }
+  .filter-bar { flex-wrap: nowrap !important; overflow-x: auto !important; }
+}
+@media (min-width: 769px) {
+  .admin-bottom-nav { display: none !important; }
+}
+</style>
 </head>
 <body>
 
@@ -151,9 +165,9 @@ if (sessionStorage.getItem("adminAuth") !== "1") location.href = "admin.html";
     <nav class="sidebar-nav">
       <a href="admin-orders.html"         class="sidebar-item"><i class="ti ti-clipboard-list"></i>訂單管理</a>
       <a href="admin-products.html"       class="sidebar-item"><i class="ti ti-package"></i>商品管理</a>
-      <a href="admin-add.html"            class="sidebar-item"><i class="ti ti-plus"></i>新增商品</a>
+      <a href="admin-add.html"            class="sidebar-item active"><i class="ti ti-plus"></i>新增商品</a>
       <a href="admin-customers.html"      class="sidebar-item"><i class="ti ti-users"></i>客戶管理</a>
-      <a href="admin-banners.html"        class="sidebar-item active"><i class="ti ti-photo"></i>輪播管理</a>
+      <a href="admin-banners.html"        class="sidebar-item"><i class="ti ti-photo"></i>輪播管理</a>
       <a href="admin-batch-add.html"      class="sidebar-item"><i class="ti ti-list-check"></i>批次上架</a>
       <a href="admin-batch-generate.html" class="sidebar-item"><i class="ti ti-sparkles"></i>AI批次生成</a>
     </nav>
@@ -163,423 +177,455 @@ if (sessionStorage.getItem("adminAuth") !== "1") location.href = "admin.html";
     </div>
   </aside>
   <main class="admin-main">
-    <div class="admin-topbar"><span class="topbar-title">輪播管理</span></div>
+    <div class="admin-topbar"><span class="topbar-title">新增商品</span></div>
     <div class="admin-content">
 
 
-<div class="px-4 py-5 max-w-3xl mx-auto space-y-4">
+<div style="padding:0">
 
-  <!-- 新增 Banner -->
-  <div class="bg-white rounded-2xl p-4 shadow-sm">
-    <h2 class="font-semibold text-sm mb-3">新增輪播圖</h2>
-
-    <!-- Step 1: 上傳區 -->
-    <div id="step1">
-      <div id="uploadArea"
-        class="flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-xl py-8 cursor-pointer hover:border-gray-400 transition mb-3"
-        onclick="document.getElementById('bannerFileInput').click()">
-        <div class="flex flex-col items-center text-gray-400">
-          <span class="text-3xl mb-2">🖼</span>
-          <span class="text-sm">點擊上傳輪播圖</span>
-          <span class="text-xs text-gray-300 mt-1">上傳後可拖曳選取裁切範圍</span>
-        </div>
-      </div>
-      <input id="bannerFileInput" type="file" accept="image/*" class="hidden">
+  <!-- 🤖 AI 描述生成工具 -->
+  <div class="bg-gradient-to-r from-purple-50 to-blue-50 rounded-2xl p-4 shadow-sm border border-purple-100">
+    <div class="flex items-center gap-2 mb-3">
+      <span class="text-lg">🤖</span>
+      <h2 class="font-semibold text-sm text-purple-800">AI 商品描述生成</h2>
     </div>
 
-    <!-- Step 2: 裁切介面 -->
-    <div id="step2" class="hidden">
-      <div class="text-xs text-gray-500 mb-2 flex items-center justify-between">
-        <span>📐 拖曳調整裁切範圍（比例 16:7）</span>
-        <button onclick="resetCrop()" class="text-xs text-gray-400 hover:text-black underline">重置</button>
-      </div>
-
-      <!-- 裁切容器 -->
-      <div id="cropWrap" class="relative overflow-hidden rounded-xl bg-black mb-3"
-        style="max-height: 400px;">
-        <img id="cropImg" class="block w-full" draggable="false">
-        <div id="cropBox">
-          <div class="handle tl" data-dir="tl"></div>
-          <div class="handle tr" data-dir="tr"></div>
-          <div class="handle bl" data-dir="bl"></div>
-          <div class="handle br" data-dir="br"></div>
+    <div class="space-y-2">
+      <div>
+        <label class="text-xs text-gray-500 mb-1 block">輸入日文商品名稱或商品編號</label>
+        <div class="flex gap-2">
+          <input id="aiProductName" type="text"
+            placeholder="例：カークランド アーモンドミルク"
+            class="flex-1 border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white"
+            onkeydown="if(event.key==='Enter') generateDescription()">
+          <button id="aiGenerateBtn" onclick="generateDescription()"
+            class="px-4 py-2.5 bg-purple-600 text-white text-sm font-medium rounded-xl hover:bg-purple-700 active:bg-purple-800 transition shrink-0">
+            ✨ 一鍵生成
+          </button>
         </div>
       </div>
+      <p id="aiStatus" class="text-xs text-gray-400 hidden"></p>
 
-      <!-- 尺寸提示 -->
-      <div class="text-xs text-gray-400 mb-3 text-center" id="cropSizeHint"></div>
-
-      <div class="flex gap-2">
-        <input id="bannerTitle" type="text" placeholder="圖片名稱（方便辨識）"
-          class="flex-1 border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black">
-        <button onclick="cropAndUpload()" id="uploadBtn"
-          class="px-4 py-2.5 bg-black text-white text-sm font-medium rounded-xl active:bg-gray-800 transition shrink-0">
-          裁切並上傳
-        </button>
-        <button onclick="cancelCrop()" class="px-3 py-2.5 border rounded-xl text-sm text-gray-500 hover:bg-gray-50">
-          取消
-        </button>
-      </div>
-      <p id="addStatus" class="text-xs text-gray-400 mt-2 hidden"></p>
+      <!-- 生成結果預覽 -->
+      <div id="aiPreview" class="hidden bg-white rounded-xl border border-purple-100 p-3 text-xs text-gray-600 leading-relaxed whitespace-pre-wrap max-h-48 overflow-y-auto"></div>
     </div>
   </div>
 
-  <!-- Banner 列表 -->
+  <!-- ① 照片上傳 -->
   <div class="bg-white rounded-2xl p-4 shadow-sm">
-    <div class="flex justify-between items-center mb-3">
-      <h2 class="font-semibold text-sm">目前輪播圖</h2>
-      <span id="bannerCount" class="text-xs text-gray-400"></span>
+    <div class="flex items-center gap-2 mb-4">
+      <span class="w-6 h-6 bg-black text-white rounded-full text-xs flex items-center justify-center font-bold">1</span>
+      <h2 class="font-semibold text-sm">上傳照片</h2>
     </div>
-    <div id="bannerList" class="space-y-3">
-      <div class="text-center text-gray-400 text-sm py-6">載入中...</div>
+    <div class="space-y-3">
+      <div>
+        <div class="text-xs text-gray-500 mb-1.5">首頁主圖 <span class="text-red-400">（封面用，建議正方形）</span></div>
+        <div id="mainImgBox"
+          class="relative flex items-center justify-center border-2 border-dashed border-gray-200 rounded-xl h-36 cursor-pointer hover:border-gray-400 transition overflow-hidden"
+          onclick="document.getElementById('mainImgInput').click()">
+          <div id="mainImgPlaceholder" class="flex flex-col items-center text-gray-400">
+            <span class="text-3xl mb-1">🖼</span>
+            <span class="text-xs">點擊上傳主圖</span>
+          </div>
+          <img id="mainImgPreview" class="hidden absolute inset-0 w-full h-full object-cover">
+          <div id="mainImgLoading" class="hidden absolute inset-0 bg-gray-50 flex items-center justify-center text-sm text-gray-400">⏳ 上傳中...</div>
+          <button id="mainImgRemove" onclick="removeMainImg(event)"
+            class="hidden absolute top-2 right-2 bg-black bg-opacity-60 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs z-10">✕</button>
+        </div>
+        <input id="mainImgInput" type="file" accept="image/*" class="hidden">
+      </div>
+      <div>
+        <div class="text-xs text-gray-500 mb-1.5">商品詳細圖 <span class="text-gray-400">（依序顯示於商品頁）</span></div>
+        <div id="detailSlots" class="grid grid-cols-3 sm:grid-cols-4 gap-2 mb-2"></div>
+        <button type="button" onclick="addDetailSlot()"
+          class="w-full py-2 border border-dashed border-gray-300 rounded-xl text-xs text-gray-400 hover:border-gray-500 hover:text-gray-600 transition">
+          ＋ 新增一張詳細圖
+        </button>
+      </div>
     </div>
   </div>
+
+  <!-- ② 基本資料 -->
+  <div class="bg-white rounded-2xl p-4 shadow-sm">
+    <div class="flex items-center gap-2 mb-3">
+      <span class="w-6 h-6 bg-black text-white rounded-full text-xs flex items-center justify-center font-bold">2</span>
+      <h2 class="font-semibold text-sm">基本資料</h2>
+    </div>
+    <div class="space-y-3">
+      <div>
+        <label class="text-xs text-gray-500 mb-1 block">商品名稱 <span class="text-red-500">*</span></label>
+        <input id="tname" type="text" placeholder="請輸入商品名稱"
+          class="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black">
+      </div>
+      <div>
+        <label class="text-xs text-gray-500 mb-1 block">日文名稱</label>
+        <input id="jname" type="text" placeholder="日文商品名稱（選填）"
+          class="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black">
+      </div>
+      <div>
+        <label class="text-xs text-gray-500 mb-1 block">商品編號 <span class="text-gray-400">（選填）</span></label>
+        <div class="relative">
+          <input id="idnumber" type="text" placeholder="請輸入商品編號"
+            class="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black pr-24">
+          <div id="idnumberStatus" class="absolute right-3 top-2.5 text-xs"></div>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="text-xs text-gray-500 mb-1 block">原價 <span class="text-red-500">*</span></label>
+          <input id="tprice" type="number" placeholder="0"
+            class="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black">
+        </div>
+        <div>
+          <label class="text-xs text-gray-500 mb-1 block">特價（選填）</label>
+          <input id="sprice" type="number" placeholder="0"
+            class="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black">
+        </div>
+      </div>
+      <div>
+        <label class="text-xs text-gray-500 mb-1 block">重量（kg）</label>
+        <input id="weight" type="number" step="0.01" placeholder="例：0.5"
+          class="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black">
+      </div>
+      <div>
+        <label class="text-xs text-gray-500 mb-2 block">大分類</label>
+        <div id="mainCategoryBtns" class="flex flex-wrap gap-2 mb-2 min-h-[28px]">
+          <span class="text-xs text-gray-300 self-center">載入中...</span>
+        </div>
+        <input id="mainCategory" type="text" placeholder="或直接輸入新分類"
+          class="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black">
+      </div>
+      <div id="subCatSection" class="hidden">
+        <label class="text-xs text-gray-500 mb-2 block">小分類</label>
+        <div id="categoryBtns" class="flex flex-wrap gap-2 mb-2 min-h-[28px]"></div>
+        <input id="category" type="text" placeholder="或直接輸入新分類"
+          class="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black">
+      </div>
+    </div>
+  </div>
+
+  <!-- ③ 商品描述 -->
+  <div class="bg-white rounded-2xl p-4 shadow-sm">
+    <div class="flex items-center gap-2 mb-3">
+      <span class="w-6 h-6 bg-black text-white rounded-full text-xs flex items-center justify-center font-bold">3</span>
+      <h2 class="font-semibold text-sm">商品描述</h2>
+    </div>
+    <textarea id="description" rows="6"
+      placeholder="商品內容跟特點&#10;• 特點一&#10;• 特點二&#10;重量：1kg&#10;產地：日本"
+      class="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black resize-none leading-relaxed"></textarea>
+    <p class="text-xs text-gray-400 mt-1.5">• 開頭 → 清單　｜　key：value → 規格表　｜　其餘 → 段落</p>
+  </div>
+
+  <!-- ④ 標籤設定 -->
+  <div class="bg-white rounded-2xl p-4 shadow-sm">
+    <div class="flex items-center gap-2 mb-3">
+      <span class="w-6 h-6 bg-black text-white rounded-full text-xs flex items-center justify-center font-bold">4</span>
+      <h2 class="font-semibold text-sm">標籤設定</h2>
+    </div>
+    <div class="grid grid-cols-2 gap-2">
+      <label class="flex items-center gap-3 border rounded-xl px-3 py-3 cursor-pointer hover:bg-gray-50">
+        <input id="isView" type="checkbox" checked class="w-4 h-4 accent-black">
+        <div><div class="text-sm font-medium">上架</div><div class="text-xs text-gray-400">isView</div></div>
+      </label>
+      <label class="flex items-center gap-3 border rounded-xl px-3 py-3 cursor-pointer hover:bg-gray-50">
+        <input id="isNew" type="checkbox" class="w-4 h-4 accent-black">
+        <div><div class="text-sm font-medium">🆕 新品</div><div class="text-xs text-gray-400">isNew</div></div>
+      </label>
+      <label class="flex items-center gap-3 border rounded-xl px-3 py-3 cursor-pointer hover:bg-gray-50">
+        <input id="isHot" type="checkbox" class="w-4 h-4 accent-black">
+        <div><div class="text-sm font-medium">🔥 熱賣</div><div class="text-xs text-gray-400">isHot</div></div>
+      </label>
+      <label class="flex items-center gap-3 border rounded-xl px-3 py-3 cursor-pointer hover:bg-gray-50">
+        <input id="isSale" type="checkbox" class="w-4 h-4 accent-black">
+        <div><div class="text-sm font-medium">🈹 特價</div><div class="text-xs text-gray-400">isSale</div></div>
+      </label>
+    </div>
+  </div>
+
+  <button id="submitBtn" onclick="submitProduct()"
+    class="w-full py-4 bg-black text-white font-semibold rounded-2xl active:bg-gray-800 transition text-base shadow-sm">
+    ＋ 新增商品
+  </button>
+  <div class="pb-8"></div>
+</div>
+
+<!-- 成功畫面 -->
+<div id="successScreen" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.5);align-items:flex-end;justify-content:center">
+  <div class="text-6xl mb-4">🎉</div>
+  <h2 class="text-2xl font-bold mb-2">商品已新增！</h2>
+  <p class="text-gray-400 text-sm mb-8">已成功寫入 Notion</p>
+  <button onclick="resetForm()"
+    class="w-full max-w-xs py-3 bg-black text-white font-medium rounded-xl active:bg-gray-800">
+    繼續新增商品
+  </button>
 </div>
 
 <script>
 const CLOUD_NAME    = "doue38blc";
 const UPLOAD_PRESET = "shop_upload";
-const BANNER_API    = "https://shoptest-chi.vercel.app/api/banner-manage";
+const ADD_API       = "https://shoptest-chi.vercel.app/api/add-product";
+const PRODUCTS_API  = "https://shoptest-chi.vercel.app/api/products";
+const CHECK_ID_API  = "https://shoptest-chi.vercel.app/api/check-idnumber";
 
-// 目標裁切比例 16:7
-const TARGET_RATIO = 16 / 7;
-const TARGET_W = 2800;
-const TARGET_H = 1226;
+let mainImgUrl = "", detailUrls = [], allProductData = [];
 
-let banners    = [];
-let origFile   = null;
-let imgNatW    = 0, imgNatH = 0;  // 原始圖片尺寸
-let dispW      = 0, dispH = 0;    // 顯示尺寸
-let scale      = 1;               // 顯示/原始 比例
+const BTN_NORMAL = "px-3 py-1.5 rounded-full border text-xs transition bg-white text-gray-700 border-gray-300 hover:border-black active:bg-gray-100";
+const BTN_ACTIVE = "px-3 py-1.5 rounded-full border text-xs transition bg-black text-white border-black";
 
-// cropBox 位置（以顯示尺寸為單位）
-let crop = { x: 0, y: 0, w: 0, h: 0 };
-let drag = null; // { type: 'move'|'tl'|'tr'|'bl'|'br', startX, startY, startCrop }
-
-// ── 初始化 ───────────────────────────────────────────
-async function init() {
+(async () => {
   try {
-    const res = await fetch(BANNER_API + "?all=1");
-    banners   = await res.json();
-    renderList();
-  } catch (err) {
-    document.getElementById("bannerList").innerHTML =
-      `<div class="text-center text-red-400 text-sm py-4">載入失敗</div>`;
-  }
+    const res = await fetch(PRODUCTS_API, { cache: "no-store" });
+    allProductData = await res.json();
+    renderMainBtns();
+    renderSubBtns("");
+  } catch { document.getElementById("mainCategoryBtns").innerHTML = '<span class="text-xs text-gray-300">載入失敗</span>'; }
+  addDetailSlot();
+
+  document.getElementById("mainImgInput").addEventListener("change", async (e) => {
+    const file = e.target.files[0]; if (file) { e.target.value = ""; await uploadMainImg(file); }
+  });
+  document.getElementById("mainCategory").addEventListener("input", (e) => renderSubBtns(e.target.value.trim()));
+
+  let idCheckTimer = null;
+  document.getElementById("idnumber").addEventListener("input", (e) => {
+    const val = e.target.value.trim(), statusEl = document.getElementById("idnumberStatus");
+    clearTimeout(idCheckTimer);
+    if (!val) { statusEl.textContent = ""; return; }
+    statusEl.textContent = "⏳";
+    statusEl.className = "absolute right-3 top-2.5 text-xs text-gray-400";
+    idCheckTimer = setTimeout(async () => {
+      try {
+        const res = await fetch(`${CHECK_ID_API}?idnumber=${encodeURIComponent(val)}`);
+        const data = await res.json();
+        if (data.exists) {
+          statusEl.textContent = "⚠️ 已存在";
+          statusEl.className = "absolute right-3 top-2.5 text-xs text-orange-500 font-medium";
+          e.target.classList.add("border-orange-400"); e.target.classList.remove("border-green-400");
+        } else {
+          statusEl.textContent = "✅ 可使用";
+          statusEl.className = "absolute right-3 top-2.5 text-xs text-green-500 font-medium";
+          e.target.classList.add("border-green-400"); e.target.classList.remove("border-orange-400");
+        }
+      } catch { statusEl.textContent = ""; }
+    }, 600);
+  });
+})();
+
+function renderMainBtns() {
+  const mains = [...new Set(allProductData.map(p => p.mainCategory).filter(Boolean))].sort();
+  const el = document.getElementById("mainCategoryBtns");
+  el.innerHTML = "";
+  if (!mains.length) { el.innerHTML = '<span class="text-xs text-gray-300">尚無大分類</span>'; return; }
+  mains.forEach(m => {
+    const btn = document.createElement("button"); btn.type = "button"; btn.textContent = m; btn.className = BTN_NORMAL;
+    btn.onclick = () => { document.getElementById("mainCategory").value = m; document.getElementById("mainCategoryBtns").querySelectorAll("button").forEach(b => b.className = BTN_NORMAL); btn.className = BTN_ACTIVE; document.getElementById("category").value = ""; renderSubBtns(m); };
+    el.appendChild(btn);
+  });
 }
 
-// ── 檔案選取 ─────────────────────────────────────────
-document.getElementById("bannerFileInput").addEventListener("change", (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  e.target.value = "";
-  origFile = file;
-
-  const url = URL.createObjectURL(file);
-  const img = document.getElementById("cropImg");
-  img.onload = () => {
-    imgNatW = img.naturalWidth;
-    imgNatH = img.naturalHeight;
-    dispW   = img.offsetWidth;
-    dispH   = img.offsetHeight;
-    scale   = imgNatW / dispW;
-    initCropBox();
-    document.getElementById("step1").style.display="none";
-    document.getElementById("step2").style.display="flex";
-  };
-  img.src = url;
-});
-
-function initCropBox() {
-  // 預設裁切框：以 16:7 比例，盡量填滿寬度，置中
-  dispW = document.getElementById("cropImg").offsetWidth;
-  dispH = document.getElementById("cropImg").offsetHeight;
-  scale = imgNatW / dispW;
-
-  let cw = dispW;
-  let ch = cw / TARGET_RATIO;
-  if (ch > dispH) {
-    ch = dispH;
-    cw = ch * TARGET_RATIO;
-  }
-  crop = {
-    x: (dispW - cw) / 2,
-    y: (dispH - ch) / 2,
-    w: cw,
-    h: ch,
-  };
-  renderCropBox();
+function renderSubBtns(selectedMain) {
+  const section = document.getElementById("subCatSection");
+  if (!selectedMain) { section.style.display="none"; return; }
+  const subs = [...new Set(allProductData.filter(p => p.mainCategory === selectedMain).map(p => p.category).filter(Boolean))].sort();
+  const el = document.getElementById("categoryBtns"); el.innerHTML = "";
+  if (!subs.length) { section.style.display="none"; return; }
+  section.style.display="flex";
+  subs.forEach(s => {
+    const btn = document.createElement("button"); btn.type = "button"; btn.textContent = s; btn.className = BTN_NORMAL;
+    btn.onclick = () => { document.getElementById("category").value = s; el.querySelectorAll("button").forEach(b => b.className = BTN_NORMAL); btn.className = BTN_ACTIVE; };
+    el.appendChild(btn);
+  });
 }
 
-function resetCrop() { initCropBox(); }
-
-function renderCropBox() {
-  const box = document.getElementById("cropBox");
-  box.style.left   = crop.x + "px";
-  box.style.top    = crop.y + "px";
-  box.style.width  = crop.w + "px";
-  box.style.height = crop.h + "px";
-
-  // 顯示原始像素尺寸
-  const pw = Math.round(crop.w * scale);
-  const ph = Math.round(crop.h * scale);
-  document.getElementById("cropSizeHint").textContent =
-    `裁切區域：${pw} × ${ph} px → 輸出 2800 × 1226 px（高解析度）`;
-}
-
-// ── 拖曳邏輯 ─────────────────────────────────────────
-const cropBox  = document.getElementById("cropBox");
-const cropWrap = document.getElementById("cropWrap");
-
-function getPos(e) {
-  const rect = cropWrap.getBoundingClientRect();
-  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-  return { x: clientX - rect.left, y: clientY - rect.top };
-}
-
-cropBox.addEventListener("mousedown",  startDrag);
-cropBox.addEventListener("touchstart", startDrag, { passive: false });
-
-function startDrag(e) {
-  e.preventDefault();
-  const dir = e.target.dataset.dir || "move";
-  const pos = getPos(e);
-  drag = { type: dir, startX: pos.x, startY: pos.y, startCrop: { ...crop } };
-
-  document.addEventListener("mousemove", onDrag);
-  document.addEventListener("touchmove", onDrag, { passive: false });
-  document.addEventListener("mouseup",   endDrag);
-  document.addEventListener("touchend",  endDrag);
-}
-
-function onDrag(e) {
-  if (!drag) return;
-  e.preventDefault();
-  const pos = getPos(e);
-  const dx  = pos.x - drag.startX;
-  const dy  = pos.y - drag.startY;
-  const sc  = drag.startCrop;
-
-  dispW = document.getElementById("cropImg").offsetWidth;
-  dispH = document.getElementById("cropImg").offsetHeight;
-
-  let { x, y, w, h } = sc;
-
-  if (drag.type === "move") {
-    x = sc.x + dx;
-    y = sc.y + dy;
-    x = Math.max(0, Math.min(dispW - w, x));
-    y = Math.max(0, Math.min(dispH - h, y));
-  } else {
-    // 縮放：鎖定 16:7 比例
-    const MIN = 100;
-    if (drag.type === "br") {
-      w = Math.max(MIN, sc.w + dx);
-      h = w / TARGET_RATIO;
-      if (x + w > dispW) { w = dispW - x; h = w / TARGET_RATIO; }
-      if (y + h > dispH) { h = dispH - y; w = h * TARGET_RATIO; }
-    } else if (drag.type === "bl") {
-      w = Math.max(MIN, sc.w - dx);
-      h = w / TARGET_RATIO;
-      x = sc.x + sc.w - w;
-      if (x < 0) { x = 0; w = sc.x + sc.w; h = w / TARGET_RATIO; }
-      if (y + h > dispH) { h = dispH - y; w = h * TARGET_RATIO; x = sc.x + sc.w - w; }
-    } else if (drag.type === "tr") {
-      w = Math.max(MIN, sc.w + dx);
-      h = w / TARGET_RATIO;
-      y = sc.y + sc.h - h;
-      if (x + w > dispW) { w = dispW - x; h = w / TARGET_RATIO; y = sc.y + sc.h - h; }
-      if (y < 0) { y = 0; h = sc.y + sc.h; w = h * TARGET_RATIO; }
-    } else if (drag.type === "tl") {
-      w = Math.max(MIN, sc.w - dx);
-      h = w / TARGET_RATIO;
-      x = sc.x + sc.w - w;
-      y = sc.y + sc.h - h;
-      if (x < 0) { x = 0; w = sc.x + sc.w; h = w / TARGET_RATIO; y = sc.y + sc.h - h; }
-      if (y < 0) { y = 0; h = sc.y + sc.h; w = h * TARGET_RATIO; x = sc.x + sc.w - w; }
-    }
-  }
-
-  crop = { x, y, w, h };
-  scale = imgNatW / dispW;
-  renderCropBox();
-}
-
-function endDrag() {
-  drag = null;
-  document.removeEventListener("mousemove", onDrag);
-  document.removeEventListener("touchmove", onDrag);
-  document.removeEventListener("mouseup",   endDrag);
-  document.removeEventListener("touchend",  endDrag);
-}
-
-// ── 裁切並上傳 ────────────────────────────────────────
-async function cropAndUpload() {
-  const btn    = document.getElementById("uploadBtn");
-  const status = document.getElementById("addStatus");
-
-  btn.disabled    = true;
-  btn.textContent = "處理中...";
-  status.textContent = "";
-  status.style.display="flex";
-
+async function uploadMainImg(file) {
+  document.getElementById("mainImgPlaceholder").style.display="none";
+  document.getElementById("mainImgLoading").style.display="flex";
   try {
-    // Canvas 裁切
-    const canvas  = document.createElement("canvas");
-    canvas.width  = TARGET_W;
-    canvas.height = TARGET_H;
-    const ctx = canvas.getContext("2d");
+    mainImgUrl = await uploadToCloudinary(file);
+    document.getElementById("mainImgPreview").src = mainImgUrl;
+    document.getElementById("mainImgPreview").style.display="flex";
+    document.getElementById("mainImgRemove").style.display="flex";
+  } catch { alert("主圖上傳失敗"); document.getElementById("mainImgPlaceholder").style.display="flex"; }
+  finally { document.getElementById("mainImgLoading").style.display="none"; }
+}
 
-    const img = document.getElementById("cropImg");
-    // 把顯示座標換算回原圖座標
-    dispW = img.offsetWidth;
-    scale = imgNatW / dispW;
+function removeMainImg(e) {
+  e.stopPropagation(); mainImgUrl = "";
+  document.getElementById("mainImgPreview").style.display="none";
+  document.getElementById("mainImgRemove").style.display="none";
+  document.getElementById("mainImgPlaceholder").style.display="flex";
+}
 
-    const sx = crop.x * scale;
-    const sy = crop.y * scale;
-    const sw = crop.w * scale;
-    const sh = crop.h * scale;
+function addDetailSlot() {
+  const idx = detailUrls.length; detailUrls.push("");
+  const container = document.getElementById("detailSlots");
+  const slot = document.createElement("div");
+  slot.id = `slot-${idx}`;
+  slot.className = "relative aspect-square rounded-xl overflow-hidden bg-gray-50 border-2 border-dashed border-gray-200 flex items-center justify-center cursor-pointer hover:border-gray-400 transition";
+  slot.innerHTML = `<div class="slot-ph flex flex-col items-center text-gray-400 pointer-events-none"><span class="text-xl">📷</span><span class="text-xs mt-0.5">圖${idx+1}</span></div><img class="slot-img hidden absolute inset-0 w-full h-full object-cover"><div class="slot-load hidden absolute inset-0 bg-gray-50 flex items-center justify-center text-xs text-gray-400">⏳</div><button class="slot-del hidden absolute top-1 right-1 bg-black bg-opacity-60 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs z-10">✕</button>`;
+  slot.querySelector(".slot-del").onclick = (e) => { e.stopPropagation(); clearSlot(idx, slot); };
+  slot.onclick = () => pickFile(idx, slot);
+  container.appendChild(slot);
+}
 
-    ctx.drawImage(img, sx, sy, sw, sh, 0, 0, TARGET_W, TARGET_H);
+function pickFile(idx, slot) {
+  const input = document.createElement("input"); input.type = "file"; input.accept = "image/*";
+  input.onchange = async (e) => {
+    const file = e.target.files[0]; if (!file) return;
+    slot.querySelector(".slot-ph").style.display="none"; slot.querySelector(".slot-load").style.display="flex";
+    try {
+      const url = await uploadToCloudinary(file); detailUrls[idx] = url;
+      slot.querySelector(".slot-img").src = url; slot.querySelector(".slot-img").style.display="flex"; slot.querySelector(".slot-del").style.display="flex"; slot.onclick = null; slot.classList.remove("cursor-pointer","hover:border-gray-400");
+    } catch { alert(`圖${idx+1}上傳失敗`); slot.querySelector(".slot-ph").style.display="flex"; }
+    finally { slot.querySelector(".slot-load").style.display="none"; }
+  }; input.click();
+}
 
-    // 轉 blob 上傳
-    status.textContent = "⏳ 上傳至 Cloudinary...";
-    const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/png"));
+function clearSlot(idx, slot) {
+  detailUrls[idx] = "";
+  const imgEl = slot.querySelector(".slot-img");
+  imgEl.src = ""; imgEl.style.display="none"; imgEl.style.display = "none";
+  slot.querySelector(".slot-del").style.display="none";
+  slot.querySelector(".slot-ph").style.display="flex";
+  slot.classList.add("cursor-pointer","hover:border-gray-400");
+  slot.onclick = () => pickFile(idx, slot);
+}
 
-    const fd = new FormData();
-    fd.append("file", blob, "banner.png");
-    fd.append("upload_preset", UPLOAD_PRESET);
+async function uploadToCloudinary(file) {
+  const fd = new FormData(); fd.append("file", file); fd.append("upload_preset", UPLOAD_PRESET);
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { method: "POST", body: fd });
+  const data = await res.json(); if (!data.secure_url) throw new Error("上傳失敗"); return data.secure_url;
+}
 
-    const upRes  = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
-      method: "POST", body: fd,
-    });
-    const upData = await upRes.json();
-    if (!upData.secure_url) throw new Error("上傳失敗");
+async function submitProduct() {
+  const tname = document.getElementById("tname").value.trim(), tprice = document.getElementById("tprice").value.trim();
+  if (!tname) { alert("請填寫商品名稱"); return; } if (!tprice) { alert("請填寫原價"); return; }
 
-    const imageUrl = upData.secure_url;
-    const title    = document.getElementById("bannerTitle").value.trim() || "Banner";
-
-    // 寫入 Notion
-    status.textContent = "⏳ 儲存至 Notion...";
-    const addRes  = await fetch(BANNER_API, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, image: imageUrl, order: banners.length + 1 }),
-    });
-    const addData = await addRes.json();
-    if (!addData.success) throw new Error(addData.error || "新增失敗");
-
-    status.textContent = "✅ 新增成功！";
-    setTimeout(() => {
-      cancelCrop();
-      init();
-    }, 1200);
-
-  } catch (err) {
-    status.textContent = "❌ " + err.message;
-    btn.disabled = false;
-    btn.textContent = "裁切並上傳";
+  // 送出前確認商品編號沒有重複
+  const idnumberVal = document.getElementById("idnumber").value.trim();
+  if (idnumberVal) {
+    try {
+      const checkRes = await fetch(`${CHECK_ID_API}?idnumber=${encodeURIComponent(idnumberVal)}`);
+      const checkData = await checkRes.json();
+      if (checkData.exists) {
+        alert(`商品編號「${idnumberVal}」已存在，請更換編號！`);
+        return;
+      }
+    } catch {}
   }
+
+  const btn = document.getElementById("submitBtn"); btn.disabled = true; btn.textContent = "送出中...";
+  try {
+    const validDetails = detailUrls.filter(Boolean);
+    const allImages = mainImgUrl ? [mainImgUrl, ...validDetails.filter(u => u !== mainImgUrl)] : validDetails;
+    const jname = document.getElementById("jname").value.trim();
+    const payload = { tname, jname, jprice: Number(tprice), jsprice: Number(document.getElementById("sprice").value)||0, mainCategory: document.getElementById("mainCategory").value.trim(), category: document.getElementById("category").value.trim(), description: document.getElementById("description").value.trim(), weight: Number(document.getElementById("weight").value)||0, idnumber: document.getElementById("idnumber").value.trim()||null, image: mainImgUrl, images: allImages.join(","), isView: document.getElementById("isView").checked, isNew: document.getElementById("isNew").checked, isHot: document.getElementById("isHot").checked, isSale: document.getElementById("isSale").checked };
+    const res = await fetch(ADD_API, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+    const data = await res.json(); if (!data.success) throw new Error(data.error||"新增失敗");
+    document.getElementById("successScreen").style.display="flex";
+  } catch (err) { alert("新增失敗：" + err.message); btn.disabled = false; btn.textContent = "＋ 新增商品"; }
 }
 
-function cancelCrop() {
-  document.getElementById("step1").style.display="flex";
-  document.getElementById("step2").style.display="none";
-  document.getElementById("bannerTitle").value = "";
-  document.getElementById("addStatus").style.display="none";
-  document.getElementById("uploadBtn").disabled = false;
-  document.getElementById("uploadBtn").textContent = "裁切並上傳";
-  origFile = null;
-  URL.revokeObjectURL(document.getElementById("cropImg").src);
-}
+// ── AI 一鍵生成 ──────────────────────────────────────
+const GENERATE_API = "https://shoptest-chi.vercel.app/api/generate-description";
 
-// ── 列表渲染 ─────────────────────────────────────────
-function renderList() {
-  const el = document.getElementById("bannerList");
-  document.getElementById("bannerCount").textContent = `共 ${banners.length} 張`;
+async function generateDescription() {
+  const name   = document.getElementById("aiProductName").value.trim();
+  const btn    = document.getElementById("aiGenerateBtn");
+  const status = document.getElementById("aiStatus");
 
-  if (!banners.length) {
-    el.innerHTML = `<div class="text-center text-gray-400 text-sm py-6">尚無輪播圖</div>`;
+  if (!name) {
+    alert("請先填入商品名稱或編號");
+    document.getElementById("aiProductName").focus();
     return;
   }
 
-  el.innerHTML = banners.map((b, i) => `
-    <div id="banner-${b.pageId}" class="flex items-center gap-3 border rounded-xl p-3 bg-gray-50">
-      <div class="flex flex-col gap-1 shrink-0">
-        <button onclick="moveUp(${i})"
-          class="w-7 h-7 flex items-center justify-center rounded-lg border bg-white text-gray-400 hover:text-black text-xs"
-          ${i === 0 ? "disabled" : ""}>▲</button>
-        <button onclick="moveDown(${i})"
-          class="w-7 h-7 flex items-center justify-center rounded-lg border bg-white text-gray-400 hover:text-black text-xs"
-          ${i === banners.length - 1 ? "disabled" : ""}>▼</button>
-      </div>
-      <img src="${b.image}" class="w-24 h-14 object-cover rounded-lg shrink-0 bg-gray-200">
-      <div class="flex-1 min-w-0">
-        <div class="text-sm font-medium text-gray-800 truncate">${b.title || "未命名"}</div>
-        <div class="text-xs text-gray-400 mt-0.5">排序：${b.order}</div>
-      </div>
-      <div class="flex flex-col items-end gap-2 shrink-0">
-        <button onclick="toggleActive('${b.pageId}', ${!b.isActive}, ${i})"
-          class="text-xs px-2.5 py-1 rounded-full border font-medium transition
-                 ${b.isActive ? "bg-green-100 text-green-600 border-green-200" : "bg-gray-100 text-gray-400 border-gray-200"}">
-          ${b.isActive ? "顯示中" : "已隱藏"}
-        </button>
-        <button onclick="deleteBanner('${b.pageId}', ${i})"
-          class="text-xs text-red-400 hover:text-red-600">刪除</button>
-      </div>
-    </div>`).join("");
-}
+  btn.disabled    = true;
+  btn.textContent = "⏳ 生成中...";
+  status.textContent = "AI 正在查詢商品資訊，約需 5-10 秒…";
+  status.className   = "text-xs text-gray-400";
+  status.style.display="flex";
 
-// ── 排序 ─────────────────────────────────────────────
-async function moveUp(idx)   { if (idx > 0) await swapOrder(idx, idx-1); }
-async function moveDown(idx) { if (idx < banners.length-1) await swapOrder(idx, idx+1); }
-
-async function swapOrder(a, b) {
-  const ba = banners[a], bb = banners[b];
   try {
-    await Promise.all([
-      fetch(BANNER_API, { method:"PATCH", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ pageId: ba.pageId, order: bb.order }) }),
-      fetch(BANNER_API, { method:"PATCH", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ pageId: bb.pageId, order: ba.order }) }),
-    ]);
-    [banners[a], banners[b]] = [banners[b], banners[a]];
-    renderList();
-  } catch (err) { alert("排序失敗：" + err.message); }
-}
-
-// ── 顯示切換 ─────────────────────────────────────────
-async function toggleActive(pageId, newVal, idx) {
-  try {
-    const res  = await fetch(BANNER_API, { method:"PATCH", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ pageId, isActive: newVal }) });
+    const res  = await fetch(GENERATE_API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ productName: name }),
+    });
     const data = await res.json();
-    if (!data.success) throw new Error(data.error);
-    banners[idx].isActive = newVal;
-    renderList();
-  } catch (err) { alert("更新失敗：" + err.message); }
-}
 
-// ── 刪除 ─────────────────────────────────────────────
-async function deleteBanner(pageId, idx) {
-  if (!confirm(`確定刪除「${banners[idx].title || "此圖片"}」嗎？`)) return;
-  try {
-    const res  = await fetch(BANNER_API, { method:"DELETE", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ pageId }) });
-    const data = await res.json();
-    if (!data.success) throw new Error(data.error);
-    banners.splice(idx, 1);
-    renderList();
-  } catch (err) { alert("刪除失敗：" + err.message); }
-}
+    if (!res.ok) throw new Error(data.error || "生成失敗");
 
-// 視窗縮放時重新計算裁切框
-window.addEventListener("resize", () => {
-  if (!document.getElementById("step2").classList.contains("hidden")) {
-    initCropBox();
+    const text = data.text || "";
+
+    // 解析並填入欄位
+    const nameMatch  = text.match(/商品名稱[：:]\s*(.+)/);
+    const jnameMatch = text.match(/日文名稱[：:]\s*(.+)/);
+    const idMatch    = text.match(/商品編號[：:]\s*(.+)/);
+    const descMatch  = text.match(/商品內容跟特點[\s\S]*/);
+
+    if (nameMatch)  document.getElementById("tname").value       = nameMatch[1].trim();
+    if (jnameMatch) {
+      const jnameEl = document.getElementById("jname");
+      if (jnameEl) jnameEl.value = jnameMatch[1].trim();
+    }
+    if (idMatch) {
+      const idnumEl = document.getElementById("idnumber");
+      if (idnumEl && !idnumEl.value) idnumEl.value = idMatch[1].trim();
+    }
+    if (descMatch) {
+      // 移除商品名稱、日文名稱、商品編號那幾行，只保留描述部分
+      const desc = descMatch[0].trim();
+      document.getElementById("description").value = desc;
+    }
+
+    status.textContent = "✅ 已生成並填入，請確認內容後繼續！";
+    status.className   = "text-xs text-green-600";
+
+    // 顯示預覽
+    const preview = document.getElementById("aiPreview");
+    preview.textContent = text;
+    preview.style.display="flex";
+
+    // 滾動到商品名稱
+    document.getElementById("tname").scrollIntoView({ behavior: "smooth", block: "center" });
+
+  } catch (err) {
+    status.textContent = "❌ 生成失敗：" + err.message;
+    status.className   = "text-xs text-red-500";
+  } finally {
+    btn.disabled    = false;
+    btn.textContent = "✨ 一鍵生成";
   }
-});
+}
 
-init();
+function resetForm() {
+  document.getElementById("successScreen").style.display="none";
+  ["tname","jname","idnumber","tprice","sprice","weight","mainCategory","category","description"].forEach(id => document.getElementById(id).value = "");
+  document.getElementById("idnumberStatus").textContent = ""; document.getElementById("idnumber").classList.remove("border-orange-400","border-green-400");
+  document.getElementById("isView").checked = true; ["isNew","isHot","isSale"].forEach(id => document.getElementById(id).checked = false);
+  mainImgUrl = ""; document.getElementById("mainImgPreview").style.display="none"; document.getElementById("mainImgRemove").style.display="none"; document.getElementById("mainImgPlaceholder").style.display="flex";
+  detailUrls = []; document.getElementById("detailSlots").innerHTML = ""; addDetailSlot();
+  document.getElementById("submitBtn").disabled = false; document.getElementById("submitBtn").textContent = "＋ 新增商品";
+  // 清除 AI 生成區
+  const aiPreview = document.getElementById("aiPreview");
+  aiPreview.textContent = "";
+  aiPreview.style.display="none";
+  const aiStatus = document.getElementById("aiStatus");
+  if (aiStatus) { aiStatus.textContent = ""; aiStatus.className = ""; }
+  const aiInput = document.getElementById("aiInput");
+  if (aiInput) aiInput.value = "";
+}
 </script>
   </main>
 </div>
+
+<nav class="admin-bottom-nav" style="display:none">
+  <a href="admin-orders.html" class="admin-bnav-item"><i class="ti ti-clipboard-list"></i>訂單</a>
+  <a href="admin-products.html" class="admin-bnav-item"><i class="ti ti-package"></i>商品</a>
+  <a href="admin-add.html" class="admin-bnav-item active"><i class="ti ti-plus"></i>新增</a>
+  <a href="admin-customers.html" class="admin-bnav-item"><i class="ti ti-users"></i>客戶</a>
+  <a href="admin-banners.html" class="admin-bnav-item"><i class="ti ti-photo"></i>輪播</a>
+</nav>
 </body>
 </html>

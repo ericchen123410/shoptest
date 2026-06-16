@@ -1,36 +1,8 @@
-<!DOCTYPE html>
-<html lang="zh">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>商品詳細 | W-82</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
-  <link rel="stylesheet" href="js/theme.css">
-</head>
-<body>
-
-<nav class="top-nav">
-  <button class="nav-icon-btn" onclick="history.back()" aria-label="返回"><i class="ti ti-arrow-left"></i></button>
-  <span style="font-size:16px;font-weight:600">商品詳細</span>
-  <a href="cart.html" class="nav-icon-btn" aria-label="購物車">
-    <i class="ti ti-shopping-cart"></i>
-    <span id="cartCount" class="cart-badge" style="display:none">0</span>
-  </a>
-</nav>
-
-<div class="page-wrap" id="productWrap">
-  <div style="padding:80px 0;text-align:center;color:var(--gray-400)">載入中...</div>
-</div>
-
-<nav class="bottom-nav">
-  <a href="index.html"        class="bnav-item"><i class="ti ti-home"></i>首頁</a>
-  <a href="hot.html"          class="bnav-item"><i class="ti ti-flame"></i>熱賣</a>
-  <a href="search.html"       class="bnav-item"><i class="ti ti-search"></i>搜尋</a>
-  <a href="order-status.html" class="bnav-item"><i class="ti ti-clipboard-list"></i>訂單</a>
-  <a href="about.html"        class="bnav-item"><i class="ti ti-info-circle"></i>關於</a>
-</nav>
-
-<script type="module" src="js/cartCount.js"></script>
-<script type="module" src="js/product.js"></script>
-</body>
-</html>
+{
+  "name": "shop-project",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "nodemailer": "^6.9.9"
+  }
+}
