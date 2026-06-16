@@ -153,6 +153,21 @@ button{cursor:pointer}
   .admin-bottom-nav { display: none !important; }
 }
 </style>
+<style id="pointer-fix">
+/* 確保按鈕可點擊 */
+button { pointer-events: auto !important; cursor: pointer !important; }
+a { pointer-events: auto !important; }
+.admin-content * { pointer-events: auto; }
+/* 比例修正 */
+.admin-main { min-width: 0; overflow-x: hidden; }
+img { max-width: 100%; }
+.w-14 { width: 56px !important; flex-shrink: 0 !important; }
+.h-14 { height: 56px !important; }
+/* 修正 flex 卡片換行 */
+.flex.items-center.gap-3 { display: flex !important; align-items: center !important; gap: 12px !important; }
+.flex-1.min-w-0 { flex: 1 !important; min-width: 0 !important; overflow: hidden !important; }
+.shrink-0 { flex-shrink: 0 !important; }
+</style>
 </head>
 <body>
 
@@ -420,26 +435,25 @@ function renderList() {
   document.getElementById("productList").innerHTML = list.map(p => {
     const img = p.image || p.images?.[0] || "";
     return `
-      <div class="bg-white rounded-xl border px-3 py-3 flex items-center gap-3">
-        ${img ? `<img src="${img}" class="w-14 h-14 object-cover rounded-lg shrink-0">` : `<div class="w-14 h-14 bg-gray-100 rounded-lg shrink-0 flex items-center justify-center text-gray-300 text-xl">📷</div>`}
-        <div class="flex-1 min-w-0">
-          <div class="text-sm font-semibold truncate">${p.name}</div>
-          <div class="text-xs text-gray-400 mt-0.5">${[p.mainCategory,p.category].filter(Boolean).join(" · ")}</div>
-          ${p.idnumber ? `<div class="text-xs text-gray-300 mt-0.5">#${p.idnumber}</div>` : ""}
-          ${p.sort ? `<div class="text-xs text-gray-300 mt-0.5">排序：${p.sort}</div>` : ""}
-          <div class="text-xs text-red-500 mt-0.5 font-medium">NT$ ${Math.round(p.price||0).toLocaleString()}</div>
+      <div style="background:#fff;border-radius:10px;border:1px solid #e5e5e5;padding:10px 12px;display:flex;align-items:center;gap:10px;cursor:pointer" onclick="openEdit('${p.id}')">
+        ${img ? `<img src="${img}" style="width:56px;height:56px;object-fit:cover;border-radius:8px;flex-shrink:0">` : `<div style="width:56px;height:56px;background:#f2f2f2;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:20px">📷</div>`}
+        <div style="flex:1;min-width:0;overflow:hidden">
+          <div style="font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:3px">${p.name}</div>
+          <div style="font-size:12px;color:#aaa">${[p.mainCategory,p.category].filter(Boolean).join(" · ")}</div>
+          ${p.idnumber ? `<div style="font-size:11px;color:#bbb">#${p.idnumber}</div>` : ""}
+          <div style="font-size:14px;font-weight:700;margin-top:4px">NT$${Math.round(p.price||0).toLocaleString()}</div>
         </div>
-        <div class="flex flex-col items-end gap-2 shrink-0">
-          <span class="text-xs px-2 py-0.5 rounded-full font-medium ${p.isView ? "bg-green-100 text-green-600" : "bg-gray-100 text-gray-400"}">
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0">
+          <span style="font-size:11px;padding:3px 8px;border-radius:6px;font-weight:600;${p.isView ? "background:#dcfce7;color:#15803d" : "background:#f2f2f2;color:#aaa"}">
             ${p.isView ? "上架" : "下架"}
           </span>
-          <div class="flex gap-1.5">
-            <button onclick="toggleView('${p.id}', ${!p.isView})"
-              class="text-xs px-2 py-1 border rounded-lg hover:bg-gray-50 active:bg-gray-100">
+          <div style="display:flex;gap:6px">
+            <button onclick="event.stopPropagation();toggleView('${p.id}', ${!p.isView})"
+              style="font-size:12px;padding:5px 10px;border:1px solid #e5e5e5;border-radius:6px;background:#fff;cursor:pointer">
               ${p.isView ? "下架" : "上架"}
             </button>
-            <button onclick="openEdit('${p.id}')"
-              class="text-xs px-2 py-1 border rounded-lg hover:bg-gray-50 active:bg-gray-100">
+            <button onclick="event.stopPropagation();openEdit('${p.id}')"
+              style="font-size:12px;padding:5px 10px;border:1px solid #e5e5e5;border-radius:6px;background:#fff;cursor:pointer">
               編輯
             </button>
           </div>

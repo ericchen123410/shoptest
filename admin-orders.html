@@ -153,6 +153,21 @@ button{cursor:pointer}
   .admin-bottom-nav { display: none !important; }
 }
 </style>
+<style id="pointer-fix">
+/* 確保按鈕可點擊 */
+button { pointer-events: auto !important; cursor: pointer !important; }
+a { pointer-events: auto !important; }
+.admin-content * { pointer-events: auto; }
+/* 比例修正 */
+.admin-main { min-width: 0; overflow-x: hidden; }
+img { max-width: 100%; }
+.w-14 { width: 56px !important; flex-shrink: 0 !important; }
+.h-14 { height: 56px !important; }
+/* 修正 flex 卡片換行 */
+.flex.items-center.gap-3 { display: flex !important; align-items: center !important; gap: 12px !important; }
+.flex-1.min-w-0 { flex: 1 !important; min-width: 0 !important; overflow: hidden !important; }
+.shrink-0 { flex-shrink: 0 !important; }
+</style>
 </head>
 <body>
 
@@ -597,7 +612,9 @@ function openModal(orderId) {
     statusEl.appendChild(btn);
   });
 
-  document.getElementById("modal").style.display="flex";
+  const m = document.getElementById("modal");
+  m.style.display="flex";
+  m.style.zIndex="9999";
   document.body.style.overflow = "hidden";
 }
 
