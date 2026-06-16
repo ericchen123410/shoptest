@@ -326,6 +326,28 @@ if (sessionStorage.getItem("adminAuth") !== "1") location.href = "admin.html";
         </label>
       </div>
 
+      <!-- 圖片上傳 -->
+      <div>
+        <label class="text-xs text-gray-500 mb-2 block">圖片（第一張為主圖）</label>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px" id="editImgSlots"></div>
+        <button type="button" onclick="addEditImgSlot()"
+          style="width:100%;padding:10px;border:2px dashed #e5e5e5;border-radius:8px;font-size:13px;color:#aaa;background:#fff;cursor:pointer">
+          ＋ 新增圖片
+        </button>
+      </div>
+
+    </div>
+
+    <!-- 儲存按鈕 -->
+    <div style="padding:16px 20px;border-top:1px solid #e5e5e5;background:#fff;position:sticky;bottom:0">
+      <button id="editSaveBtn" onclick="saveEdit()"
+        style="width:100%;padding:16px;background:#111;color:#fff;border:none;border-radius:10px;font-size:16px;font-weight:700;cursor:pointer">
+        儲存變更
+      </button>
+      <button onclick="closeEdit()"
+        style="width:100%;padding:12px;background:#fff;color:#666;border:1px solid #e5e5e5;border-radius:10px;font-size:15px;cursor:pointer;margin-top:8px">
+        取消
+      </button>
     </div>
   </div>
 </div>
@@ -560,7 +582,7 @@ async function saveEdit() {
   payload.image  = validImgs[0]  || "";
   payload.images = validImgs.join(",");
 
-  const btn = document.querySelector("#editModal .sticky button:first-child");
+  const btn = document.getElementById("editSaveBtn");
   btn.textContent = "儲存中..."; btn.disabled = true;
 
   try {
