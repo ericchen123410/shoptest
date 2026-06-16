@@ -148,11 +148,12 @@ async function init() {
   const ids  = Object.keys(cart);
 
   if (!ids.length) {
-    el.innerHTML = `
-      <div class="flex flex-col items-center justify-center py-20 text-gray-400">
-        <div class="text-5xl mb-4">🛒</div>
-        <div class="text-base">購物車是空的</div>
-        <a href="index.html" class="mt-4 text-sm text-black underline">繼續逛逛</a>
+    const cartEl2 = document.getElementById("cartBody") || el;
+    cartEl2.innerHTML = `
+      <div style="padding:80px 20px;text-align:center;color:var(--gray-400)">
+        <div style="font-size:60px;margin-bottom:16px">🛒</div>
+        <div style="font-size:18px;font-weight:500;margin-bottom:16px">購物車是空的</div>
+        <a href="index.html" class="btn-primary" style="display:inline-block;text-decoration:none;padding:14px 32px;width:auto">繼續逛逛</a>
       </div>`;
     return;
   }
@@ -188,28 +189,23 @@ async function init() {
     const img = p.image || imagesArr[0] || "https://via.placeholder.com/80";
 
     return `
-      <div class="flex items-center gap-3 py-4 border-b">
-        <img src="${img}" class="w-20 h-20 sm:w-24 sm:h-24 shrink-0 object-cover rounded-xl">
-
-        <div class="flex-1 min-w-0">
-          <div class="text-sm sm:text-base font-semibold leading-snug line-clamp-2 text-gray-800">${p.name}</div>
-          ${variant ? `<div class="text-xs text-gray-500 mt-0.5">規格：${variant}</div>` : ""}
-          <div class="text-red-500 text-sm mt-1 font-medium">${formatPrice(unitPrice)}${appliedCoupon && p.jprice ? `<span class="text-xs text-gray-400 line-through ml-1">${formatPrice(p.price)}</span>` : ""}</div>
-          ${weightNote}
-
-          <div class="flex items-center mt-2 border rounded-lg overflow-hidden w-fit">
-            <button onclick="updateQty('${cartKey}', -1)"
-              class="w-9 h-9 text-lg flex items-center justify-center active:bg-gray-100">−</button>
-            <span class="w-8 text-center text-sm font-medium">${qty}</span>
-            <button onclick="updateQty('${cartKey}', 1)"
-              class="w-9 h-9 text-lg flex items-center justify-center active:bg-gray-100">＋</button>
+      <div style="display:flex;gap:12px;padding:16px;border-bottom:1px solid var(--gray-200);background:var(--white)">
+        <img src="${img}" style="width:80px;height:80px;object-fit:cover;border-radius:var(--radius);flex-shrink:0;background:var(--gray-100)">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:15px;font-weight:600;line-height:1.4;margin-bottom:4px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">${p.name}</div>
+          ${variant ? `<div style="font-size:13px;color:var(--gray-400);margin-bottom:4px">規格：${variant}</div>` : ""}
+          <div style="font-size:16px;font-weight:700;margin-bottom:8px">${formatPrice(unitPrice)}${appliedCoupon && p.jprice ? `<span style="font-size:12px;color:var(--gray-400);text-decoration:line-through;margin-left:6px">${formatPrice(p.price)}</span>` : ""}</div>
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div style="display:flex;align-items:center;border:1.5px solid var(--gray-200);border-radius:var(--radius-sm);overflow:hidden">
+              <button onclick="updateQty('${cartKey}',-1)" style="width:36px;height:36px;background:var(--gray-50);border:none;font-size:20px;cursor:pointer">−</button>
+              <span style="width:40px;height:36px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;border-left:1px solid var(--gray-200);border-right:1px solid var(--gray-200)">${qty}</span>
+              <button onclick="updateQty('${cartKey}',1)"  style="width:36px;height:36px;background:var(--gray-50);border:none;font-size:20px;cursor:pointer">＋</button>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px">
+              <span style="font-size:16px;font-weight:700">${formatPrice(sub)}</span>
+              <button onclick="removeItem('${cartKey}')" style="background:none;border:none;cursor:pointer;color:var(--gray-400);font-size:20px;padding:4px">✕</button>
+            </div>
           </div>
-        </div>
-
-        <div class="flex flex-col items-end gap-3 shrink-0">
-          <button onclick="removeItem('${cartKey}')"
-            class="text-gray-300 active:text-red-400 text-xl leading-none">✕</button>
-          <div class="text-sm font-bold text-gray-800">${formatPrice(sub)}</div>
         </div>
       </div>`;
   }).join("");
@@ -243,82 +239,67 @@ async function init() {
          <span>再買 <span class="font-medium text-gray-600">NT$${Math.ceil(amountLeft).toLocaleString()}</span> 即可免出貨手續費</span>
        </div>`;
 
-  el.innerHTML = `
-    ${rows}
+  const cartEl = document.getElementById("cartBody") || el;
+  cartEl.innerHTML = `
+    <div style="background:var(--white)">${rows}</div>
 
-    <div class="sticky bottom-0 bg-white pt-3 pb-2 border-t mt-2 space-y-2">
-
-      ${shippingHint}
-
-      <!-- 小計 -->
-      <div class="flex justify-between items-center text-sm text-gray-500 pt-1">
+    <div style="margin:12px;background:var(--white);border-radius:var(--radius-lg);padding:16px">
+      ${shippingHint.replace(/class="[^"]*"/g, 'style="font-size:13px;display:flex;align-items:center;gap:6px;margin-bottom:12px"')}
+      <div style="display:flex;justify-content:space-between;font-size:14px;color:var(--gray-600);padding:6px 0">
         <span>商品小計</span>
         <span id="cart-subtotal-val" data-val="${subtotal}">${formatPrice(subtotal)}</span>
       </div>
-
       ${!appliedCoupon && discount > 0 ? `
-      <div class="flex justify-between items-center text-sm text-green-600">
-        <span>🎉 滿NT$3,000折扣</span>
-        <span>- NT$200</span>
+      <div style="display:flex;justify-content:space-between;font-size:14px;color:var(--green);padding:6px 0">
+        <span>🎉 滿NT$3,000折扣</span><span>- NT$200</span>
       </div>` : !appliedCoupon && subtotal > 0 && subtotal < DISCOUNT_MIN ? `
-      <div class="flex items-center gap-1.5 text-xs text-gray-400 mt-1">
-        <span>🎁</span>
-        <span>再買 <span class="font-medium text-gray-600">NT$${(DISCOUNT_MIN - subtotal).toLocaleString()}</span> 可折 NT$200</span>
+      <div style="font-size:13px;color:var(--gray-400);padding:4px 0">
+        再買 <strong>NT$${(DISCOUNT_MIN - subtotal).toLocaleString()}</strong> 可折 NT$200
       </div>` : ""}
-
-      <!-- 運費明細 -->
-      <div class="flex justify-between items-center text-sm ${isFreeShipping ? 'text-green-600' : 'text-gray-500'}">
-        <span>出貨手續費</span>
-        <span>${isFreeShipping ? '免費' : formatPrice(shipping)}</span>
+      <div style="display:flex;justify-content:space-between;font-size:14px;color:${isFreeShipping?'var(--green)':'var(--gray-600)'};padding:6px 0">
+        <span>出貨手續費</span><span>${isFreeShipping ? "免費" : formatPrice(shipping)}</span>
       </div>
-
-      <!-- 總計 -->
-      <div class="border-t pt-2 flex justify-between items-center">
-        <span class="text-gray-700 font-medium">總計</span>
-        <span class="text-xl sm:text-2xl font-bold">${formatPrice(grandTotal)}</span>
+      <div style="border-top:1px solid var(--gray-200);margin-top:8px;padding-top:12px;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:16px;font-weight:600">總計</span>
+        <span style="font-size:26px;font-weight:700">${formatPrice(grandTotal)}</span>
       </div>
+    </div>
 
-      <!-- 集運選項 -->
-      <div class="border rounded-xl p-3 mb-3">
-        <label class="flex items-center gap-3 cursor-pointer">
-          <input type="checkbox" id="bundleCheck" onchange="toggleBundle(this.checked)"
-            class="w-4 h-4 accent-black">
-          <div>
-            <div class="text-sm font-medium">集運合併</div>
-            <div class="text-xs text-gray-400">與其他待處理訂單合併計算出貨手續費</div>
-          </div>
-        </label>
-        <div id="bundleHint" class="hidden text-xs text-orange-500 mt-2"></div>
-        <div id="bundleSection" class="hidden mt-3">
-          <div class="text-xs text-gray-500 mb-2">輸入 Email 查詢可合併的訂單</div>
-          <div class="flex gap-2">
-            <input id="bundleEmail" type="email" placeholder="your@email.com"
-              class="flex-1 border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
-              onkeydown="if(event.key==='Enter') searchBundleOrders()">
-            <button onclick="searchBundleOrders()"
-              class="px-3 py-2 border rounded-xl text-sm hover:bg-gray-50 transition shrink-0">
-              查詢
-            </button>
-          </div>
-          <div id="bundleOrderList" class="mt-2 space-y-2"></div>
-          <div id="bundleTotal" class="hidden mt-2 text-xs text-green-600 font-medium"></div>
+    <!-- 集運 -->
+    <div style="margin:0 12px 12px;background:var(--white);border-radius:var(--radius-lg);padding:14px">
+      <label style="display:flex;align-items:center;gap:12px;cursor:pointer">
+        <input type="checkbox" id="bundleCheck" onchange="toggleBundle(this.checked)" style="width:20px;height:20px;accent-color:var(--black)">
+        <div>
+          <div style="font-size:15px;font-weight:600">集運合併</div>
+          <div style="font-size:13px;color:var(--gray-400)">與其他訂單合併計算出貨手續費</div>
         </div>
+      </label>
+      <div id="bundleHint" style="display:none;font-size:13px;color:orange;margin-top:8px"></div>
+      <div id="bundleSection" style="display:none;margin-top:12px">
+        <div style="display:flex;gap:8px">
+          <input id="bundleEmail" type="email" placeholder="輸入 Email 查詢訂單"
+            style="flex:1;padding:10px 12px;font-size:15px"
+            onkeydown="if(event.key==='Enter') searchBundleOrders()">
+          <button onclick="searchBundleOrders()" class="btn-secondary" style="width:auto;padding:10px 16px;white-space:nowrap">查詢</button>
+        </div>
+        <div id="bundleOrderList" style="margin-top:8px"></div>
+        <div id="bundleTotal" style="display:none;margin-top:8px;font-size:13px;color:var(--green);font-weight:600"></div>
       </div>
+    </div>
 
-      <!-- 優惠碼 -->
-      <div class="flex gap-2 mb-3">
+    <!-- 優惠碼 -->
+    <div style="margin:0 12px 12px;background:var(--white);border-radius:var(--radius-lg);padding:14px">
+      <div style="display:flex;gap:8px">
         <input id="couponInput" type="text" placeholder="輸入優惠碼"
-          class="flex-1 border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+          style="flex:1;padding:10px 12px;font-size:15px"
           onkeydown="if(event.key==='Enter') applyCoupon()">
-        <button onclick="applyCoupon()"
-          class="px-4 py-2.5 border rounded-xl text-sm hover:bg-gray-50 transition shrink-0">
-          套用
-        </button>
+        <button onclick="applyCoupon()" class="btn-secondary" style="width:auto;padding:10px 16px">套用</button>
       </div>
-      <div id="couponStatus" class="text-xs mb-3 hidden"></div>
+      <div id="couponStatus" style="display:none;font-size:13px;margin-top:8px"></div>
+    </div>
 
-      <a href="checkout.html"
-         class="block w-full py-3 bg-black text-white font-medium rounded-xl active:bg-gray-800 transition text-center">
+    <div style="padding:0 12px 12px">
+      <a href="checkout.html" class="btn-primary" style="display:block;text-align:center;text-decoration:none;padding:18px;font-size:17px">
         前往結帳 →
       </a>
     </div>`;

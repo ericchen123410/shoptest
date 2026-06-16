@@ -1,118 +1,27 @@
 <!DOCTYPE html>
 <html lang="zh">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>新商品</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>最新商品 | W-82</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+  <link rel="stylesheet" href="js/theme.css">
 </head>
-<body class="bg-gray-100">
-
-<div class="sticky top-0 z-50 bg-white border-b shadow-sm">
-  <div class="flex justify-between items-center px-4 py-2 max-w-7xl mx-auto">
-    <div class="flex items-center gap-1">
-      <a href="index.html" class="font-bold px-2 py-1.5 rounded-lg hover:bg-gray-100 text-sm">🏠 <span class="hidden lg:inline">首頁</span></a>
-      <a href="new.html"   class="px-2 py-1.5 rounded-lg hover:bg-gray-100 text-xs lg:text-sm">🆕 <span class="hidden sm:inline">新品</span></a>
-      <a href="hot.html"   class="px-2 py-1.5 rounded-lg hover:bg-gray-100 text-xs lg:text-sm">🔥 <span class="hidden sm:inline">熱賣</span></a>
-      <a href="sale.html"  class="px-2 py-1.5 rounded-lg hover:bg-gray-100 text-xs lg:text-sm">🈹 <span class="hidden sm:inline">特價</span></a>
-    </div>
-    <div class="flex items-center gap-1">
-      <!-- ⭐ 搜尋 -->
-      <div id="searchWrap" class="flex items-center">
-        <div id="searchBox"
-          class="hidden items-center gap-1 bg-gray-50 border rounded-xl px-2 py-1 mr-1 transition-all">
-          <input id="navSearchInput" type="text" placeholder="搜尋商品… (Enter)"
-            class="bg-transparent text-sm outline-none w-36 sm:w-48"
-            oninput="onNavSearch(this.value)"
-            onkeydown="if(event.key==='Escape') closeSearch()">
-          <button onclick="closeSearch()" class="text-gray-400 hover:text-black text-sm leading-none">✕</button>
-        </div>
-        <button onclick="toggleSearch()" id="searchToggleBtn"
-          class="px-2 py-1.5 rounded-lg hover:bg-gray-100 text-base">🔍</button>
-      </div>
-      <a href="about.html" class="px-2 py-1.5 rounded-lg hover:bg-gray-100 text-xs lg:text-sm">ℹ️ <span class="hidden sm:inline">關於我們</span></a>
-      <a href="order-status.html" class="px-2 py-1.5 rounded-lg hover:bg-gray-100 text-xs lg:text-sm">📋 <span class="hidden sm:inline">訂單查詢</span></a>
-      <button onclick="history.back()" class="px-2 py-1.5 rounded-lg hover:bg-gray-100 text-sm">⬅️</button>
-      <a href="cart.html" class="px-2 py-1.5 rounded-lg hover:bg-gray-100 text-sm">
-        🛒 <span id="cartCount" class="bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full">0</span>
-      </a>
-    </div>
-  </div>
-  <!-- ⭐ 搜尋結果下拉（僅首頁顯示即時結果） -->
-  <div id="searchDropdown" class="hidden absolute left-0 right-0 bg-white border-t shadow-lg z-50 max-h-80 overflow-y-auto max-w-7xl mx-auto"></div>
-</div>
-
-<div class="px-3 sm:px-6 lg:px-8 py-4 max-w-7xl mx-auto">
-  <h1 class="text-xl sm:text-2xl font-bold mb-3 text-gray-800">🆕 新商品</h1>
-  <div id="list" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4"></div>
-</div>
-
+<body>
+<nav class="top-nav">
+  <button class="nav-icon-btn" onclick="history.back()"><i class="ti ti-arrow-left"></i></button>
+  <span style="font-size:16px;font-weight:600">最新商品</span>
+  <a href="cart.html" class="nav-icon-btn"><i class="ti ti-shopping-cart"></i><span id="cartCount" class="cart-badge" style="display:none">0</span></a>
+</nav>
+<div class="page-wrap" id="list"></div>
+<nav class="bottom-nav">
+  <a href="index.html"        class="bnav-item"><i class="ti ti-home"></i>首頁</a>
+  <a href="hot.html"          class="bnav-item"><i class="ti ti-flame"></i>熱賣</a>
+  <a href="search.html"       class="bnav-item"><i class="ti ti-search"></i>搜尋</a>
+  <a href="order-status.html" class="bnav-item"><i class="ti ti-clipboard-list"></i>訂單</a>
+  <a href="about.html"        class="bnav-item"><i class="ti ti-info-circle"></i>關於</a>
+</nav>
 <script type="module" src="./js/new.js"></script>
 <script src="./js/cartCount.js"></script>
-<script>
-// ── Navibar 搜尋共用 JS ───────────────────────────────
-function toggleSearch() {
-  const box = document.getElementById("searchBox");
-  const isHidden = box.classList.contains("hidden");
-  box.classList.toggle("hidden", !isHidden);
-  box.classList.toggle("flex", isHidden);
-  if (isHidden) {
-    setTimeout(() => document.getElementById("navSearchInput").focus(), 50);
-  } else {
-    closeSearch();
-  }
-}
-
-function closeSearch() {
-  const box = document.getElementById("searchBox");
-  box.classList.add("hidden");
-  box.classList.remove("flex");
-  document.getElementById("navSearchInput").value = "";
-  const dd = document.getElementById("searchDropdown");
-  if (dd) { dd.classList.add("hidden"); dd.innerHTML = ""; }
-  if (typeof restoreList === "function") restoreList();
-}
-
-function onNavSearch(val) {
-  if (typeof handleNavSearch === "function") {
-    handleNavSearch(val);
-  }
-}
-
-// 非首頁：組字完成或按 Enter 才跳到 search.html
-document.addEventListener("DOMContentLoaded", () => {
-  const input = document.getElementById("navSearchInput");
-  if (!input) return;
-
-  let isComposing = false;
-
-  input.addEventListener("compositionstart", () => { isComposing = true; });
-  input.addEventListener("compositionend",   () => {
-    isComposing = false;
-    // 組字完成後如果有值就跳頁
-    const val = input.value.trim();
-    if (val) {
-      window.location.href = "search.html?q=" + encodeURIComponent(val);
-    }
-  });
-  input.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" && !isComposing && input.value.trim()) {
-      window.location.href = "search.html?q=" + encodeURIComponent(input.value.trim());
-    }
-  });
-});
-
-document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") closeSearch();
-});
-
-document.addEventListener("click", (e) => {
-  const wrap = document.getElementById("searchWrap");
-  const dd   = document.getElementById("searchDropdown");
-  if (wrap && !wrap.contains(e.target) && dd && !dd.contains(e.target)) {
-    closeSearch();
-  }
-});
-</script>
 </body>
 </html>

@@ -4,37 +4,16 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>訂單查詢</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+  <link rel="stylesheet" href="js/theme.css">
 </head>
 <body class="bg-gray-50">
 
-<div class="sticky top-0 z-50 bg-white border-b shadow-sm">
-  <div class="flex justify-between items-center px-4 py-2 max-w-7xl mx-auto">
-    <div class="flex items-center gap-1">
-      <a href="index.html" class="font-bold px-2 py-1.5 rounded-lg hover:bg-gray-100 text-sm">🏠 <span class="hidden lg:inline">首頁</span></a>
-      <a href="new.html"   class="px-2 py-1.5 rounded-lg hover:bg-gray-100 text-xs lg:text-sm">🆕 <span class="hidden sm:inline">新品</span></a>
-      <a href="hot.html"   class="px-2 py-1.5 rounded-lg hover:bg-gray-100 text-xs lg:text-sm">🔥 <span class="hidden sm:inline">熱賣</span></a>
-      <a href="sale.html"  class="px-2 py-1.5 rounded-lg hover:bg-gray-100 text-xs lg:text-sm">🈹 <span class="hidden sm:inline">特價</span></a>
-    </div>
-    <div class="flex items-center gap-1">
-      <div id="searchWrap" class="flex items-center">
-        <div id="searchBox" class="hidden items-center gap-1 bg-gray-50 border rounded-xl px-2 py-1 mr-1 transition-all">
-          <input id="navSearchInput" type="text" placeholder="搜尋商品… (Enter)"
-            class="bg-transparent text-sm outline-none w-36 sm:w-48"
-            onkeydown="if(event.key==='Escape') closeSearch()">
-          <button onclick="closeSearch()" class="text-gray-400 hover:text-black text-sm leading-none">✕</button>
-        </div>
-        <button onclick="toggleSearch()" id="searchToggleBtn"
-          class="px-2 py-1.5 rounded-lg hover:bg-gray-100 text-base">🔍</button>
-      </div>
-      <a href="about.html" class="px-2 py-1.5 rounded-lg hover:bg-gray-100 text-xs lg:text-sm">ℹ️ <span class="hidden sm:inline">關於我們</span></a>
-      <a href="order-status.html" class="px-2 py-1.5 rounded-lg hover:bg-gray-100 text-xs lg:text-sm">📋 <span class="hidden sm:inline">訂單查詢</span></a>
-      <button onclick="history.back()" class="px-2 py-1.5 rounded-lg hover:bg-gray-100 text-sm">⬅️</button>
-      <a href="cart.html" class="px-2 py-1.5 rounded-lg hover:bg-gray-100 text-sm">
-        🛒 <span id="cartCount" class="bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full">0</span>
-      </a>
-    </div>
-  </div>
+<nav class="top-nav">
+  <a href="index.html" class="nav-icon-btn"><i class="ti ti-arrow-left"></i></a>
+  <span style="font-size:16px;font-weight:600">訂單查詢</span>
+  <a href="cart.html" class="nav-icon-btn"><i class="ti ti-shopping-cart"></i><span id="cartCount" class="cart-badge" style="display:none">0</span></a>
+</nav>
   <div id="searchDropdown" class="hidden"></div>
 </div>
 
