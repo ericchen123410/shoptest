@@ -20,45 +20,26 @@ export async function initBanner(containerId) {
 
     // ── HTML ──────────────────────────────────────────
     container.innerHTML = `
-      <div class="relative overflow-hidden bg-gray-100 select-none" id="bannerRoot">
-
-        <!-- 圖片軌道 -->
-        <div id="bannerTrack"
-          class="flex transition-transform duration-500 ease-in-out"
-          style="will-change: transform;">
-          ${banners.map((b, i) => `
-            <div class="w-full shrink-0" style="aspect-ratio: 16/7; overflow: hidden; background: #000;">
+      <div style="position:relative;overflow:hidden;background:#111;user-select:none" id="bannerRoot">
+        <div id="bannerTrack" style="display:flex;transition:transform 0.5s ease;will-change:transform">
+          ${banners.map(b => `
+            <div style="width:100%;flex-shrink:0;aspect-ratio:16/7;overflow:hidden;background:#000">
               <img src="${b.image}" alt="${b.title}"
-                class="w-full h-full object-contain"
-                style="display: block;"
+                style="width:100%;height:100%;object-fit:contain;display:block"
                 draggable="false">
             </div>`).join("")}
         </div>
-
-        <!-- 左右箭頭（桌機顯示）-->
         ${banners.length > 1 ? `
         <button id="bannerPrev"
-          class="hidden sm:flex absolute left-3 top-1/2 -translate-y-1/2
-                 w-9 h-9 bg-black bg-opacity-30 hover:bg-opacity-60 text-white
-                 rounded-full items-center justify-center transition z-10">‹</button>
+          style="position:absolute;left:12px;top:50%;transform:translateY(-50%);width:36px;height:36px;background:rgba(0,0,0,0.4);color:#fff;border:none;border-radius:50%;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:10">‹</button>
         <button id="bannerNext"
-          class="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2
-                 w-9 h-9 bg-black bg-opacity-30 hover:bg-opacity-60 text-white
-                 rounded-full items-center justify-center transition z-10">›</button>
-        ` : ""}
-
-        <!-- 圓點指示器 -->
-        ${banners.length > 1 ? `
-        <div id="bannerDots"
-          class="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+          style="position:absolute;right:12px;top:50%;transform:translateY(-50%);width:36px;height:36px;background:rgba(0,0,0,0.4);color:#fff;border:none;border-radius:50%;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:10">›</button>
+        <div id="bannerDots" style="position:absolute;bottom:10px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:10">
           ${banners.map((_, i) => `
-            <button data-idx="${i}"
-              class="dot w-1.5 h-1.5 rounded-full transition-all duration-300
-                     ${i === 0 ? "bg-white w-4" : "bg-white bg-opacity-50"}">
+            <button data-idx="${i}" class="dot"
+              style="height:6px;border-radius:3px;border:none;cursor:pointer;transition:all 0.3s;background:${i===0?"#fff":"rgba(255,255,255,0.5)"};width:${i===0?"20px":"6px"}">
             </button>`).join("")}
-        </div>
-        ` : ""}
-
+        </div>` : ""}
       </div>`;
 
     const track = document.getElementById("bannerTrack");
@@ -69,11 +50,8 @@ export async function initBanner(containerId) {
       current = (idx + banners.length) % banners.length;
       track.style.transform = `translateX(-${current * 100}%)`;
       dots.forEach((d, i) => {
-        d.className = `dot rounded-full transition-all duration-300 h-1.5 ${
-          i === current
-            ? "bg-white w-4"
-            : "bg-white bg-opacity-50 w-1.5"
-        }`;
+        d.style.background = i === current ? "#fff" : "rgba(255,255,255,0.5)";
+        d.style.width = i === current ? "20px" : "6px";
       });
     }
 

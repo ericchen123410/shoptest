@@ -6,6 +6,79 @@
   <title>訂單查詢</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
   <link rel="stylesheet" href="js/theme.css">
+
+<style>
+/* === 覆蓋舊 Tailwind class，套用新設計 === */
+body { background: var(--gray-100) !important; font-family: -apple-system, BlinkMacSystemFont, "Noto Sans TC", sans-serif !important; }
+
+/* 主容器 */
+.px-4.py-6.max-w-xl.mx-auto { padding: 0 !important; }
+.px-4.py-6 { padding: 0 !important; }
+.max-w-xl.mx-auto { max-width: 640px; margin: 0 auto; }
+
+/* Tab */
+.flex.gap-2.mb-5.border-b {
+  display: flex !important; border-bottom: 2px solid var(--gray-200) !important;
+  background: var(--white); padding: 0 16px !important; margin: 0 !important; gap: 0 !important;
+}
+#tab1, #tab2 {
+  padding: 14px 16px !important; font-size: 15px !important; font-weight: 600 !important;
+  border: none !important; background: none !important; cursor: pointer;
+}
+
+/* 輸入框和按鈕 */
+.flex.gap-2.mb-4 { display: flex; gap: 8px; padding: 16px; background: var(--white); margin-bottom: 0 !important; }
+.flex-1.border.rounded-xl.px-4.py-3 { border: 1px solid var(--gray-200) !important; border-radius: var(--radius) !important; padding: 13px 14px !important; font-size: 16px !important; }
+.space-y-3.mb-4 { display: flex; flex-direction: column; gap: 10px; padding: 16px; background: var(--white); margin-bottom: 0 !important; }
+.w-full.border.rounded-xl.px-4.py-3 { border: 1px solid var(--gray-200) !important; border-radius: var(--radius) !important; padding: 13px 14px !important; font-size: 16px !important; }
+.px-5.py-3.bg-black.text-white.rounded-xl { background: var(--black) !important; color: var(--white) !important; border-radius: var(--radius) !important; padding: 13px 20px !important; border: none !important; cursor: pointer; font-size: 15px !important; font-weight: 600 !important; white-space: nowrap; }
+.w-full.py-3.bg-black.text-white.rounded-xl { background: var(--black) !important; color: var(--white) !important; border-radius: var(--radius) !important; padding: 14px !important; border: none !important; cursor: pointer; font-size: 15px !important; font-weight: 600 !important; width: 100% !important; display: block !important; }
+
+/* 訂單卡片 */
+.bg-white.rounded-xl.border.px-4.py-3 {
+  background: var(--white) !important; border-radius: var(--radius-lg) !important;
+  border: none !important; padding: 12px 16px !important;
+  box-shadow: none !important;
+}
+.space-y-3 { display: flex; flex-direction: column; gap: 8px; }
+.font-bold.text-sm { font-size: 15px !important; font-weight: 700 !important; }
+.text-xs.text-gray-400 { font-size: 13px !important; color: var(--gray-400) !important; }
+.text-sm.font-medium.text-gray-800 { font-size: 15px !important; }
+.font-bold.text-red-500.text-sm { font-size: 15px !important; font-weight: 700 !important; color: var(--black) !important; }
+
+/* 狀態 badge */
+.text-xs.px-2.py-0\.5.rounded-full { font-size: 12px !important; padding: 3px 10px !important; border-radius: var(--radius-sm) !important; }
+
+/* 集運批次 */
+.bg-white.rounded-xl.border-2.border-blue-200.overflow-hidden { border-radius: var(--radius-lg) !important; border: 2px solid #bfdbfe !important; }
+.bg-blue-50.px-4.py-2 { background: #eff6ff !important; padding: 10px 16px !important; }
+.text-xs.font-bold.text-blue-600 { font-size: 13px !important; font-weight: 700 !important; color: #1d4ed8 !important; }
+.text-xs.text-blue-400 { font-size: 12px !important; color: #60a5fa !important; }
+.text-xs.px-2.py-1.bg-white.border.border-blue-200.text-blue-500.rounded-lg { font-size: 12px !important; padding: 5px 10px !important; border: 1px solid #bfdbfe !important; border-radius: var(--radius-sm) !important; color: #2563eb !important; background: var(--white) !important; cursor: pointer; }
+
+/* Modal */
+.fixed.inset-0.z-50.bg-black.bg-opacity-40 { background: rgba(0,0,0,0.5) !important; }
+.bg-white.w-full.sm\:max-w-md.sm\:rounded-2xl.rounded-t-2xl { border-radius: var(--radius-lg) var(--radius-lg) 0 0 !important; max-width: 480px !important; }
+.font-bold.text-base { font-size: 17px !important; font-weight: 700 !important; }
+.px-5.py-4.border-b { padding: 16px 20px !important; }
+.px-5.py-4.border-t { padding: 16px 20px !important; }
+.flex-1.overflow-y-auto.px-5.py-4 { padding: 16px 20px !important; }
+
+/* 修改商品 Modal 商品行 */
+.flex.items-center.gap-3.border.rounded-xl.p-3 { padding: 12px !important; border-radius: var(--radius) !important; border: 1px solid var(--gray-200) !important; }
+
+/* 大按鈕 */
+.w-full.py-3.border.rounded-xl.text-sm { border: 1px solid var(--gray-200) !important; border-radius: var(--radius) !important; padding: 14px !important; font-size: 15px !important; background: var(--white) !important; cursor: pointer; font-weight: 500 !important; }
+.flex-1.py-2\.5.bg-black.text-white { background: var(--black) !important; color: var(--white) !important; padding: 12px !important; border: none !important; border-radius: var(--radius) !important; cursor: pointer; font-size: 15px !important; font-weight: 600 !important; }
+.flex-1.py-2\.5.border.rounded-xl { border: 1px solid var(--gray-200) !important; border-radius: var(--radius) !important; padding: 12px !important; font-size: 15px !important; background: var(--white) !important; cursor: pointer; }
+
+/* 集運合併區 */
+#mergeArea { background: var(--white) !important; border-radius: var(--radius-lg) !important; border: none !important; padding: 16px !important; }
+.text-xs.font-semibold.text-gray-500 { font-size: 13px !important; font-weight: 600 !important; color: var(--gray-600) !important; }
+
+/* panel */
+#panel1, #panel2 { background: transparent; }
+</style>
 </head>
 <body class="bg-gray-50">
 
@@ -80,21 +153,23 @@ const QUERY_API    = "https://shoptest-chi.vercel.app/api/orders-manage?type=que
 const CUSTOMER_API_URL = "https://shoptest-chi.vercel.app/api/orders-manage?type=customer";
 
 const STATUS_MAP = {
-  "待處理":   { icon: "🕐", color: "bg-yellow-100 text-yellow-700", bar: 1 },
-  "處理中":   { icon: "📦", color: "bg-blue-100 text-blue-600",    bar: 2 },
-  "已出貨":   { icon: "🚚", color: "bg-purple-100 text-purple-600", bar: 3 },
-  "已完成":   { icon: "✅", color: "bg-green-100 text-green-600",   bar: 4 },
-  "已取消":   { icon: "❌", color: "bg-gray-100 text-gray-400",     bar: 0 },
-  "申請取消中": { icon: "📋", color: "bg-orange-100 text-orange-500", bar: 2 },
+  "待處理":   { icon: "🕐", color: "background:#fef9c3;color:#a16207", bar: 1 },
+  "處理中":   { icon: "📦", color: "background:#dbeafe;color:#1d4ed8", bar: 2 },
+  "已出貨":   { icon: "🚚", color: "background:#ede9fe;color:#6d28d9", bar: 3 },
+  "已完成":   { icon: "✅", color: "background:#dcfce7;color:#15803d", bar: 4 },
+  "已取消":   { icon: "❌", color: "background:#f3f4f6;color:#6b7280", bar: 0 },
+  "申請取消中": { icon: "📋", color: "background:#ffedd5;color:#c2410c", bar: 2 },
 };
 const STEPS = ["待處理", "處理中", "已出貨", "已完成"];
 
 // ── Tab 切換 ─────────────────────────────────────────
 window.switchTab = (n) => {
-  document.getElementById("panel1").classList.toggle("hidden", n !== 1);
-  document.getElementById("panel2").classList.toggle("hidden", n !== 2);
-  document.getElementById("tab1").className = `pb-2.5 px-1 text-sm font-medium border-b-2 transition ${n===1 ? "border-black text-black" : "border-transparent text-gray-400 hover:text-gray-600"}`;
-  document.getElementById("tab2").className = `pb-2.5 px-1 text-sm font-medium border-b-2 transition ${n===2 ? "border-black text-black" : "border-transparent text-gray-400 hover:text-gray-600"}`;
+  document.getElementById("panel1").style.display = n === 1 ? "block" : "none";
+  document.getElementById("panel2").style.display = n === 2 ? "block" : "none";
+  document.getElementById("tab1").style.borderBottom = n===1 ? "2px solid var(--black)" : "2px solid transparent";
+  document.getElementById("tab1").style.color = n===1 ? "var(--black)" : "var(--gray-400)";
+  document.getElementById("tab2").style.borderBottom = n===2 ? "2px solid var(--black)" : "2px solid transparent";
+  document.getElementById("tab2").style.color = n===2 ? "var(--black)" : "var(--gray-400)";
 };
 
 // ── Tab 1：訂單編號查詢 ───────────────────────────────
@@ -209,7 +284,7 @@ window.queryByCustomer = async () => {
                       <div class="min-w-0">
                         <div class="flex items-center gap-2 mb-1">
                           <span class="font-bold text-sm">${o.orderId}</span>
-                          <span class="text-xs px-2 py-0.5 rounded-full ${st.color}">${o.status}</span>
+                          <span style="font-size:12px;padding:3px 10px;border-radius:var(--radius-sm);${st.color}">${o.status}</span>
                         </div>
                         <div class="text-xs text-gray-400 truncate max-w-[180px]">${firstItem}</div>
                       </div>

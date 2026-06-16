@@ -63,7 +63,10 @@
 </nav>
 
 <script type="module" src="js/cartCount.js"></script>
-<script type="module" src="js/banner.js"></script>
+<script type="module">
+import { initBanner } from "./js/banner.js";
+initBanner("bannerWrap");
+</script>
 <script type="module" src="js/main.js"></script>
 <script>
 function toggleSearch() {
