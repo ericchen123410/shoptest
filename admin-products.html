@@ -642,7 +642,7 @@ function addEditImgSlot(existingUrl) {
 
   // 用 DOM 操作避免字串拼接問題
   const ph = document.createElement("span");
-  ph.className = "slot-ph text-gray-300 text-lg pointer-events-none" + (hasImg ? " hidden" : "");
+  ph.style.cssText = "font-size:18px;color:#ccc;pointer-events:none;display:" + (hasImg ? "none" : "flex");
   ph.textContent = "📷";
 
   const img = document.createElement("img");
@@ -651,11 +651,11 @@ function addEditImgSlot(existingUrl) {
   if (hasImg) img.src = existingUrl;
 
   const loader = document.createElement("div");
-  loader.className = "slot-load hidden absolute inset-0 bg-gray-50 flex items-center justify-center text-xs";
+  loader.style.cssText = "display:none;position:absolute;inset:0;background:#f9f9f9;align-items:center;justify-content:center;font-size:12px;color:#aaa";
   loader.textContent = "⏳";
 
   const delBtn = document.createElement("button");
-  delBtn.className = "slot-del absolute top-0 right-0 bg-black bg-opacity-60 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs z-10" + (hasImg ? "" : " hidden");
+  delBtn.style.cssText = "position:absolute;top:3px;right:3px;background:rgba(0,0,0,0.6);color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:11px;cursor:pointer;z-index:10;display:" + (hasImg ? "flex" : "none") + ";align-items:center;justify-content:center;line-height:1";
   delBtn.textContent = "✕";
   delBtn.onclick = (e) => removeEditSlot(slotIdx, e);
 
@@ -692,7 +692,7 @@ function pickEditSlot(slotIdx, slot) {
       slot.querySelector(".slot-img").src = data.secure_url;
       slot.querySelector(".slot-img").style.display = "block";
       slot.querySelector(".slot-ph").style.display = "none";
-      slot.querySelector(".slot-del").style.display = "flex";
+      const db=slot.querySelector(".slot-del"); db.style.display="flex"; db.style.alignItems="center"; db.style.justifyContent="center";
       slot.onclick = null;
     } catch { alert("上傳失敗"); slot.querySelector(".slot-ph").style.display="flex"; }
     finally { slot.querySelector(".slot-load").style.display="none"; }
