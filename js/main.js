@@ -56,7 +56,7 @@ function makeTab(label, isActive, isSub) {
 
 function renderMainTabs() {
   // 強制 grid 樣式
-  mainTabs.style.cssText = "display:grid!important;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px;padding:12px;background:#fff;border-bottom:1px solid #e5e5e5";
+  mainTabs.style.cssText = "display:flex;gap:8px;padding:12px;overflow-x:auto;scrollbar-width:none;background:#fff;border-bottom:1px solid #e5e5e5;-webkit-overflow-scrolling:touch";
   const cats = ["全部", ...new Set(allData.map(p => p.mainCategory).filter(Boolean))];
   mainTabs.innerHTML = "";
   cats.forEach(cat => {
@@ -75,7 +75,7 @@ function renderSubTabs() {
   const subs = ["全部", ...new Set(pool.map(p => p.category).filter(Boolean))];
   if (subs.length <= 1) { subWrap.style.display = "none"; return; }
   subWrap.style.display = "block";
-  subTabs.style.cssText = "display:grid!important;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:6px;padding:10px;background:#f9f9f9;border-bottom:1px solid #e5e5e5";
+  subTabs.style.cssText = "display:flex;gap:8px;padding:10px;overflow-x:auto;scrollbar-width:none;background:#f9f9f9;border-bottom:1px solid #e5e5e5;-webkit-overflow-scrolling:touch";
   subTabs.innerHTML = "";
   subs.forEach(cat => {
     const btn = makeTab(cat, cat === activeSub, true);

@@ -34,6 +34,9 @@ export default async function handler(req, res) {
     if (fields.isView  !== undefined) properties.isView  = { checkbox: !!fields.isView  };
     if (fields.isHot   !== undefined) properties.isHot   = { checkbox: !!fields.isHot   };
     if (fields.isSale  !== undefined) properties.isSale  = { checkbox: !!fields.isSale  };
+    if (fields.saleEnd !== undefined) properties.saleEnd = fields.saleEnd
+      ? { date: { start: fields.saleEnd } }
+      : { date: null };
     if (fields.isNew   !== undefined) properties.isNew   = { checkbox: !!fields.isNew   };
     if (fields.update  !== undefined)
       properties.update = { date: { start: new Date().toISOString().split("T")[0] } };

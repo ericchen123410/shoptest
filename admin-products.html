@@ -210,12 +210,12 @@ if (sessionStorage.getItem("adminAuth") !== "1") location.href = "admin.html";
 
   <!-- 大分類篩選 -->
   <div class="mb-2">
-    <div id="mainCatBtns" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px"></div>
+    <div id="mainCatBtns" style="display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding-bottom:4px;margin-bottom:8px"></div>
   </div>
 
   <!-- 小分類篩選 -->
   <div id="subCatWrap" class="hidden mb-3">
-    <div id="subCatBtns" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px"></div>
+    <div id="subCatBtns" style="display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding-bottom:4px"></div>
   </div>
 
   <div id="productCount" class="text-xs text-gray-400 mb-3"></div>
@@ -271,6 +271,12 @@ if (sessionStorage.getItem("adminAuth") !== "1") location.href = "admin.html";
           <input id="editSort" type="number" placeholder="例：1" class="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black">
         </div>
       </div>
+      <!-- 特價結束日期 -->
+      <div>
+        <label style="font-size:13px;font-weight:600;margin-bottom:6px;display:block">特價結束日期 <span style="font-size:12px;color:#aaa">（填入後到期自動關閉）</span></label>
+        <input id="editSaleEnd" type="date" style="width:100%;border:1px solid #e5e5e5;border-radius:8px;padding:10px 12px;font-size:15px">
+      </div>
+
       <!-- 圖片上傳 -->
       <div>
         <label class="text-xs text-gray-500 mb-2 block">圖片（第一張為主圖）</label>
@@ -336,8 +342,8 @@ let editImgUrls    = [];
 
 const BTN_NORMAL = "";
 const BTN_ACTIVE = "";
-const BTN_NORMAL_STYLE = "padding:12px 8px;border-radius:8px;font-size:14px;font-weight:600;text-align:center;border:1.5px solid #e5e5e5;background:#fff;color:#111;cursor:pointer";
-const BTN_ACTIVE_STYLE = "padding:12px 8px;border-radius:8px;font-size:14px;font-weight:600;text-align:center;border:1.5px solid #111;background:#111;color:#fff;cursor:pointer";
+const BTN_NORMAL_STYLE = "padding:12px 16px;border-radius:8px;font-size:14px;font-weight:600;text-align:center;border:1.5px solid #e5e5e5;background:#fff;color:#111;cursor:pointer;white-space:nowrap;flex-shrink:0";
+const BTN_ACTIVE_STYLE = "padding:12px 16px;border-radius:8px;font-size:14px;font-weight:600;text-align:center;border:1.5px solid #111;background:#111;color:#fff;cursor:pointer;white-space:nowrap;flex-shrink:0";
 
 // ── 初始化 ───────────────────────────────────────────
 async function init() {
@@ -502,6 +508,7 @@ function openEdit(id) {
   document.getElementById("editIsNew").checked  = p.isNew;
   document.getElementById("editIsHot").checked  = p.isHot;
   document.getElementById("editIsSale").checked = p.isSale;
+  document.getElementById("editSaleEnd").value   = p.saleEnd || "";
   editImgUrls = [];
   document.getElementById("editImgSlots").innerHTML = "";
   const imagesRaw = Array.isArray(p.images) ? p.images.join(",") : (p.images || "");
@@ -539,6 +546,7 @@ async function saveEdit() {
     isNew:        document.getElementById("editIsNew").checked,
     isHot:        document.getElementById("editIsHot").checked,
     isSale:       document.getElementById("editIsSale").checked,
+    saleEnd:      document.getElementById("editSaleEnd").value || null,
     update:       true,
   };
   const jp  = document.getElementById("editJprice").value;

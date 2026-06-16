@@ -80,7 +80,15 @@ export default async function handler(req, res) {
 
       const isView = getCheckbox(props.isView); // ⭐ 上架控制
       const isHot  = getCheckbox(props.isHot);
-      const isSale = getCheckbox(props.isSale);
+      // 自動判斷特價：有 saleEnd 且今天 <= saleEnd
+      const saleEndRaw = props.saleEnd?.date?.start || null;
+      let isSale = getCheckbox(props.isSale);
+      if (saleEndRaw) {
+        const now     = new Date();
+        const twNow   = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Taipei" }));
+        const saleEnd = new Date(saleEndRaw + "T23:59:59+08:00");
+        isSale = twNow <= saleEnd;
+      }
       const isNew  = getCheckbox(props.isNew);
 
       const price   = Math.floor(getNumber(props.tprice));  // formula：台幣售價
@@ -97,6 +105,7 @@ export default async function handler(req, res) {
         price: isSale ? sprice || price : price,
         originalPrice: price,
         isSale,
+        saleEnd:  saleEndRaw,
 
         isHot,
         isNew,
