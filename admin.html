@@ -23,22 +23,8 @@
 </head>
 <body>
 
-<!-- 登入頁 -->
-<div id="loginScreen" class="login-wrap">
-  <div class="login-card">
-    <div class="login-logo">W-82</div>
-    <div class="login-sub">後台管理系統</div>
-    <div class="form-row">
-      <input id="passwordInput" type="password" placeholder="請輸入管理員密碼"
-        onkeydown="if(event.key==='Enter') login()">
-    </div>
-    <button onclick="login()" class="btn btn-primary w-full" style="justify-content:center;padding:12px">登入</button>
-    <div id="loginError" style="display:none;margin-top:10px;text-align:center;font-size:13px;color:var(--red)"></div>
-  </div>
-</div>
-
 <!-- 後台主畫面 -->
-<div id="adminScreen" style="display:none" class="admin-layout">
+<div id="adminScreen" class="admin-layout">
   <aside class="admin-sidebar">
     <a href="admin.html" class="sidebar-logo">W-82</a>
     <nav class="sidebar-nav">
@@ -86,29 +72,7 @@
 </div>
 
 <script>
-const ADMIN_API = "https://shoptest-chi.vercel.app/api/admin-login";
-async function login() {
-  const pw  = document.getElementById("passwordInput").value;
-  const err = document.getElementById("loginError");
-  if (!pw) { err.textContent = "請輸入密碼"; err.style.display = "block"; return; }
-  try {
-    const res  = await fetch(ADMIN_API, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({password:pw}) });
-    const data = await res.json();
-    if (data.success) {
-      sessionStorage.setItem("adminAuth","1");
-      document.getElementById("loginScreen").style.display = "none";
-      document.getElementById("adminScreen").style.display = "flex";
-    } else {
-      err.textContent = "密碼錯誤";
-      err.style.display = "block";
-    }
-  } catch { err.textContent = "連線失敗"; err.style.display = "block"; }
-}
-if (sessionStorage.getItem("adminAuth") === "1") {
-  document.getElementById("loginScreen").style.display = "none";
-  document.getElementById("adminScreen").style.display = "flex";
-}
-document.getElementById("passwordInput").addEventListener("keydown", e => { if(e.key==="Enter") login(); });
+sessionStorage.setItem("adminAuth","1");
 </script>
 
 <nav class="admin-bottom-nav" style="display:none">
