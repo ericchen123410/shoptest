@@ -33,11 +33,8 @@ button[type="submit"], #submitBtn { background: var(--black) !important; color: 
   <span style="font-size:16px;font-weight:600">結帳</span>
   <div style="width:44px"></div>
 </nav>
-  <!-- ⭐ 搜尋結果下拉（僅首頁顯示即時結果） -->
-  <div id="searchDropdown" class="hidden absolute left-0 right-0 bg-white border-t shadow-lg z-50 max-h-80 overflow-y-auto max-w-7xl mx-auto"></div>
-</div>
 
-<div class="px-4 sm:px-6 py-6 max-w-4xl mx-auto">
+<div style="max-width:640px;margin:0 auto;padding:16px">
 
   <!-- 步驟指示 -->
   <div class="flex items-center justify-center gap-2 mb-6 text-sm sm:text-base">
@@ -394,9 +391,6 @@ function closeSearch() {
   box.classList.add("hidden");
   box.classList.remove("flex");
   document.getElementById("navSearchInput").value = "";
-  const dd = document.getElementById("searchDropdown");
-  if (dd) { dd.classList.add("hidden"); dd.innerHTML = ""; }
-  if (typeof restoreList === "function") restoreList();
 }
 
 function onNavSearch(val) {
