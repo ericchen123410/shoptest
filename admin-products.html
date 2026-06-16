@@ -274,7 +274,7 @@ if (sessionStorage.getItem("adminAuth") !== "1") location.href = "admin.html";
       <!-- 圖片上傳 -->
       <div>
         <label class="text-xs text-gray-500 mb-2 block">圖片（第一張為主圖）</label>
-        <div class="flex flex-wrap gap-2 mb-2" id="editImgSlots"></div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px" id="editImgSlots"></div>
         <button type="button" onclick="addEditImgSlot()"
           class="w-full py-2 border border-dashed border-gray-300 rounded-xl text-xs text-gray-400 hover:border-gray-500 transition">
           ＋ 新增圖片
@@ -607,7 +607,7 @@ function addEditImgSlot(existingUrl) {
   const container = document.getElementById("editImgSlots");
   const slot      = document.createElement("div");
   slot.id         = `editSlot-${slotIdx}`;
-  slot.className  = "relative w-16 h-16 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center cursor-pointer hover:border-gray-400 transition overflow-hidden bg-gray-50 shrink-0";
+  slot.style.cssText = "position:relative;width:72px;height:72px;border-radius:8px;border:2px dashed #e5e5e5;display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;background:#f9f9f9;flex-shrink:0";
   const hasImg    = !!existingUrl;
 
   // 用 DOM 操作避免字串拼接問題
@@ -616,7 +616,7 @@ function addEditImgSlot(existingUrl) {
   ph.textContent = "📷";
 
   const img = document.createElement("img");
-  img.className = "slot-img absolute inset-0 w-full h-full object-cover";
+  img.style.cssText = "position:absolute;inset:0;width:100%;height:100%;object-fit:cover";
   img.style.display = hasImg ? "block" : "none";
   if (hasImg) img.src = existingUrl;
 
