@@ -210,12 +210,12 @@ if (sessionStorage.getItem("adminAuth") !== "1") location.href = "admin.html";
 
   <!-- 大分類篩選 -->
   <div class="mb-2">
-    <div id="mainCatBtns" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:8px;margin-bottom:8px"></div>
+    <div id="mainCatBtns" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px"></div>
   </div>
 
   <!-- 小分類篩選 -->
   <div id="subCatWrap" class="hidden mb-3">
-    <div id="subCatBtns" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:6px"></div>
+    <div id="subCatBtns" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px"></div>
   </div>
 
   <div id="productCount" class="text-xs text-gray-400 mb-3"></div>
