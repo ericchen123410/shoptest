@@ -3,12 +3,169 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>商品管理</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-100 min-h-screen">
+  <title>商品管理 | W-82 後台</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+  <link rel="stylesheet" href="js/admin-theme.css">
 
-<div class="px-4 py-4 max-w-4xl mx-auto">
+<style>
+body{background:var(--gray-100)!important}
+.bg-gray-100,.bg-gray-50{background:var(--gray-100)!important}
+.bg-white{background:var(--white)!important}
+.rounded-xl,.rounded-2xl,.rounded-lg{border-radius:var(--radius-lg)!important}
+.rounded-full{border-radius:50%!important}
+.border{border:1px solid var(--gray-200)!important}
+.border-b{border-bottom:1px solid var(--gray-200)!important}
+.border-t{border-top:1px solid var(--gray-200)!important}
+.shadow-sm,.shadow-md{box-shadow:none!important}
+.text-gray-900,.text-gray-800,.text-gray-700{color:var(--black)!important}
+.text-gray-600,.text-gray-500{color:var(--gray-600)!important}
+.text-gray-400{color:var(--gray-400)!important}
+.font-bold{font-weight:700!important}
+.font-semibold{font-weight:600!important}
+.font-medium{font-weight:500!important}
+.text-sm{font-size:14px!important}
+.text-xs{font-size:12px!important}
+.text-base{font-size:15px!important}
+.text-lg{font-size:17px!important}
+.text-xl{font-size:20px!important}
+.text-2xl{font-size:22px!important}
+.text-red-500,.text-red-400{color:var(--red)!important}
+.text-green-500,.text-green-600{color:var(--green)!important}
+.text-blue-500,.text-blue-600{color:var(--blue)!important}
+.bg-black,.bg-gray-900{background:var(--black)!important}
+.text-white{color:var(--white)!important}
+.px-3,.px-4{padding-left:14px!important;padding-right:14px!important}
+.py-2,.py-2\.5{padding-top:9px!important;padding-bottom:9px!important}
+.py-3{padding-top:12px!important;padding-bottom:12px!important}
+.space-y-2>*+*{margin-top:8px}
+.space-y-3>*+*{margin-top:12px}
+.space-y-4>*+*{margin-top:16px}
+.space-y-6>*+*{margin-top:24px}
+.gap-2{gap:8px!important}
+.gap-3{gap:12px!important}
+.gap-4{gap:16px!important}
+.p-4{padding:16px!important}
+.p-3{padding:12px!important}
+.p-6{padding:24px!important}
+.p-8{padding:32px!important}
+.mt-1{margin-top:4px!important}
+.mt-2{margin-top:8px!important}
+.mt-3{margin-top:12px!important}
+.mt-4{margin-top:16px!important}
+.mt-6{margin-top:24px!important}
+.mb-1{margin-bottom:4px!important}
+.mb-2{margin-bottom:8px!important}
+.mb-3{margin-bottom:12px!important}
+.mb-4{margin-bottom:16px!important}
+.mb-6{margin-bottom:24px!important}
+.w-full{width:100%!important}
+.max-w-sm{max-width:400px!important}
+.max-w-xl{max-width:600px!important}
+.overflow-hidden{overflow:hidden!important}
+.truncate{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.line-clamp-2{overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+input[type="text"],input[type="email"],input[type="password"],input[type="number"],textarea,select{font-size:14px!important;border:1px solid var(--gray-200)!important;border-radius:var(--radius)!important;padding:10px 12px!important}
+input:focus,textarea:focus,select:focus{border-color:var(--black)!important;outline:none!important}
+button{cursor:pointer}
+.bg-yellow-100{background:#fef9c3!important}
+.text-yellow-700{color:#a16207!important}
+.bg-blue-100{background:#dbeafe!important}
+.text-blue-600{color:#1d4ed8!important}
+.bg-purple-100{background:#ede9fe!important}
+.text-purple-600{color:#6d28d9!important}
+.bg-green-100{background:#dcfce7!important}
+.text-green-600{color:#15803d!important}
+.bg-orange-100{background:#ffedd5!important}
+.text-orange-500{color:#c2410c!important}
+</style>
+
+<style id="tw-override-extra">
+/* 主容器 */
+.px-4.py-4.max-w-4xl.mx-auto,.px-4.py-5.max-w-2xl.mx-auto,.px-4.py-5.max-w-3xl.mx-auto,.px-4.py-5.max-w-5xl.mx-auto{padding:0!important;max-width:none!important}
+
+/* flex layouts */
+.flex.items-center.justify-between{display:flex;align-items:center;justify-content:space-between}
+.flex.items-center.gap-2{display:flex;align-items:center;gap:8px}
+.flex.gap-2{display:flex;gap:8px}
+.flex.gap-2.mb-4{display:flex;gap:8px;margin-bottom:16px}
+.flex.flex-wrap.gap-1\.5{display:flex;flex-wrap:wrap;gap:6px}
+.flex.flex-col.items-center{display:flex;flex-direction:column;align-items:center}
+
+/* 輸入框 */
+.flex-1.border.rounded-xl,.w-full.border.rounded-xl{border:1px solid var(--gray-200)!important;border-radius:var(--radius)!important;font-size:14px!important}
+.focus\:outline-none{outline:none!important}
+.focus\:ring-2{box-shadow:none!important}
+.pr-10{padding-right:10px!important}
+
+/* 卡片 */
+.bg-white.rounded-2xl,.bg-white.rounded-2xl.p-4,.bg-white.rounded-xl{background:var(--white)!important;border-radius:var(--radius-lg)!important}
+.shadow-sm{box-shadow:none!important;border:1px solid var(--gray-200)!important}
+
+/* Modal overlay */
+.hidden.fixed.inset-0.z-50,.hidden.fixed.inset-0{display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.5);align-items:flex-end;justify-content:center}
+.bg-black.bg-opacity-40{background:rgba(0,0,0,0.5)!important}
+.bg-white.w-full.sm\:max-w-lg,.bg-white.w-full.sm\:max-w-md{background:var(--white)!important;width:100%!important;max-width:520px!important;border-radius:16px 16px 0 0!important;max-height:88vh!important;overflow-y:auto!important}
+.sm\:rounded-2xl.rounded-t-2xl{border-radius:16px 16px 0 0!important}
+
+/* overflow */
+.overflow-x-auto{overflow-x:auto}
+.overflow-y-auto{overflow-y:auto}
+.-mx-4.px-4{margin-left:0!important;padding-left:0!important}
+
+/* 狀態文字 */
+.text-sm.text-gray-600{font-size:14px;color:var(--gray-600)}
+.text-xs.text-gray-500{font-size:12px;color:var(--gray-400)}
+.font-semibold.text-sm{font-size:14px;font-weight:600}
+.font-bold.text-base{font-size:16px;font-weight:700}
+
+/* 按鈕 */
+.px-3.py-1\.5.border.rounded-xl,.px-4.py-1\.5.border.rounded-xl{padding:6px 12px!important;border:1px solid var(--gray-200)!important;border-radius:var(--radius)!important;font-size:13px!important;background:var(--white)!important;color:var(--black)!important}
+.px-4.py-1\.5.bg-black.text-white{padding:6px 14px!important;background:var(--black)!important;color:var(--white)!important;border:none!important;border-radius:var(--radius)!important;font-size:13px!important}
+.px-4.py-2\.5.bg-purple-600,.px-4.py-2\.5.bg-black{padding:9px 16px!important;background:var(--black)!important;color:var(--white)!important;border:none!important;border-radius:var(--radius)!important;font-size:14px!important}
+.hover\:bg-gray-800:hover,.hover\:bg-gray-50:hover,.hover\:bg-purple-700:hover{opacity:0.85!important}
+.text-gray-400.hover\:text-black{background:none;border:none;cursor:pointer;color:var(--gray-400);font-size:22px}
+
+/* 集運/狀態區 */
+.hidden.sticky.bottom-0.bg-white{display:none;position:sticky;bottom:0;background:var(--white);border-radius:var(--radius-lg);border:1px solid var(--gray-200);padding:16px;margin-top:12px}
+
+/* 上傳區 */
+.border-2.border-dashed.border-gray-200.rounded-xl{border:2px dashed var(--gray-200)!important;border-radius:var(--radius-lg)!important}
+.border-2.border-dashed:hover{border-color:#999!important}
+.relative.overflow-hidden.rounded-xl{border-radius:var(--radius-lg)!important}
+
+/* AI 生成區 */
+.font-semibold.text-sm.text-purple-800{font-size:14px;font-weight:600;color:var(--black)}
+.hidden.bg-white.rounded-xl.border.border-purple-100{display:none;background:var(--gray-50)!important;border:1px solid var(--gray-200)!important;border-radius:var(--radius)!important;padding:12px!important;font-size:14px!important}
+.hidden.bg-white.rounded-2xl{display:none;background:var(--white)!important;border-radius:var(--radius-lg)!important}
+.px-4.py-2\.5.bg-purple-600.text-white{padding:9px 16px!important;background:var(--black)!important;color:var(--white)!important;border:none!important;border-radius:var(--radius)!important;font-size:14px!important}
+</style>
+</head>
+<body>
+
+<script>
+if (sessionStorage.getItem("adminAuth") !== "1") location.href = "admin.html";
+</script>
+<div class="admin-layout">
+  <aside class="admin-sidebar">
+    <a href="admin.html" class="sidebar-logo">W-82</a>
+    <nav class="sidebar-nav">
+      <a href="admin-orders.html"         class="sidebar-item"><i class="ti ti-clipboard-list"></i>訂單管理</a>
+      <a href="admin-products.html"       class="sidebar-item active"><i class="ti ti-package"></i>商品管理</a>
+      <a href="admin-add.html"            class="sidebar-item"><i class="ti ti-plus"></i>新增商品</a>
+      <a href="admin-customers.html"      class="sidebar-item"><i class="ti ti-users"></i>客戶管理</a>
+      <a href="admin-banners.html"        class="sidebar-item"><i class="ti ti-photo"></i>輪播管理</a>
+      <a href="admin-batch-add.html"      class="sidebar-item"><i class="ti ti-list-check"></i>批次上架</a>
+      <a href="admin-batch-generate.html" class="sidebar-item"><i class="ti ti-sparkles"></i>AI批次生成</a>
+    </nav>
+    <div class="sidebar-footer">
+      <a href="index.html" target="_blank" class="sidebar-item"><i class="ti ti-external-link"></i>前往商店</a>
+      <button onclick="sessionStorage.removeItem('adminAuth');location.href='admin.html'" class="sidebar-item"><i class="ti ti-logout"></i>登出</button>
+    </div>
+  </aside>
+  <main class="admin-main">
+
+
+<div style="padding:0">
 
   <!-- 搜尋 + 篩選 -->
   <div class="flex gap-2 mb-4">
@@ -37,18 +194,13 @@
 </div>
 
 <!-- 編輯 Modal -->
-<div id="editModal" class="hidden fixed inset-0 z-50 bg-black bg-opacity-40 flex items-end sm:items-center justify-center p-0 sm:p-4">
+<div id="editModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.5);align-items:flex-end;justify-content:center">
   <div class="bg-white w-full sm:max-w-lg sm:rounded-2xl rounded-t-2xl max-h-[90vh] overflow-y-auto">
-    <div class="sticky top-0 bg-white flex justify-between items-center px-4 py-3 border-b rounded-t-2xl">
-      <h2 class="font-bold text-sm">編輯商品</h2>
-      <div class="flex items-center gap-2">
-        <button onclick="saveEdit()"
-          class="px-3 py-1.5 bg-black text-white text-xs font-medium rounded-lg active:bg-gray-800 transition">
-          儲存變更
-        </button>
-        <button onclick="closeEdit()" class="text-gray-400 hover:text-black text-xl w-8 h-8 flex items-center justify-center">✕</button>
-      </div>
+    <div class="admin-topbar">
+      <span class="topbar-title">商品管理</span>
+      <div class="topbar-actions" id="topbarActions"></div>
     </div>
+    <div class="admin-content">
     <div class="px-4 py-4 space-y-3">
       <div>
         <label class="text-xs text-gray-500 mb-1 block">商品名稱</label>
@@ -211,8 +363,8 @@ function renderSubBtns() {
   const wrap  = document.getElementById("subCatWrap");
   const subEl = document.getElementById("subCatBtns");
 
-  if (!subs.length) { wrap.classList.add("hidden"); return; }
-  wrap.classList.remove("hidden");
+  if (!subs.length) { wrap.style.display="none"; return; }
+  wrap.style.display="flex";
   subEl.innerHTML = "";
 
   ["全部", ...subs].forEach(s => {
@@ -327,13 +479,13 @@ function openEdit(id) {
   const existingImgs = p.image ? [p.image, ...allImgs.filter(u => u !== p.image)] : allImgs;
   existingImgs.forEach(url => addEditImgSlot(url));
   if (!existingImgs.length) addEditImgSlot();
-  document.getElementById("editModal").classList.remove("hidden");
+  document.getElementById("editModal").style.display="flex";
   document.body.style.overflow = "hidden";
   } catch(err) { console.error("openEdit 錯誤:", err); alert("編輯開啟失敗：" + err.message); }
 }
 
 function closeEdit() {
-  document.getElementById("editModal").classList.add("hidden");
+  document.getElementById("editModal").style.display="none";
   document.body.style.overflow = "";
   editingProduct = null;
 }
@@ -468,8 +620,8 @@ function pickEditSlot(slotIdx, slot) {
   input.type = "file"; input.accept = "image/*";
   input.onchange = async (e) => {
     const file = e.target.files[0]; if (!file) return;
-    slot.querySelector(".slot-ph").classList.add("hidden");
-    slot.querySelector(".slot-load").classList.remove("hidden");
+    slot.querySelector(".slot-ph").style.display="none";
+    slot.querySelector(".slot-load").style.display="flex";
     try {
       const fd = new FormData();
       fd.append("file", file); fd.append("upload_preset", UPLOAD_PRESET_P);
@@ -482,8 +634,8 @@ function pickEditSlot(slotIdx, slot) {
       slot.querySelector(".slot-ph").style.display = "none";
       slot.querySelector(".slot-del").style.display = "flex";
       slot.onclick = null;
-    } catch { alert("上傳失敗"); slot.querySelector(".slot-ph").classList.remove("hidden"); }
-    finally { slot.querySelector(".slot-load").classList.add("hidden"); }
+    } catch { alert("上傳失敗"); slot.querySelector(".slot-ph").style.display="flex"; }
+    finally { slot.querySelector(".slot-load").style.display="none"; }
   };
   input.click();
 }
@@ -516,7 +668,7 @@ async function generateEditDesc() {
   btn.textContent = "⏳...";
   status.textContent = "生成中，約需 5-10 秒…";
   status.className   = "text-xs mt-1.5 text-gray-400";
-  status.classList.remove("hidden");
+  status.style.display="flex";
 
   try {
     // 優先用 jname+idnumber，否則用手動輸入
@@ -562,5 +714,7 @@ document.getElementById("filterStatus").addEventListener("change", renderList);
 
 init();
 </script>
+  </main>
+</div>
 </body>
 </html>

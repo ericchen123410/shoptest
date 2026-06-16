@@ -3,10 +3,108 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>批次生成商品描述</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>AI批次生成 | W-82 後台</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+  <link rel="stylesheet" href="js/admin-theme.css">
+
+<style>
+body{background:var(--gray-100)!important}
+.bg-gray-100,.bg-gray-50{background:var(--gray-100)!important}
+.bg-white{background:var(--white)!important}
+.rounded-xl,.rounded-2xl,.rounded-lg{border-radius:var(--radius-lg)!important}
+.rounded-full{border-radius:50%!important}
+.border{border:1px solid var(--gray-200)!important}
+.border-b{border-bottom:1px solid var(--gray-200)!important}
+.border-t{border-top:1px solid var(--gray-200)!important}
+.shadow-sm,.shadow-md{box-shadow:none!important}
+.text-gray-900,.text-gray-800,.text-gray-700{color:var(--black)!important}
+.text-gray-600,.text-gray-500{color:var(--gray-600)!important}
+.text-gray-400{color:var(--gray-400)!important}
+.font-bold{font-weight:700!important}
+.font-semibold{font-weight:600!important}
+.font-medium{font-weight:500!important}
+.text-sm{font-size:14px!important}
+.text-xs{font-size:12px!important}
+.text-base{font-size:15px!important}
+.text-lg{font-size:17px!important}
+.text-xl{font-size:20px!important}
+.text-2xl{font-size:22px!important}
+.text-red-500,.text-red-400{color:var(--red)!important}
+.text-green-500,.text-green-600{color:var(--green)!important}
+.text-blue-500,.text-blue-600{color:var(--blue)!important}
+.bg-black,.bg-gray-900{background:var(--black)!important}
+.text-white{color:var(--white)!important}
+.px-3,.px-4{padding-left:14px!important;padding-right:14px!important}
+.py-2,.py-2\.5{padding-top:9px!important;padding-bottom:9px!important}
+.py-3{padding-top:12px!important;padding-bottom:12px!important}
+.space-y-2>*+*{margin-top:8px}
+.space-y-3>*+*{margin-top:12px}
+.space-y-4>*+*{margin-top:16px}
+.space-y-6>*+*{margin-top:24px}
+.gap-2{gap:8px!important}
+.gap-3{gap:12px!important}
+.gap-4{gap:16px!important}
+.p-4{padding:16px!important}
+.p-3{padding:12px!important}
+.p-6{padding:24px!important}
+.p-8{padding:32px!important}
+.mt-1{margin-top:4px!important}
+.mt-2{margin-top:8px!important}
+.mt-3{margin-top:12px!important}
+.mt-4{margin-top:16px!important}
+.mt-6{margin-top:24px!important}
+.mb-1{margin-bottom:4px!important}
+.mb-2{margin-bottom:8px!important}
+.mb-3{margin-bottom:12px!important}
+.mb-4{margin-bottom:16px!important}
+.mb-6{margin-bottom:24px!important}
+.w-full{width:100%!important}
+.max-w-sm{max-width:400px!important}
+.max-w-xl{max-width:600px!important}
+.overflow-hidden{overflow:hidden!important}
+.truncate{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.line-clamp-2{overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+input[type="text"],input[type="email"],input[type="password"],input[type="number"],textarea,select{font-size:14px!important;border:1px solid var(--gray-200)!important;border-radius:var(--radius)!important;padding:10px 12px!important}
+input:focus,textarea:focus,select:focus{border-color:var(--black)!important;outline:none!important}
+button{cursor:pointer}
+.bg-yellow-100{background:#fef9c3!important}
+.text-yellow-700{color:#a16207!important}
+.bg-blue-100{background:#dbeafe!important}
+.text-blue-600{color:#1d4ed8!important}
+.bg-purple-100{background:#ede9fe!important}
+.text-purple-600{color:#6d28d9!important}
+.bg-green-100{background:#dcfce7!important}
+.text-green-600{color:#15803d!important}
+.bg-orange-100{background:#ffedd5!important}
+.text-orange-500{color:#c2410c!important}
+</style>
 </head>
-<body class="bg-gray-100 min-h-screen">
+<body>
+
+<script>
+if (sessionStorage.getItem("adminAuth") !== "1") location.href = "admin.html";
+</script>
+<div class="admin-layout">
+  <aside class="admin-sidebar">
+    <a href="admin.html" class="sidebar-logo">W-82</a>
+    <nav class="sidebar-nav">
+      <a href="admin-orders.html"         class="sidebar-item"><i class="ti ti-clipboard-list"></i>訂單管理</a>
+      <a href="admin-products.html"       class="sidebar-item"><i class="ti ti-package"></i>商品管理</a>
+      <a href="admin-add.html"            class="sidebar-item"><i class="ti ti-plus"></i>新增商品</a>
+      <a href="admin-customers.html"      class="sidebar-item"><i class="ti ti-users"></i>客戶管理</a>
+      <a href="admin-banners.html"        class="sidebar-item"><i class="ti ti-photo"></i>輪播管理</a>
+      <a href="admin-batch-add.html"      class="sidebar-item"><i class="ti ti-list-check"></i>批次上架</a>
+      <a href="admin-batch-generate.html" class="sidebar-item active"><i class="ti ti-sparkles"></i>AI批次生成</a>
+    </nav>
+    <div class="sidebar-footer">
+      <a href="index.html" target="_blank" class="sidebar-item"><i class="ti ti-external-link"></i>前往商店</a>
+      <button onclick="sessionStorage.removeItem('adminAuth');location.href='admin.html'" class="sidebar-item"><i class="ti ti-logout"></i>登出</button>
+    </div>
+  </aside>
+  <main class="admin-main">
+    <div class="admin-topbar"><span class="topbar-title">AI批次生成</span></div>
+    <div class="admin-content">
+
 
 <div class="px-4 py-5 max-w-3xl mx-auto space-y-4">
 
@@ -111,8 +209,8 @@ function renderList() {
       </div>`;
   }).join("");
 
-  document.getElementById("statsWrap").classList.remove("hidden");
-  document.getElementById("progressWrap").classList.remove("hidden");
+  document.getElementById("statsWrap").style.display="flex";
+  document.getElementById("progressWrap").style.display="flex";
 }
 
 // ── 批次生成 ─────────────────────────────────────────
@@ -238,5 +336,7 @@ function updateStats() {
   document.getElementById("statSkip").textContent    = stats.skip;
 }
 </script>
+  </main>
+</div>
 </body>
 </html>
