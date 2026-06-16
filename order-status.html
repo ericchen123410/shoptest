@@ -146,45 +146,49 @@ body { background: var(--gray-100) !important; font-family: -apple-system, Blink
   </a>
 </nav>
 
-<div class="page-wrap" style="max-width:640px;margin:0 auto">
+<div class="page-wrap" style="max-width:640px;margin:0 auto;padding:20px 16px">
 
-  <!-- Tab 切換 -->
-  <div style="display:flex;background:var(--white);border-bottom:2px solid var(--gray-200)">
-    <button id="tab1" onclick="switchTab(1)"
-      style="flex:1;padding:14px 16px;font-size:15px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid var(--black);margin-bottom:-2px;color:var(--black)">
-      訂單編號查詢
-    </button>
-    <button id="tab2" onclick="switchTab(2)"
-      style="flex:1;padding:14px 16px;font-size:15px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--gray-400)">
-      客戶編號查詢
-    </button>
+  <!-- 說明文字 -->
+  <div style="margin-bottom:24px">
+    <div style="font-size:22px;font-weight:700;margin-bottom:6px">查詢我的訂單</div>
+    <div style="font-size:14px;color:var(--gray-400)">輸入訂單編號 或 客戶編號 + Email</div>
   </div>
 
-  <!-- Tab 1：訂單編號 -->
-  <div id="panel1" style="padding:16px">
+  <!-- 訂單編號查詢 -->
+  <div style="background:var(--white);border-radius:var(--radius-lg);padding:20px;margin-bottom:12px">
+    <div style="font-size:15px;font-weight:700;margin-bottom:4px">用訂單編號查詢</div>
+    <div style="font-size:13px;color:var(--gray-400);margin-bottom:14px">結帳後收到的 ORD 開頭編號</div>
     <div style="display:flex;gap:8px">
-      <input id="orderInput" type="text"
-        placeholder="輸入訂單編號 ORD…"
+      <input id="orderInput" type="text" placeholder="例如：ORD12345678"
         style="flex:1;text-transform:uppercase"
         oninput="this.value=this.value.toUpperCase()"
         onkeydown="if(event.key==='Enter') queryByOrder()">
-      <button onclick="queryByOrder()" class="btn-primary" style="width:auto;padding:13px 20px;white-space:nowrap">查詢</button>
+      <button onclick="queryByOrder()" class="btn-primary" style="width:auto;padding:13px 20px;white-space:nowrap">
+        查詢
+      </button>
     </div>
     <div id="result1" style="margin-top:16px"></div>
   </div>
 
-  <!-- Tab 2：客戶編號 + Email -->
-  <div id="panel2" style="display:none;padding:16px">
+  <!-- 分隔 -->
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+    <div style="flex:1;height:1px;background:var(--gray-200)"></div>
+    <span style="font-size:13px;color:var(--gray-400)">或</span>
+    <div style="flex:1;height:1px;background:var(--gray-200)"></div>
+  </div>
+
+  <!-- 客戶編號查詢 -->
+  <div style="background:var(--white);border-radius:var(--radius-lg);padding:20px">
+    <div style="font-size:15px;font-weight:700;margin-bottom:4px">用客戶編號查詢所有訂單</div>
+    <div style="font-size:13px;color:var(--gray-400);margin-bottom:14px">結帳後拿到的 W-82 或 C-161 開頭編號</div>
     <div style="display:flex;flex-direction:column;gap:10px">
-      <input id="customerInput" type="text"
-        placeholder="客戶編號，例如 W-82I"
+      <input id="customerInput" type="text" placeholder="例如：W-82I"
         style="text-transform:uppercase"
         oninput="this.value=this.value.toUpperCase()"
         onkeydown="if(event.key==='Enter') queryByCustomer()">
-      <input id="emailInput" type="email"
-        placeholder="您的 Email"
+      <input id="emailInput" type="email" placeholder="驗證用 Email"
         onkeydown="if(event.key==='Enter') queryByCustomer()">
-      <button onclick="queryByCustomer()" class="btn-primary">查詢我的訂單</button>
+      <button onclick="queryByCustomer()" class="btn-primary">查詢所有訂單</button>
     </div>
     <div id="result2" style="margin-top:16px"></div>
   </div>
